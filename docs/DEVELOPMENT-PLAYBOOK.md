@@ -27,14 +27,14 @@ Build the complete Forms MESRC application and release it to invited beta users.
 
 **Exit:** repeatable local build and GitHub Pages static deployment; no secrets in generated bundle.
 
-**Phase 0 status (2026-11-06): foundation built locally; GitHub Pages deployment not yet run.**
+**Phase 0 status (2026-11-06): complete.**
 
-- Done: Next.js 16 + React 19 + TypeScript static export (`output: "export"`, `trailingSlash: true`), placeholder routes (`/`, `/sign-in`, `/forms`, `/admin`, `/maintenance`, `/maintenance/settings`), PWA manifest, placeholder icons, public-assets-only service worker, `.github/workflows/pages.yml`, `.env.example`.
-- Commands: `npm run lint`, `npm run typecheck`, `npm run build`, `npm run verify:export` (or `npm run check`). `verify:export` checks route files and scans `out/` for secret patterns.
-- Verified: lint, typecheck and build pass with empty base path and with placeholder `NEXT_PUBLIC_BASE_PATH=/forms-mesrc`; manifest, in-app links and assets are base-path prefixed; no secrets found in the bundle.
-- Placeholders: `NEXT_PUBLIC_BASE_PATH`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (set as GitHub Actions variables later). No real Supabase, Google or SMTP credentials are connected.
-- Still open before Phase 0 exit: create the GitHub repository, enable Pages (source: GitHub Actions) with a protected deployment branch, confirm beta URL/base path, run the workflow, test direct open/refresh of nested routes and PWA install in a real browser. Icons are placeholders pending branding.
-
+- Repository: https://github.com/MoonWIRaja/forms-mesrc (public). Live beta placeholder: https://moonwiraja.github.io/forms-mesrc/
+- Layout: app in `apps/web` (Next.js 16, React 19, TypeScript, static export, `trailingSlash`); docs in `docs/`; workflow in `.github/workflows/pages.yml`. Keep the repo root minimal; new apps/packages go under `apps/` or `packages/`.
+- Commands (run in `apps/web`): `npm run check` = lint + typecheck + build + `verify:export` (route files and secret-pattern scan of `out/`).
+- Verified: CI build/deploy passed; live routes `/`, `/sign-in/`, `/maintenance/settings/`, manifest, service worker and icons return 200; unknown route returns 404. `npm audit --omit=dev` reports 0 vulnerabilities (moderate findings are dev-only lint tooling).
+- Placeholders (GitHub Actions variables): `NEXT_PUBLIC_BASE_PATH=/forms-mesrc` (change when URL/custom domain changes), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. No real Supabase, Google or SMTP credentials connected.
+- Not yet done: branch protection on `main`, PWA install test on a real device, real branding icons.
 ### Phase 1 — Supabase environments and security baseline
 
 - Create development and beta Supabase projects when available.
