@@ -1,0 +1,32 @@
+{
+  "name": "forms-mesrc",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Forms MESRC - static-export Next.js PWA (Phase 0 foundation)",
+  "engines": { "node": ">=20.9" },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "icons": "node scripts/generate-icons.mjs",
+    "verify:export": "node scripts/verify-export.mjs",
+    "check": "npm run lint && npm run typecheck && npm run build && npm run verify:export"
+  },
+  "dependencies": {
+    "next": "^16.4.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.4.5",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  }
+}
