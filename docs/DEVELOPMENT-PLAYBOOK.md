@@ -46,8 +46,11 @@ Build the complete Forms MESRC application and release it to invited beta users.
 
 **Exit:** test accounts prove role isolation and RLS rules; no production data.
 
-**Phase 1 status (2026-11-06): in progress.** Migration, synthetic seed and RLS test script authored in `supabase/` but not applied or executed. Remaining: connect the Supabase MCP (or CLI login), apply to the dev project, run `supabase/tests/rls.sql`, fix findings, configure Auth redirects/SMTP, record the Edge Function secret plan.
+**Phase 1 status (2026-11-06): database schema & RLS verified on remote.**
 
+- Applied `supabase/migrations/20261106000000_phase1_baseline.sql` and `supabase/seed.sql` to remote project `uvjwepsawrbrhpywabdu` via `supabase db push --remote`.
+- Verified: `supabase db lint --remote` reported 0 schema errors; `supabase/tests/rls.sql` executed and passed all 7 role-isolation, bootstrap, invite-only, and privilege-escalation checks against the live Postgres instance.
+- Remaining setup-time items (require Dashboard / project keys): set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in GitHub Actions variables, register first Maintenance email (`select private.set_bootstrap_maintenance_email(...)`), and configure Auth OTP/SMTP/redirects in Supabase Dashboard.
 ### Phase 2 — Invitations, OTP and Maintenance setup
 
 - Build invite management with exact role matrix and revocation/expiry.

@@ -1,6 +1,6 @@
 # Supabase (Phase 1 baseline)
 
-Versioned SQL for the Forms MESRC backend. **Status: authored, NOT yet applied or executed** (no Docker/psql in the authoring environment; MCP/credentials not connected).
+Versioned SQL for the Forms MESRC backend. **Status: applied and RLS-verified on remote project `uvjwepsawrbrhpywabdu` (2026-11-06).**
 
 - `migrations/20261106000000_phase1_baseline.sql` - profiles, roles, services, invites, settings, audit; RLS on every table; invite-only profile creation; one-time Maintenance bootstrap.
 - `seed.sql` - synthetic data only.
