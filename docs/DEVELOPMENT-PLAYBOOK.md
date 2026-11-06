@@ -46,6 +46,8 @@ Build the complete Forms MESRC application and release it to invited beta users.
 
 **Exit:** test accounts prove role isolation and RLS rules; no production data.
 
+**Phase 1 status (2026-11-06): in progress.** Migration, synthetic seed and RLS test script authored in `supabase/` but not applied or executed. Remaining: connect the Supabase MCP (or CLI login), apply to the dev project, run `supabase/tests/rls.sql`, fix findings, configure Auth redirects/SMTP, record the Edge Function secret plan.
+
 ### Phase 2 — Invitations, OTP and Maintenance setup
 
 - Build invite management with exact role matrix and revocation/expiry.
