@@ -107,6 +107,7 @@ Semua ini menjadi wajah berpikir satu agen:
 - harness2 — ujian perubahan kod
 - Understand-Anything — memahami kod & konteks
 - andrej-karpathy-skills — pemikiran bertahap AI
+- Supabase (`.Mcore/Feature/Supabase/`) - wajib baca sebelum kerja Supabase/Postgres/RLS; MCP config di `.Mcore/mcp/`
 
 ---
 
