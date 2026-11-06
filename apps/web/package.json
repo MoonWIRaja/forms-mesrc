@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "description": "Forms MESRC - static-export Next.js PWA (Phase 0 foundation)",
-  "engines": { "node": ">=20.9" },
+  "engines": {
+    "node": ">=20.9"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -16,6 +18,7 @@
     "check": "npm run lint && npm run typecheck && npm run build && npm run verify:export"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
     "next": "^16.4.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

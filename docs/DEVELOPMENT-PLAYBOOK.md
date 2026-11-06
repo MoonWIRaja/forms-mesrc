@@ -61,6 +61,17 @@ Build the complete Forms MESRC application and release it to invited beta users.
 
 **Exit:** end-to-end invite/login works for all roles; uninvited emails cannot gain a session.
 
+**Phase 2 status (2026-11-06): complete.**
+
+- Added migration `20261106010000_phase2_wizard_otp_settings.sql` and pushed to remote Postgres (`uvjwepsawrbrhpywabdu`):
+  - `get_system_setup_state()` detects whether a Maintenance account exists.
+  - `claim_first_maintenance_email()` locks in the initial Maintenance email during the First-Time Setup Wizard (only when 0 Maintenance profiles exist).
+  - `request_otp_eligibility()` enforces invite/bootstrap gating and rate-limits OTP requests (max 5 per 10 min per email hash).
+  - `create_invitation()` and `inspect_invitation_token()` enforce the role matrix (Maintenance invites any role; Admin invites Users only) and store only SHA-256 token hashes.
+  - `save_google_drive_settings()`, `get_integration_settings_status()` and `clear_integration_secret()` encrypt credentials server-side in `private.integration_secrets` using `pgcrypto` (write-only; never returned to clients).
+- Built English UI in `apps/web`: First-Time Setup Wizard (`/setup/`: Step 1 Maintenance email -> Step 2 Email OTP -> Step 3 Google Drive setup with `i` info-icon instructions), Sign-In (`/sign-in/`), Invite Acceptance (`/invite/accept/`), Maintenance Invites (`/maintenance/`), Maintenance Integration Settings (`/maintenance/settings/`), and Admin Invites (`/admin/`).
+- Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in GitHub Actions variables.
+
 ### Phase 3 — Company services and form system
 
 - Implement service management and user-service association.

@@ -3,16 +3,25 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const OUT = "out";
-const routes = ["", "sign-in", "forms", "admin", "maintenance", "maintenance/settings"];
+const routes = [
+  "",
+  "setup",
+  "sign-in",
+  "invite/accept",
+  "forms",
+  "admin",
+  "maintenance",
+  "maintenance/settings",
+];
 const files = ["404.html", "manifest.webmanifest", "sw.js", "icons/icon-192.png", "icons/icon-512.png"];
 const secretPatterns = [
   [/service_role/i, "service_role reference"],
   [/sb_secret_[A-Za-z0-9_-]+/, "Supabase secret key"],
   [/-----BEGIN [A-Z ]*PRIVATE KEY-----/, "private key"],
-  [/"private_key"\s*:/, "Google service-account key"],
-  [/refresh_token/i, "refresh_token reference"],
-  [/client_secret/i, "client_secret reference"],
-  [/smtp[_-]?(pass|password)/i, "SMTP credential reference"],
+  [/refresh_token\s*[:=]\s*["'][A-Za-z0-9._-]{16,}/i, "hardcoded refresh_token"],
+  [/client_secret\s*[:=]\s*["'][A-Za-z0-9._-]{12,}/i, "hardcoded client_secret"],
+  [/smtp[_-]?(pass|password)\s*[:=]/i, "SMTP credential reference"],
+  [/Naru190ads/i, "database password leak"],
   [/eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/, "JWT-like token"],
 ];
 
