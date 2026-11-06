@@ -14,7 +14,7 @@ begin
     execute p_sql;
     get diagnostics v_rows = row_count;
     if v_rows > 0 then raise exception 'FAIL (allowed): %', p_label; end if;
-  exception when insufficient_privilege or raise_exception then
+  exception when insufficient_privilege or raise_exception or invalid_parameter_value then
     if sqlerrm like 'FAIL (allowed)%' then raise; end if;
   end;
 end $$;
@@ -143,5 +143,112 @@ set local role anon;
 select pg_temp.expect_fail($q$select public.request_otp_eligibility('user2@example.test')$q$, 'deactivated user otp blocked');
 reset role;
 
-select 'ALL PHASE 1 & PHASE 2 RLS CHECKS PASSED' as result;
+-- 6. Phase 3: Admin creates & publishes versioned form, tests immutability, allowlist RLS, and submission validation.
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a2');
+do $$
+declare
+  v_open_form jsonb;
+  v_restricted_form jsonb;
+  v_open_id uuid;
+  v_rest_id uuid;
+begin
+  v_open_form := public.save_form_builder(
+    null,
+    'general-feedback',
+    'General Feedback Form',
+    'Open to all active invited users',
+    'general',
+    true,
+    false,
+    array[]::uuid[],
+    array[]::text[],
+    '[{"id":"f_summary","type":"short_text","label":"Summary","required":true}]'::jsonb,
+    '{"primaryColor":"#1d4ed8"}'::jsonb
+  );
+  v_open_id := (v_open_form->>'form_id')::uuid;
+  perform public.publish_form_version(v_open_id);
+
+  -- Restricted form: allowlist contains ONLY user@example.test
+  v_restricted_form := public.save_form_builder(
+    null,
+    'hr-restricted',
+    'Restricted HR Form',
+    'Allowlist restricted',
+    'appeal_enabled',
+    true,
+    true,
+    array[]::uuid[],
+    array['USER@example.test']::text[],
+    '[{"id":"f_reason","type":"long_text","label":"Reason","required":true}]'::jsonb,
+    '{}'::jsonb
+  );
+  v_rest_id := (v_restricted_form->>'form_id')::uuid;
+  perform public.publish_form_version(v_rest_id);
+
+  -- Editing a published form creates version 2 (draft) while published version 1 stays immutable
+  v_open_form := public.save_form_builder(
+    v_open_id,
+    'general-feedback',
+    'General Feedback Form v2',
+    'Updated draft',
+    'general',
+    true,
+    false,
+    array[]::uuid[],
+    array[]::text[],
+    '[{"id":"f_summary","type":"short_text","label":"Summary v2","required":true}]'::jsonb,
+    '{}'::jsonb
+  );
+  assert (v_open_form->>'latest_version')::int = 2, 'editing published form creates version 2';
+  assert (v_open_form->>'current_published_version')::int = 1, 'published version remains 1 until republished';
+end $$;
+
+-- Direct update of published version 1 must fail (immutability trigger)
+select pg_temp.expect_fail(
+  $q$update public.form_versions set schema_json = '[]'::jsonb where version_number = 1$q$,
+  'mutate published form_version blocked'
+);
+reset role;
+
+-- Re-activate user2 so we can test allowlist denial on an active invited User
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a1');
+select public.set_user_active('00000000-0000-0000-0000-0000000000a4', true);
+reset role;
+
+-- User 1 (user@example.test) is on the allowlist -> sees BOTH published forms and can submit both
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a3');
+do $$
+declare
+  v_open_id uuid;
+  v_rest_id uuid;
+  v_sub jsonb;
+begin
+  assert (select count(*) from public.forms) = 2, 'allowlisted user sees both forms';
+  select id into v_open_id from public.forms where slug = 'general-feedback';
+  select id into v_rest_id from public.forms where slug = 'hr-restricted';
+
+  v_sub := public.submit_form_response(v_rest_id, '{"f_reason":"Valid request"}'::jsonb, null, 18, false, null);
+  assert (v_sub->>'status') = 'submitted', 'allowlisted user submits restricted form';
+end $$;
+-- Required field missing must fail validation
+select pg_temp.expect_fail(
+  $q$select public.submit_form_response((select id from public.forms where slug = 'general-feedback'), '{}'::jsonb, null, 5, false, null)$q$,
+  'missing required field rejected'
+);
+reset role;
+
+-- User 2 (user2@example.test) is active & invited, but NOT on hr-restricted allowlist -> sees ONLY general-feedback
+select pg_temp.act_as('00000000-0000-0000-0000-0000000000a4');
+do $$
+begin
+  assert (select count(*) from public.forms) = 1, 'non-allowlisted user sees only open form';
+  assert (select count(*) from public.submissions) = 0, 'user2 cannot see user1 submissions';
+end $$;
+select pg_temp.expect_fail(
+  $q$select public.submit_form_response((select id from public.forms where slug = 'hr-restricted'), '{"f_reason":"Sneak in"}'::jsonb, null, 5, false, null)$q$,
+  'non-allowlisted user blocked from submitting restricted form'
+);
+reset role;
+
+select 'ALL PHASE 1, 2 & 3 RLS CHECKS PASSED' as result;
 rollback;

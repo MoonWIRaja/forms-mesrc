@@ -8,7 +8,7 @@ const routes = [
   "setup",
   "sign-in",
   "invite/accept",
-  "forms",
+  "forms", "forms/fill", "admin/forms",
   "admin",
   "maintenance",
   "maintenance/settings",

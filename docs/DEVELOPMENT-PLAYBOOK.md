@@ -83,6 +83,15 @@ Build the complete Forms MESRC application and release it to invited beta users.
 
 **Exit:** Admin creates/publishes versioned forms; eligible User submits; unauthorized email is denied at RLS.
 
+**Phase 3 status (2026-11-06): complete.**
+
+- Added migration `20261106020000_phase3_services_forms_submissions.sql` and pushed to remote Postgres:
+  - Tables: `forms`, `form_services`, `form_versions`, `form_email_allowlist`, `submissions`.
+  - Trigger `trg_immutable_form_version` prevents editing or deleting published form versions.
+  - RLS helper `private.can_user_access_form()` allows all active invited Users to access published forms with an empty allowlist, and restricts access to exact normalized allowlist emails when populated.
+  - RPCs: `save_form_builder()` (auto-increments draft version when editing a published form), `publish_form_version()`, `set_form_state()`, and `submit_form_response()` (validates required fields against the immutable version schema and records completion timer).
+- Built English UI in `apps/web`: Service Manager (`/admin/`), Visual Form Builder (`/admin/forms/` with 3 starter templates, 12 field types, drag-and-drop node ordering, property inspector, email allowlist, and phone/desktop preview), User Form Catalog & My Submissions (`/forms/`), and Form Renderer with timer & save-draft support (`/forms/fill/`).
+
 ### Phase 4 — Google Drive files
 
 - Confirm Workspace IT-approved Shared Drive and API identity.
