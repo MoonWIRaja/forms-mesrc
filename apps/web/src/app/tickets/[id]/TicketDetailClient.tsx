@@ -232,9 +232,8 @@ export default function TicketDetailClient() {
   if (loading) {
     return (
       <ChunkLoader
-        title="OPENING TICKET DOSSIER..."
-        subtitle="Unfolding decision history & message thread"
-        variant="both"
+        title="Ticket"
+        subtitle="Loading ticket details..."
       />
     );
   }

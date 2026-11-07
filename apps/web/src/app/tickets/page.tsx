@@ -63,9 +63,8 @@ export default function TicketsPage() {
   if (loading) {
     return (
       <ChunkLoader
-        title="LOADING APPEALS & TICKETS..."
-        subtitle="Fetching atomic claim ledger & ticket statuses"
-        variant="both"
+        title="Tickets"
+        subtitle="Loading tickets..."
       />
     );
   }

@@ -70,9 +70,8 @@ export default function AdminPage() {
   if (loading) {
     return (
       <ChunkLoader
-        title="LOADING ADMIN WORKSPACE..."
-        subtitle="Syncing submissions, service tags, and user invitations"
-        variant="both"
+        title="Admin Workspace"
+        subtitle="Loading submissions & services..."
       />
     );
   }

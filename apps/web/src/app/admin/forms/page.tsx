@@ -286,9 +286,8 @@ export default function AdminFormBuilderPage() {
   if (loading) {
     return (
       <ChunkLoader
-        title="SPAWNING VISUAL FORM BUILDER..."
-        subtitle="Loading workbench, field palette, and immutable versions"
-        variant="both"
+        title="Visual Form Builder"
+        subtitle="Loading builder..."
       />
     );
   }

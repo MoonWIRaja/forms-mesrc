@@ -137,9 +137,8 @@ export default function FirstTimeSetupPage() {
   if (loading) {
     return (
       <ChunkLoader
-        title="CHECKING BOOTSTRAP CHUNKS..."
-        subtitle="Inspecting first-time Maintenance setup & Shared Drive vault status"
-        variant="both"
+        title="First-Time System Setup"
+        subtitle="Checking initialization status..."
       />
     );
   }

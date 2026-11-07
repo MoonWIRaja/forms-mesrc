@@ -77,9 +77,8 @@ export default function MaintenanceSettingsPage() {
   if (loading) {
     return (
       <ChunkLoader
-        title="INSPECTING VAULT & SMTP SETTINGS..."
-        subtitle="Checking Google Workspace Shared Drive & OTP integration status"
-        variant="both"
+        title="Maintenance Integration Settings"
+        subtitle="Loading settings..."
       />
     );
   }

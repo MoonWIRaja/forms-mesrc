@@ -78,9 +78,8 @@ export default function FormsCatalogPage() {
   if (loading) {
     return (
       <ChunkLoader
-        title="LOADING FORMS CATALOG..."
-        subtitle="Unfolding published blueprints & user submission history"
-        variant="both"
+        title="Available Forms"
+        subtitle="Loading published forms..."
       />
     );
   }

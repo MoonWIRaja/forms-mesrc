@@ -30,9 +30,8 @@ export default function MaintenancePage() {
   if (loading) {
     return (
       <ChunkLoader
-        title="LOADING MAINTENANCE COMMAND..."
-        subtitle="Verifying authority role & invitation ledger"
-        variant="both"
+        title="Maintenance Workspace"
+        subtitle="Loading invitations..."
       />
     );
   }

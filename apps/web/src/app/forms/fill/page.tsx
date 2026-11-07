@@ -191,9 +191,8 @@ export default function FillFormPage() {
   if (loading) {
     return (
       <ChunkLoader
-        title="UNFOLDING FORM BLUEPRINT..."
-        subtitle="Checking allowlist & preparing versioned fields"
-        variant="both"
+        title="Loading Form..."
+        subtitle="Preparing form fields"
       />
     );
   }
