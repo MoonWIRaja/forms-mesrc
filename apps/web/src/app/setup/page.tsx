@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import ChunkLoader from "@/components/ChunkLoader";
 import GoogleDriveSetupForm from "@/components/GoogleDriveSetupForm";
 import InfoPopover from "@/components/InfoPopover";
-import SmtpOtpGuideCard from "@/components/SmtpOtpGuideCard";
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
 type WizardStep = 1 | 2 | 3 | 4;
@@ -238,8 +237,6 @@ export default function FirstTimeSetupPage() {
               {busy ? "Sending OTP..." : "Send Verification OTP"}
             </button>
           </div>
-          <hr style={{ border: "none", borderTop: "1.5px solid var(--border-subtle)", margin: "0.5rem 0" }} />
-          <SmtpOtpGuideCard />
         </form>
       )}
 
