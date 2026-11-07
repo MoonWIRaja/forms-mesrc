@@ -101,6 +101,12 @@ Build the complete Forms MESRC application and release it to invited beta users.
 
 **Exit:** allowed users can upload/download; other users cannot access file; oversized or untrusted files are rejected.
 
+**Status (2026-11-06): database metadata migration and placeholder UI exist locally; feature is blocked and not deployed.**
+
+- `20261106030000_phase4_google_drive_files.sql` is unvalidated. It creates metadata sessions but no Edge Function or direct/resumable Drive upload. Browser code does not upload file bytes. The form UI now refuses submission when a file is selected so it cannot claim an attachment succeeded.
+- The migration returns `drive_file_id` and a Drive link to authenticated callers, and its finalize RPC accepts client-supplied IDs without verifying the Drive object. Do not apply this migration until authorization and server-side verification are fixed.
+- `/forms/fill/` is statically exported. Checks pass, but the Google Drive exit criteria are not met.
+
 ### Phase 5 — Appeals and complaint tickets
 
 - Implement appeal review states, reasons, decision history and User status view.
@@ -110,6 +116,13 @@ Build the complete Forms MESRC application and release it to invited beta users.
 - Implement transactional email outbox, retries, idempotency and delivery status.
 
 **Exit:** no double claim; correct ownership and notifications; ticket transitions fully audited.
+
+**Status (2026-11-06): initial schema, RPC and UI files exist locally; feature is blocked and not deployed.**
+
+- `20261106040000_phase5_appeals_tickets.sql` has not been applied or validated. Its write RPCs are declared `STABLE`; the atomic claim implementation uses an invalid aggregate in `UPDATE ... RETURNING`; status transitions and helper acceptance/decline lack complete state and authorization checks. Message RLS also needs participant/sender validation.
+- Email outbox rows are created, but no worker/Edge Function is present to deliver or retry messages. The existing `request_help` flow does not provide complete helper-scoped access.
+- `/tickets/` and `/tickets/[id]/` are local static-export pages only. Build validation passes; no authenticated end-to-end ticket flow or concurrency test has passed.
+- Do not push either Phase 4 or Phase 5 migration until the blockers are corrected and database/RLS checks pass.
 
 ### Phase 6 — Realtime administration and operational views
 

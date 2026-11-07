@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -13,6 +13,7 @@ export default function FillFormPage() {
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [serviceId, setServiceId] = useState<string>("");
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const [draftId, setDraftId] = useState<string | null>(null);
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -23,6 +24,16 @@ export default function FillFormPage() {
   const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{
+    id: string;
+    file_name: string;
+    mime_type: string;
+    size_bytes: number;
+    drive_file_id: string;
+    drive_web_view_link: string;
+    created_at: string;
+  }>>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   useEffect(() => {
     startMsRef.current = Date.now();
@@ -119,16 +130,60 @@ export default function FillFormPage() {
       });
       if (rpcErr) throw rpcErr;
       const res = data as { submission_id: string; status: string };
+      const submissionId = res.submission_id;
+
+      // Do not record metadata as if file bytes had been uploaded to Drive.
+      const fileNodes = nodes.filter((n) => n.type === "file_upload");
+      for (const node of fileNodes) {
+        if (pendingFiles[node.id]) {
+          throw new Error("File uploads are unavailable until Google Drive upload is configured. Remove the selected file and submit again.");
+        }
+      }
+
       if (asDraft) {
-        setDraftId(res.submission_id);
+        setDraftId(submissionId);
         setInfo("Draft saved. You can resume it anytime from the Forms page.");
       } else {
-        setSubmittedId(res.submission_id);
+        setSubmittedId(submissionId);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submission failed.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleDownloadFile(fileId: string) {
+    setFileError(null);
+    try {
+      const supabase = getSupabase();
+      const { data, error: dlErr } = await supabase.rpc("get_file_download_url", {
+        p_file_id: fileId,
+      });
+      if (dlErr) throw dlErr;
+      const res = data as { drive_web_view_link: string; file_name: string };
+      if (res.drive_web_view_link) {
+        window.open(res.drive_web_view_link, "_blank");
+      } else {
+        setFileError("No download link available.");
+      }
+    } catch (err) {
+      setFileError(err instanceof Error ? err.message : "Download failed.");
+    }
+  }
+
+  async function handleDeleteFile(fileId: string) {
+    setFileError(null);
+    try {
+      const supabase = getSupabase();
+      const { error: delErr } = await supabase.rpc("delete_submission_file", {
+        p_file_id: fileId,
+      });
+      if (delErr) throw delErr;
+      setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+      setInfo("File deleted.");
+    } catch (err) {
+      setFileError(err instanceof Error ? err.message : "Delete failed.");
     }
   }
 
@@ -225,9 +280,67 @@ export default function FillFormPage() {
           nodes={nodes}
           theme={theme}
           answers={answers}
-          onChange={(fid, val) => setAnswers((prev) => ({ ...prev, [fid]: val }))}
+          onChange={(fid, val, file) => {
+            setAnswers((prev) => ({ ...prev, [fid]: val }));
+            setPendingFiles((prev) => {
+              const next = { ...prev };
+              if (file) next[fid] = file;
+              else delete next[fid];
+              return next;
+            });
+          }}
           disabled={busy}
         />
+
+        {uploadedFiles.length > 0 && (
+          <section className="card stack" style={{ marginTop: "1rem" }}>
+            <h2>Attached Files</h2>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>File Name</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {uploadedFiles.map((f) => (
+                    <tr key={f.id}>
+                      <td>{f.file_name}</td>
+                      <td>{f.mime_type}</td>
+                      <td>{(f.size_bytes / 1024 / 1024).toFixed(2)} MB</td>
+                      <td>
+                        <div className="row-actions" style={{ gap: "0.5rem" }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            disabled={busy}
+                            onClick={() => handleDownloadFile(f.id)}
+                          >
+                            Download
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            disabled={busy}
+                            onClick={() => handleDeleteFile(f.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {fileError && (
+              <p className="alert alert-error" role="alert">{fileError}</p>
+            )}
+          </section>
+        )}
 
         <div className="row-actions">
           <button type="submit" className="btn btn-primary" disabled={busy}>

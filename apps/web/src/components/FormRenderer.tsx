@@ -6,7 +6,7 @@ interface FormRendererProps {
   nodes: FormFieldNode[];
   theme?: FormTheme;
   answers: Record<string, unknown>;
-  onChange: (fieldId: string, value: unknown) => void;
+  onChange: (fieldId: string, value: unknown, file?: File) => void;
   disabled?: boolean;
 }
 
@@ -210,7 +210,7 @@ export default function FormRenderer({
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (!f) {
-                      onChange(node.id, null);
+                      onChange(node.id, null, undefined);
                       return;
                     }
                     if (f.size > 1073741824) {
@@ -222,7 +222,7 @@ export default function FormRenderer({
                       name: f.name,
                       size: f.size,
                       type: f.type || "application/octet-stream",
-                    });
+                    }, f);
                   }}
                 />
                 <p className="notice" style={{ margin: "0.35rem 0 0", fontSize: "0.82rem" }}>
