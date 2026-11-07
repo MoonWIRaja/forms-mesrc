@@ -110,8 +110,9 @@ export default function InviteAcceptPage() {
   }
 
   return (
-    <section className="card stack">
-      <h1>Accept Invitation</h1>
+    <div className="center-stage">
+      <section className="card stack">
+        <h1>Accept Invitation</h1>
       {error && (
         <p className="alert alert-error" role="alert">
           {error}
@@ -206,6 +207,7 @@ export default function InviteAcceptPage() {
           </div>
         </div>
       )}
-    </section>
+      </section>
+    </div>
   );
 }

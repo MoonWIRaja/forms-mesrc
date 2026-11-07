@@ -95,50 +95,55 @@ export default function SignInPage() {
 
   if (setupState?.needs_first_maintenance) {
     return (
-      <section className="card stack">
-        <h1>First-Time System Setup Required</h1>
-        <p className="notice">
-          No Maintenance account has been configured yet. Complete the initial setup wizard before
-          signing in.
-        </p>
-        <div className="row-actions">
-          <Link href="/setup/" className="btn btn-primary">
-            Go to First-Time Setup Wizard
-          </Link>
-        </div>
-      </section>
+      <div className="center-stage">
+        <section className="card stack">
+          <h1>First-Time System Setup Required</h1>
+          <p className="notice">
+            No Maintenance account has been configured yet. Complete the initial setup wizard before
+            signing in.
+          </p>
+          <div className="row-actions">
+            <Link href="/setup/" className="btn btn-primary">
+              Go to First-Time Setup Wizard
+            </Link>
+          </div>
+        </section>
+      </div>
     );
   }
 
   if (profile) {
     return (
-      <section className="card stack">
-        <h1>Signed In</h1>
-        <p className="notice">
-          You are signed in as <strong>{profile.email}</strong> (role:{" "}
-          <code>{profile.role}</code>).
-        </p>
-        <div className="row-actions">
-          <Link href="/forms/" className="btn btn-primary">
-            Go to Forms
-          </Link>
-          {(profile.role === "admin" || profile.role === "maintenance") && (
-            <Link href="/admin/" className="btn btn-secondary">
-              Admin Workspace
+      <div className="center-stage">
+        <section className="card stack">
+          <h1>Signed In</h1>
+          <p className="notice">
+            You are signed in as <strong>{profile.email}</strong> (role:{" "}
+            <code>{profile.role}</code>).
+          </p>
+          <div className="row-actions">
+            <Link href="/forms/" className="btn btn-primary">
+              Go to Forms
             </Link>
-          )}
-          {profile.role === "maintenance" && (
-            <Link href="/maintenance/" className="btn btn-secondary">
-              Maintenance Workspace
-            </Link>
-          )}
-        </div>
-      </section>
+            {(profile.role === "admin" || profile.role === "maintenance") && (
+              <Link href="/admin/" className="btn btn-secondary">
+                Admin Workspace
+              </Link>
+            )}
+            {profile.role === "maintenance" && (
+              <Link href="/maintenance/" className="btn btn-secondary">
+                Maintenance Workspace
+              </Link>
+            )}
+          </div>
+        </section>
+      </div>
     );
   }
 
   return (
-    <section className="card stack">
+    <div className="center-stage">
+      <section className="card stack">
       <h1>Sign in to Forms MESRC</h1>
       <p className="notice">
         Invite-only access via email one-time passcode (OTP). Passwords are not used.
@@ -204,6 +209,7 @@ export default function SignInPage() {
           </div>
         </form>
       )}
-    </section>
+      </section>
+    </div>
   );
 }

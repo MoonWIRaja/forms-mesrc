@@ -136,32 +136,37 @@ export default function FirstTimeSetupPage() {
 
   if (loading) {
     return (
-      <ChunkLoader
-        title="First-Time System Setup"
-        subtitle="Checking initialization status..."
-      />
+      <div className="center-stage">
+        <ChunkLoader
+          title="First-Time System Setup"
+          subtitle="Checking initialization status..."
+        />
+      </div>
     );
   }
 
   if (step === 4 && (!profile || profile.role !== "maintenance") && setupState && !setupState.needs_first_maintenance) {
     return (
-      <section className="card stack">
-        <h1>System Initialized</h1>
-        <p className="notice">
-          First-time Maintenance setup has already been completed. Please sign in with your invited
-          or Maintenance email address.
-        </p>
-        <div className="row-actions">
-          <Link href="/sign-in/" className="btn btn-primary">
-            Go to Sign in
-          </Link>
-        </div>
-      </section>
+      <div className="center-stage">
+        <section className="card stack">
+          <h1>System Initialized</h1>
+          <p className="notice">
+            First-time Maintenance setup has already been completed. Please sign in with your invited
+            or Maintenance email address.
+          </p>
+          <div className="row-actions">
+            <Link href="/sign-in/" className="btn btn-primary">
+              Go to Sign in
+            </Link>
+          </div>
+        </section>
+      </div>
     );
   }
 
   return (
-    <section className="card stack">
+    <div className="center-stage">
+      <section className="card stack">
       <div>
         <h1>First-Time System Setup Wizard</h1>
         <p className="notice">
@@ -305,6 +310,7 @@ export default function FirstTimeSetupPage() {
           </div>
         </div>
       )}
-    </section>
+      </section>
+    </div>
   );
 }
