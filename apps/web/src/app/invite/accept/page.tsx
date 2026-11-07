@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import OtpBoxInput from "@/components/OtpBoxInput";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabase, verifyFourDigitOtp } from "@/lib/supabase";
 
 interface InviteDetails {
   email: string;
@@ -95,16 +95,10 @@ export default function InviteAcceptPage() {
     setBusy(true);
     setError(null);
     try {
-      const supabase = getSupabase();
-      const { error: verifyErr } = await supabase.auth.verifyOtp({
-        email: details.email,
-        token: otp.trim(),
-        type: "email",
-      });
-      if (verifyErr) throw verifyErr;
+      await verifyFourDigitOtp(details.email, otp);
       setStep("done");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid or expired OTP.");
+      setError(err instanceof Error ? err.message : "Invalid or expired 4-digit OTP.");
     } finally {
       setBusy(false);
     }

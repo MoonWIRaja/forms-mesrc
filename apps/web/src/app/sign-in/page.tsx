@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import OtpBoxInput from "@/components/OtpBoxInput";
-import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
+import {
+  getSupabase,
+  verifyFourDigitOtp,
+  type SystemSetupState,
+  type UserProfile,
+} from "@/lib/supabase";
 
 export default function SignInPage() {
   const [setupState, setSetupState] = useState<SystemSetupState | null>(null);
@@ -70,12 +75,7 @@ export default function SignInPage() {
     setInfo(null);
     try {
       const supabase = getSupabase();
-      const { data, error: verifyErr } = await supabase.auth.verifyOtp({
-        email: email.trim().toLowerCase(),
-        token: otp.trim(),
-        type: "email",
-      });
-      if (verifyErr) throw verifyErr;
+      const data = await verifyFourDigitOtp(email, otp);
 
       const uid = data.user?.id;
       if (uid) {
@@ -88,7 +88,7 @@ export default function SignInPage() {
       }
       setInfo("Signed in successfully.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid or expired verification code.");
+      setError(err instanceof Error ? err.message : "Invalid or expired 4-digit verification code.");
     } finally {
       setBusy(false);
     }

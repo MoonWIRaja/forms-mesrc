@@ -385,29 +385,6 @@ a:hover {
   box-shadow: 5px 5px 0px var(--ink) !important;
 }
 
-.otp-mode-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.otp-len-btn {
-  padding: 0.2rem 0.55rem;
-  font-family: inherit;
-  font-size: 0.76rem;
-  font-weight: 700;
-  border: 1.5px solid var(--ink);
-  border-radius: 3px;
-  background: var(--surface);
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.otp-len-btn.active {
-  background: var(--ink);
-  color: var(--surface);
-}
-
 /* Badges & Wizard Steps */
 .badge {
   display: inline-flex;

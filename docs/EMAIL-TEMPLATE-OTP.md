@@ -5,7 +5,7 @@ Templat e-mel OTP ini menggunakan palet kertas jurnal hangat yang bersih (`#f3ef
 ### Cara Pasang di Supabase Dashboard:
 1. Buka [Supabase Dashboard &rarr; Authentication &rarr; Email Templates](https://supabase.com/dashboard/project/uvjwepsawrbrhpywabdu/auth/templates).
 2. Pilih tab **Magic Link / Confirmation / OTP**.
-3. Tukar **Subject** kepada: `Your Forms MESRC Verification Code: {{ .Token }}`
+3. Tukar **Subject** kepada: `Forms MESRC Verification Code: {{ slice .Token 0 4 }}`
 4. Salin dan tampal kod HTML di bawah ke dalam bahagian **Body**:
 
 ```html
@@ -37,21 +37,21 @@ Templat e-mel OTP ini menggunakan palet kertas jurnal hangat yang bersih (`#f3ef
               </h1>
 
               <p style="margin: 0 0 22px 0; font-size: 15px; line-height: 1.6; color: #57534e;">
-                Enter the 6-digit verification code below to sign in or complete your setup:
+                Enter the 4-digit verification code below to sign in or complete your setup:
               </p>
 
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; border: 2px solid #1c1917; border-radius: 4px; box-shadow: 3px 3px 0px #1c1917; margin: 0 0 22px 0;">
                 <tr>
                   <td style="padding: 20px; text-align: center;">
-                    <span style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #1c1917;">
-                      {{ .Token }}
+                    <span style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 38px; font-weight: 800; letter-spacing: 10px; color: #1c1917;">
+                      {{ slice .Token 0 4 }}
                     </span>
                   </td>
                 </tr>
               </table>
 
               <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #57534e;">
-                This code expires in 10 minutes and can only be used once. If you did not request this code, you can ignore this email.
+                This 4-digit code expires in 10 minutes and can only be used once. If you did not request this code, you can ignore this email.
               </p>
             </td>
           </tr>

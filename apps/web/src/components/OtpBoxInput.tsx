@@ -1,26 +1,22 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 
 interface OtpBoxInputProps {
   value: string;
   onChange: (value: string) => void;
-  defaultLength?: 4 | 6 | 8;
   disabled?: boolean;
 }
+
+const BOX_COUNT = 4;
 
 export default function OtpBoxInput({
   value,
   onChange,
-  defaultLength = 4,
   disabled = false,
 }: OtpBoxInputProps) {
-  const [boxCount, setBoxCount] = useState<4 | 6 | 8>(
-    value.length > 6 ? 8 : value.length > 4 ? 6 : defaultLength,
-  );
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
-
-  const digits = Array.from({ length: boxCount }, (_, i) => value[i] ?? "");
+  const digits = Array.from({ length: BOX_COUNT }, (_, i) => value[i] ?? "");
 
   function focusBox(index: number) {
     const target = inputsRef.current[index];
@@ -39,7 +35,6 @@ export default function OtpBoxInput({
       return;
     }
 
-    // If user typed or pasted multiple digits into a single box
     if (clean.length > 1) {
       handlePasteString(clean, index);
       return;
@@ -49,7 +44,7 @@ export default function OtpBoxInput({
     next[index] = clean[0];
     onChange(next.join(""));
 
-    if (index < boxCount - 1) {
+    if (index < BOX_COUNT - 1) {
       focusBox(index + 1);
     }
   }
@@ -70,30 +65,23 @@ export default function OtpBoxInput({
     } else if (e.key === "ArrowLeft" && index > 0) {
       focusBox(index - 1);
       e.preventDefault();
-    } else if (e.key === "ArrowRight" && index < boxCount - 1) {
+    } else if (e.key === "ArrowRight" && index < BOX_COUNT - 1) {
       focusBox(index + 1);
       e.preventDefault();
     }
   }
 
   function handlePasteString(pasted: string, startIndex = 0) {
-    const clean = pasted.replace(/\D/g, "");
+    const clean = pasted.replace(/\D/g, "").slice(0, BOX_COUNT);
     if (!clean) return;
 
-    // Auto-adapt box count to match the pasted OTP length (4, 6, or 8 digits)
-    const targetLen: 4 | 6 | 8 = clean.length > 6 ? 8 : clean.length > 4 ? 6 : boxCount;
-    if (targetLen !== boxCount) {
-      setBoxCount(targetLen);
-    }
-
-    const next = Array.from({ length: targetLen }, (_, i) => value[i] ?? "");
-    for (let i = 0; i < clean.length && startIndex + i < targetLen; i++) {
+    const next = Array.from({ length: BOX_COUNT }, (_, i) => value[i] ?? "");
+    for (let i = 0; i < clean.length && startIndex + i < BOX_COUNT; i++) {
       next[startIndex + i] = clean[i];
     }
-    const joined = next.join("");
-    onChange(joined);
+    onChange(next.join(""));
 
-    const focusIdx = Math.min(startIndex + clean.length, targetLen - 1);
+    const focusIdx = Math.min(startIndex + clean.length, BOX_COUNT - 1);
     window.setTimeout(() => focusBox(focusIdx), 10);
   }
 
@@ -103,14 +91,9 @@ export default function OtpBoxInput({
     handlePasteString(pasted, index);
   }
 
-  function toggleLength(newLen: 4 | 6 | 8) {
-    setBoxCount(newLen);
-    onChange(value.slice(0, newLen));
-  }
-
   return (
     <div className="otp-wrapper">
-      <div className="otp-box-row" role="group" aria-label="One-Time Passcode Digits">
+      <div className="otp-box-row" role="group" aria-label="4-Digit One-Time Passcode">
         {digits.map((digit, idx) => (
           <input
             key={idx}
@@ -124,7 +107,7 @@ export default function OtpBoxInput({
             autoComplete={idx === 0 ? "one-time-code" : "off"}
             disabled={disabled}
             value={digit}
-            aria-label={`Digit ${idx + 1}`}
+            aria-label={`Digit ${idx + 1} of 4`}
             className={`otp-digit-box ${digit ? "filled" : ""}`}
             onChange={(e) => handleChange(idx, e.target.value)}
             onKeyDown={(e) => handleKeyDown(idx, e)}
@@ -132,33 +115,6 @@ export default function OtpBoxInput({
             onFocus={(e) => e.target.select()}
           />
         ))}
-      </div>
-
-      <div className="otp-mode-switch">
-        <span className="notice" style={{ fontSize: "0.78rem" }}>
-          Boxes:
-        </span>
-        <button
-          type="button"
-          className={`otp-len-btn ${boxCount === 4 ? "active" : ""}`}
-          onClick={() => toggleLength(4)}
-        >
-          4
-        </button>
-        <button
-          type="button"
-          className={`otp-len-btn ${boxCount === 6 ? "active" : ""}`}
-          onClick={() => toggleLength(6)}
-        >
-          6
-        </button>
-        <button
-          type="button"
-          className={`otp-len-btn ${boxCount === 8 ? "active" : ""}`}
-          onClick={() => toggleLength(8)}
-        >
-          8
-        </button>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import InfoPopover from "./InfoPopover";
 
-export const OTP_EMAIL_SUBJECT = "Forms MESRC Verification Code: {{ .Token }}";
+export const OTP_EMAIL_SUBJECT = "Forms MESRC Verification Code: {{ slice .Token 0 4 }}";
 
 export const OTP_EMAIL_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -28,7 +28,7 @@ export const OTP_EMAIL_HTML = `<!DOCTYPE html>
                   </td>
                   <td align="right">
                     <span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border: 1.5px solid #1c1917; border-radius: 4px; background-color: #faf8f5; color: #1c1917;">
-                      OTP CODE
+                      4-DIGIT OTP
                     </span>
                   </td>
                 </tr>
@@ -41,22 +41,22 @@ export const OTP_EMAIL_HTML = `<!DOCTYPE html>
                 Verification Passcode
               </h1>
               <p style="margin: 0 0 22px 0; font-size: 15px; line-height: 1.6; color: #57534e;">
-                Enter the 6-digit verification code below in Forms MESRC to verify your email address:
+                Enter the 4-digit verification code below in Forms MESRC to verify your email address:
               </p>
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; border: 2px solid #1c1917; border-radius: 4px; box-shadow: 3px 3px 0px #1c1917; margin: 0 0 22px 0;">
                 <tr>
                   <td style="padding: 22px; text-align: center;">
                     <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #57534e; margin-bottom: 6px;">
-                      One-Time Passcode
+                      4-Digit Passcode
                     </div>
-                    <span style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #1c1917;">
-                      {{ .Token }}
+                    <span style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 38px; font-weight: 800; letter-spacing: 10px; color: #1c1917;">
+                      {{ slice .Token 0 4 }}
                     </span>
                   </td>
                 </tr>
               </table>
               <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #57534e;">
-                This code expires in 10 minutes and can only be used once. Sent by <strong>support@mesrc.com.my</strong>.
+                This 4-digit code expires in 10 minutes and can only be used once. Sent by <strong>support@mesrc.com.my</strong>.
               </p>
             </td>
           </tr>
@@ -104,7 +104,7 @@ export default function SmtpOtpGuideCard() {
           </p>
           <ol style={{ margin: 0, paddingLeft: "1.25rem" }}>
             <li>Emails are sent from <strong>support@mesrc.com.my</strong> via Google SMTP instead of noreply@mail.app.supabase.io.</li>
-            <li>Recipients see a <strong>6-digit OTP code box</strong> (<code>&#123;&#123; .Token &#125;&#125;</code>) instead of a default magic link.</li>
+            <li>Recipients see a <strong>4-digit OTP code box</strong> (<code>&#123;&#123; slice .Token 0 4 &#125;&#125;</code>) instead of a default magic link.</li>
           </ol>
         </InfoPopover>
       </div>
