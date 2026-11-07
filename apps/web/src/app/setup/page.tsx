@@ -174,15 +174,15 @@ export default function FirstTimeSetupPage() {
         </p>
       </div>
 
-      <div className="steps-bar" aria-label="Setup progress">
-        <span className={`step-pill ${step === 1 ? "active" : step > 1 ? "done" : ""}`}>
-          1. First Maintenance Email
-        </span>
-        <span className={`step-pill ${step === 2 ? "active" : step > 2 ? "done" : ""}`}>
-          2. Verify Email OTP
-        </span>
-        <span className={`step-pill ${step === 3 ? "active" : step > 3 ? "done" : ""}`}>
-          3. Google Drive Storage Setup
+      <div className="step-focus-banner" aria-label="Setup progress">
+        <strong className="step-focus-title">
+          {step === 1 && "1. First Maintenance Email"}
+          {step === 2 && "2. Verify Email OTP"}
+          {step === 3 && "3. Google Drive Storage Setup"}
+          {step === 4 && "First-Time Setup Complete"}
+        </strong>
+        <span className="step-focus-counter">
+          {step === 4 ? "Done" : `Step ${step} / 3`}
         </span>
       </div>
 
@@ -199,7 +199,6 @@ export default function FirstTimeSetupPage() {
 
       {step === 1 && (
         <form onSubmit={handleStep1ClaimAndSendOtp} className="stack">
-          <h2>Step 1: Register First Maintenance Account</h2>
           <p className="notice">
             No Maintenance account exists yet. Enter the primary Maintenance email address. We will
             send a one-time passcode (OTP) to verify ownership and permanently lock public
@@ -243,7 +242,6 @@ export default function FirstTimeSetupPage() {
 
       {step === 2 && (
         <form onSubmit={handleStep2VerifyOtp} className="stack">
-          <h2>Step 2: Enter Email Verification Code</h2>
           <p className="notice">
             Enter the one-time verification code sent to <strong>{email}</strong>.
           </p>
@@ -278,7 +276,6 @@ export default function FirstTimeSetupPage() {
 
       {step === 3 && (
         <div className="stack">
-          <h2>Step 3: Configure Company Google Workspace Shared Drive</h2>
           <p className="notice">
             All form attachments are stored privately in your company Google Workspace Shared Drive
             under <code>Forms MESRC/&#123;user_id&#125;/&#123;submission_id&#125;</code> (up to 1
