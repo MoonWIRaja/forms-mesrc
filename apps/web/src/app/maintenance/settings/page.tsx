@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import ChunkLoader from "@/components/ChunkLoader";
 import GoogleDriveSetupForm, { type DriveConfigPublic } from "@/components/GoogleDriveSetupForm";
-import InfoPopover from "@/components/InfoPopover";
+import SmtpOtpGuideCard from "@/components/SmtpOtpGuideCard";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
 interface IntegrationStatusPayload {
@@ -134,38 +134,7 @@ export default function MaintenanceSettingsPage() {
       </section>
 
       <section className="card stack">
-        <div className="row-between">
-          <h2>Email &amp; OTP Delivery (Supabase Auth SMTP)</h2>
-          <InfoPopover title="Configuring Custom SMTP in Supabase Dashboard">
-            <ol style={{ margin: 0, paddingLeft: "1.25rem" }}>
-              <li>
-                Open your{" "}
-                <a
-                  href="https://supabase.com/dashboard/project/uvjwepsawrbrhpywabdu/auth/templates"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Supabase Dashboard &rarr; Authentication &rarr; Emails
-                </a>
-                .
-              </li>
-              <li>
-                Under <strong>SMTP Settings</strong>, enable Custom SMTP and enter your company
-                Google Workspace / transactional SMTP host, port, sender address, and app credential.
-              </li>
-              <li>
-                Under <strong>Email Templates &rarr; Magic Link / OTP</strong>, ensure the template
-                includes <code>&#123;&#123; .Token &#125;&#125;</code> so recipients receive the
-                6-digit verification code.
-              </li>
-            </ol>
-          </InfoPopover>
-        </div>
-        <p className="notice">
-          One-time passcodes (OTP) are sent by Supabase Auth. Click the <strong>i</strong> icon
-          above for instructions on connecting your company SMTP sender and verifying the OTP email
-          template.
-        </p>
+        <SmtpOtpGuideCard />
       </section>
     </div>
   );
