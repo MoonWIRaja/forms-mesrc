@@ -1,16 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getSupabase, type UserProfile } from "@/lib/supabase";
+import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
 export default function SiteNav() {
+  const pathname = usePathname();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [needsSetup, setNeedsSetup] = useState<boolean>(false);
 
   useEffect(() => {
     const supabase = getSupabase();
     async function load() {
-      const { data: sessionData } = await supabase.auth.getSession();
+      const [{ data: stData }, { data: sessionData }] = await Promise.all([
+        supabase.rpc("get_system_setup_state"),
+        supabase.auth.getSession(),
+      ]);
+      const st = stData as SystemSetupState | null;
+      setNeedsSetup(Boolean(st?.needs_first_maintenance));
+
       const uid = sessionData.session?.user?.id;
       if (!uid) {
         setProfile(null);
@@ -24,11 +33,16 @@ export default function SiteNav() {
       load();
     });
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [pathname]);
 
   async function handleSignOut() {
     await getSupabase().auth.signOut();
     setProfile(null);
+  }
+
+  // Hide navbar completely on /setup or while initial setup is not yet completed
+  if (pathname?.startsWith("/setup") || needsSetup) {
+    return null;
   }
 
   return (
