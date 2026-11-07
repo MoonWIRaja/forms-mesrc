@@ -342,6 +342,72 @@ a:hover {
   box-shadow: 3px 3px 0px var(--ink);
 }
 
+/* Individual OTP Code Boxes */
+.otp-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0;
+}
+
+.otp-box-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.otp-digit-box {
+  width: 3.1rem !important;
+  height: 3.6rem !important;
+  padding: 0 !important;
+  text-align: center;
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace !important;
+  font-size: 1.45rem !important;
+  font-weight: 800 !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: var(--radius-sm) !important;
+  background: var(--surface-elevated) !important;
+  color: var(--ink) !important;
+  box-shadow: 3px 3px 0px var(--ink) !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.1s ease !important;
+}
+
+.otp-digit-box.filled {
+  background: #fef3c7 !important;
+}
+
+.otp-digit-box:focus {
+  outline: none !important;
+  background: #ffffff !important;
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px var(--ink) !important;
+}
+
+.otp-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.otp-len-btn {
+  padding: 0.2rem 0.55rem;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.otp-len-btn.active {
+  background: var(--ink);
+  color: var(--surface);
+}
+
 /* Badges & Wizard Steps */
 .badge {
   display: inline-flex;

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import ChunkLoader from "@/components/ChunkLoader";
 import GoogleDriveSetupForm from "@/components/GoogleDriveSetupForm";
 import InfoPopover from "@/components/InfoPopover";
+import OtpBoxInput from "@/components/OtpBoxInput";
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
 type WizardStep = 1 | 2 | 3 | 4;
@@ -246,17 +247,8 @@ export default function FirstTimeSetupPage() {
             Enter the one-time verification code sent to <strong>{email}</strong>.
           </p>
           <div className="field">
-            <label htmlFor="wiz-otp">One-Time Passcode (OTP)</label>
-            <input
-              id="wiz-otp"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              required
-              placeholder="123456"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-            />
+            <label>One-Time Passcode (OTP)</label>
+            <OtpBoxInput value={otp} onChange={setOtp} disabled={busy} />
           </div>
           <div className="row-actions">
             <button type="submit" className="btn btn-primary" disabled={busy}>

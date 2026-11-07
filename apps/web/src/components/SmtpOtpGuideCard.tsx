@@ -127,7 +127,7 @@ export default function SmtpOtpGuideCard() {
             <div><strong>Sender email:</strong> <code>support@mesrc.com.my</code></div>
             <div><strong>Sender name:</strong> <code>Forms MESRC</code></div>
             <div><strong>Host:</strong> <code>smtp.gmail.com</code></div>
-            <div><strong>Port:</strong> <code>465</code> (SSL) or <code>587</code> (TLS)</div>
+            <div><strong>Port:</strong> <code>587</code> (STARTTLS — <em>do not use 465</em>)</div>
             <div><strong>Username:</strong> <code>support@mesrc.com.my</code></div>
             <div><strong>Password:</strong> <em>16-char Google App Password (no spaces)</em></div>
           </div>

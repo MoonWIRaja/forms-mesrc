@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import OtpBoxInput from "@/components/OtpBoxInput";
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
 export default function SignInPage() {
@@ -182,17 +183,8 @@ export default function SignInPage() {
       ) : (
         <form onSubmit={handleVerifyOtp} className="stack">
           <div className="field">
-            <label htmlFor="si-otp">One-Time Passcode (OTP) sent to {email}</label>
-            <input
-              id="si-otp"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              required
-              placeholder="123456"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-            />
+            <label>One-Time Passcode (OTP) sent to {email}</label>
+            <OtpBoxInput value={otp} onChange={setOtp} disabled={busy} />
           </div>
           <div className="row-actions">
             <button type="submit" className="btn btn-primary" disabled={busy}>

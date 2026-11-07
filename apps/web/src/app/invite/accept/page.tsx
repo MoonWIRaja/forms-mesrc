@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import OtpBoxInput from "@/components/OtpBoxInput";
 import { getSupabase } from "@/lib/supabase";
 
 interface InviteDetails {
@@ -176,16 +177,8 @@ export default function InviteAcceptPage() {
       {details && step === "otp" && (
         <form onSubmit={handleVerifyOtp} className="stack">
           <div className="field">
-            <label htmlFor="inv-otp">Enter the OTP sent to {details.email}</label>
-            <input
-              id="inv-otp"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              required
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-            />
+            <label>Enter the OTP sent to {details.email}</label>
+            <OtpBoxInput value={otp} onChange={setOtp} disabled={busy} />
           </div>
           <div className="row-actions">
             <button type="submit" className="btn btn-primary" disabled={busy}>
