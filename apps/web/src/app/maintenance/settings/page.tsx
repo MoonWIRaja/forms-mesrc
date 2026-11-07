@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import ChunkLoader from "@/components/ChunkLoader";
 import GoogleDriveSetupForm, { type DriveConfigPublic } from "@/components/GoogleDriveSetupForm";
 import InfoPopover from "@/components/InfoPopover";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
@@ -75,10 +76,11 @@ export default function MaintenanceSettingsPage() {
 
   if (loading) {
     return (
-      <section className="card">
-        <h1>Maintenance Integration Settings</h1>
-        <p className="notice">Loading settings...</p>
-      </section>
+      <ChunkLoader
+        title="INSPECTING VAULT & SMTP SETTINGS..."
+        subtitle="Checking Google Workspace Shared Drive & OTP integration status"
+        variant="both"
+      />
     );
   }
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ChunkLoader from "@/components/ChunkLoader";
 import type { FormRow, ServiceRow } from "@/lib/form-types";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
@@ -76,10 +77,11 @@ export default function FormsCatalogPage() {
 
   if (loading) {
     return (
-      <section className="card">
-        <h1>Available Forms</h1>
-        <p className="notice">Loading forms...</p>
-      </section>
+      <ChunkLoader
+        title="LOADING FORMS CATALOG..."
+        subtitle="Unfolding published blueprints & user submission history"
+        variant="both"
+      />
     );
   }
 

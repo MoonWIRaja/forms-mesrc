@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import ChunkLoader from "@/components/ChunkLoader";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
 interface TicketRow {
@@ -230,10 +231,11 @@ export default function TicketDetailClient() {
 
   if (loading) {
     return (
-      <section className="card">
-        <h1>Ticket</h1>
-        <p className="notice">Loading ticket...</p>
-      </section>
+      <ChunkLoader
+        title="OPENING TICKET DOSSIER..."
+        subtitle="Unfolding decision history & message thread"
+        variant="both"
+      />
     );
   }
 

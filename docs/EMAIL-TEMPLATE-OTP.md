@@ -1,11 +1,12 @@
-# Production Email Template: Supabase Auth Magic Link & OTP
+# Production Email Template: Neo-Brutalist 3D Paper Journal & Voxel Style
 
-Untuk memastikan e-mel kod pengesahan (OTP) kelihatan **sangat cantik, profesional, dan eksklusif** (bukan e-mel teks kosong), salin templat HTML di bawah ke dalam tetapan Supabase Dashboard anda:
+Templat e-mel OTP ini direka khas mengikut gaya **Neo-Brutalist 3D Paper Journal** (kertas buku nota berkotak, bayang-bayang hitam tebal `6px 6px 0px #18181b`, warna kuning highlighter `#facc15`, dan fon kod blok bergaya Minecraft/Voxel).
 
+### Cara Pasang di Supabase Dashboard:
 1. Buka [Supabase Dashboard &rarr; Authentication &rarr; Email Templates](https://supabase.com/dashboard/project/uvjwepsawrbrhpywabdu/auth/templates).
 2. Pilih tab **Magic Link / Confirmation / OTP**.
-3. Tukar subjek kepada: `Your Forms MESRC Security Code: {{ .Token }}`
-4. Tampal kod HTML di bawah ke dalam bahagian **Body**:
+3. Tukar **Subject** kepada: `[Forms MESRC] Your Passcode: {{ .Token }}`
+4. Salin dan tampal kod HTML di bawah ke dalam bahagian **Body**:
 
 ```html
 <!DOCTYPE html>
@@ -13,68 +14,84 @@ Untuk memastikan e-mel kod pengesahan (OTP) kelihatan **sangat cantik, profesion
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Security Verification Code</title>
+  <title>Forms MESRC Verification Code</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #f3f4f6;">
-  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #0b0f19; padding: 40px 10px;">
+<body style="margin: 0; padding: 0; background-color: #ebe4d5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #18181b;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ebe4d5; padding: 40px 14px;">
     <tr>
       <td align="center">
-        <!-- Main Card Container -->
-        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 520px; background-color: #111827; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);">
-          <!-- Top Accent Bar -->
-          <tr>
-            <td height="4" style="background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%); font-size: 0; line-height: 0;">&nbsp;</td>
-          </tr>
+        <!-- 3D Paper Journal Card with Hard Brutalist Shadow -->
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 540px; background-color: #fffdf7; border: 4px solid #18181b; border-radius: 12px; box-shadow: 8px 8px 0px #18181b; overflow: hidden;">
           
-          <!-- Header with Logo / Brand Name -->
+          <!-- Top Yellow & Green Block Header -->
           <tr>
-            <td style="padding: 36px 40px 20px 40px; text-align: left;">
+            <td style="background-color: #facc15; border-bottom: 4px solid #18181b; padding: 18px 28px;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td>
-                    <span style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">Forms MESRC</span>
+                    <span style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; color: #18181b;">
+                      [FORMS MESRC] // JOURNAL
+                    </span>
                   </td>
                   <td align="right">
-                    <span style="display: inline-block; padding: 4px 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 999px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">Secure Auth</span>
+                    <span style="display: inline-block; padding: 4px 10px; background-color: #4ade80; border: 2px solid #18181b; border-radius: 4px; font-size: 11px; font-weight: 900; text-transform: uppercase; color: #18181b; box-shadow: 2px 2px 0px #18181b;">
+                      OTP AUTH
+                    </span>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Content Body -->
+          <!-- Main Notebook Content Area -->
           <tr>
-            <td style="padding: 10px 40px 30px 40px;">
-              <h1 style="margin: 0 0 12px 0; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Verification Passcode</h1>
-              <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.6; color: #94a3b8;">
-                Use the following one-time passcode (OTP) to securely access your account or complete your setup process:
+            <td style="padding: 32px 28px;">
+              <div style="display: inline-block; padding: 3px 8px; background-color: #38bdf8; border: 2px solid #18181b; font-size: 11px; font-weight: 900; text-transform: uppercase; margin-bottom: 12px; box-shadow: 2px 2px 0px #18181b;">
+                SECURITY STAMP // ONE-TIME PASSCODE
+              </div>
+
+              <h1 style="margin: 0 0 12px 0; font-size: 26px; font-weight: 900; color: #18181b; letter-spacing: -0.5px;">
+                Unlock Your Workspace
+              </h1>
+
+              <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.6; font-weight: 600; color: #3f3f46;">
+                Enter the 6-digit verification block code below into your open Forms MESRC journal page to verify your email and sign in:
               </p>
 
-              <!-- OTP Code Display Box -->
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #1e293b; border: 1px dashed #3b82f6; border-radius: 12px; margin: 0 0 24px 0;">
+              <!-- Tactile Chunky OTP Code Box -->
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fef08a; border: 4px solid #18181b; border-radius: 8px; box-shadow: 6px 6px 0px #18181b; margin: 0 0 28px 0;">
                 <tr>
-                  <td style="padding: 24px; text-align: center;">
-                    <span style="font-family: 'SF Mono', Monaco, Consolas, 'Courier New', monospace; font-size: 38px; font-weight: 800; letter-spacing: 10px; color: #60a5fa; display: inline-block; margin-left: 10px;">
+                  <td style="padding: 24px 16px; text-align: center;">
+                    <div style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #18181b; margin-bottom: 6px;">
+                      VERIFICATION CODE
+                    </div>
+                    <span style="font-family: 'Courier New', Consolas, Monaco, monospace; font-size: 40px; font-weight: 900; letter-spacing: 10px; color: #18181b; display: inline-block; background-color: #ffffff; padding: 10px 18px; border: 3px solid #18181b; box-shadow: 3px 3px 0px #18181b;">
                       {{ .Token }}
                     </span>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin: 0 0 20px 0; font-size: 13px; line-height: 1.5; color: #64748b;">
-                <strong>Security note:</strong> This code is valid for 10 minutes and can only be used once. Never share this code with anyone. Forms MESRC administrators will never ask for your code.
+              <!-- Sticky Note Security Warning -->
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7f2e4; border: 2px dashed #18181b; border-radius: 6px;">
+                <tr>
+                  <td style="padding: 14px 16px; font-size: 13px; line-height: 1.5; font-weight: 600; color: #3f3f46;">
+                    <strong>NOTE:</strong> This code expires in 10 minutes and works only once. If you did not request this code, you can safely ignore this message.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer Bar -->
+          <tr>
+            <td style="padding: 16px 28px; background-color: #f7f2e4; border-top: 4px solid #18181b; text-align: center;">
+              <p style="margin: 0; font-size: 12px; font-weight: 800; color: #52525b; text-transform: uppercase;">
+                FORMS MESRC &bull; INVITE-ONLY COMPANY WORKSPACE
               </p>
             </td>
           </tr>
 
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 24px 40px; background-color: #0b0f19; border-top: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
-              <p style="margin: 0; font-size: 12px; color: #475569;">
-                &copy; Forms MESRC. All rights reserved. Automated security notification.
-              </p>
-            </td>
-          </tr>
         </table>
       </td>
     </tr>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import ChunkLoader from "@/components/ChunkLoader";
 import FormRenderer from "@/components/FormRenderer";
 import {
   FORM_TEMPLATES,
@@ -284,10 +285,11 @@ export default function AdminFormBuilderPage() {
 
   if (loading) {
     return (
-      <section className="card">
-        <h1>Visual Form Builder</h1>
-        <p className="notice">Loading builder...</p>
-      </section>
+      <ChunkLoader
+        title="SPAWNING VISUAL FORM BUILDER..."
+        subtitle="Loading workbench, field palette, and immutable versions"
+        variant="both"
+      />
     );
   }
 

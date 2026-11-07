@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ChunkLoader from "@/components/ChunkLoader";
 import InvitationManager from "@/components/InvitationManager";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
@@ -28,10 +29,11 @@ export default function MaintenancePage() {
 
   if (loading) {
     return (
-      <section className="card">
-        <h1>Maintenance Workspace</h1>
-        <p className="notice">Loading...</p>
-      </section>
+      <ChunkLoader
+        title="LOADING MAINTENANCE COMMAND..."
+        subtitle="Verifying authority role & invitation ledger"
+        variant="both"
+      />
     );
   }
 

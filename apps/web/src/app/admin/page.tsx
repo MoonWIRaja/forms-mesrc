@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ChunkLoader from "@/components/ChunkLoader";
 import InvitationManager from "@/components/InvitationManager";
 import ServiceManager from "@/components/ServiceManager";
 import type { FormRow } from "@/lib/form-types";
@@ -68,10 +69,11 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <section className="card">
-        <h1>Admin Workspace</h1>
-        <p className="notice">Loading...</p>
-      </section>
+      <ChunkLoader
+        title="LOADING ADMIN WORKSPACE..."
+        subtitle="Syncing submissions, service tags, and user invitations"
+        variant="both"
+      />
     );
   }
 

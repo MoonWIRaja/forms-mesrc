@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ChunkLoader from "@/components/ChunkLoader";
 import GoogleDriveSetupForm from "@/components/GoogleDriveSetupForm";
 import InfoPopover from "@/components/InfoPopover";
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
@@ -135,10 +136,11 @@ export default function FirstTimeSetupPage() {
 
   if (loading) {
     return (
-      <section className="card">
-        <h1>First-Time System Setup</h1>
-        <p className="notice">Checking system initialization status...</p>
-      </section>
+      <ChunkLoader
+        title="CHECKING BOOTSTRAP CHUNKS..."
+        subtitle="Inspecting first-time Maintenance setup & Shared Drive vault status"
+        variant="both"
+      />
     );
   }
 

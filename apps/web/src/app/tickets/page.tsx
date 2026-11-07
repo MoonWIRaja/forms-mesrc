@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ChunkLoader from "@/components/ChunkLoader";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
 interface TicketRow {
@@ -61,10 +62,11 @@ export default function TicketsPage() {
 
   if (loading) {
     return (
-      <section className="card">
-        <h1>Tickets</h1>
-        <p className="notice">Loading tickets...</p>
-      </section>
+      <ChunkLoader
+        title="LOADING APPEALS & TICKETS..."
+        subtitle="Fetching atomic claim ledger & ticket statuses"
+        variant="both"
+      />
     );
   }
 

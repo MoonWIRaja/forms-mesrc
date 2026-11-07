@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import ChunkLoader from "@/components/ChunkLoader";
 import FormRenderer from "@/components/FormRenderer";
 import type { FormFieldNode, FormRow, FormTheme, ServiceRow } from "@/lib/form-types";
 import { getSupabase } from "@/lib/supabase";
@@ -189,9 +190,11 @@ export default function FillFormPage() {
 
   if (loading) {
     return (
-      <section className="card">
-        <h1>Loading Form...</h1>
-      </section>
+      <ChunkLoader
+        title="UNFOLDING FORM BLUEPRINT..."
+        subtitle="Checking allowlist & preparing versioned fields"
+        variant="both"
+      />
     );
   }
 
