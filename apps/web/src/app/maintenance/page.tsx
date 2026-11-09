@@ -61,9 +61,14 @@ export default function MaintenancePage() {
             Manage invitations across all roles and configure Google Drive &amp; email integrations.
           </p>
         </div>
-        <Link href="/maintenance/settings/" className="btn btn-primary">
-          Open Integration Settings
-        </Link>
+        <div className="row-actions">
+          <Link href="/users/" className="btn btn-secondary">
+            User Directory
+          </Link>
+          <Link href="/maintenance/settings/" className="btn btn-primary">
+            Integration Settings
+          </Link>
+        </div>
       </section>
 
       <section className="card">

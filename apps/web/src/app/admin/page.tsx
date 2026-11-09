@@ -100,6 +100,9 @@ export default function AdminPage() {
           </p>
         </div>
         <div className="row-actions">
+          <Link href="/users/" className="btn btn-secondary">
+            Users &amp; Team
+          </Link>
           <Link href="/admin/forms/" className="btn btn-primary">
             Open Visual Form Builder
           </Link>
