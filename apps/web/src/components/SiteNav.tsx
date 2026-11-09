@@ -30,9 +30,9 @@ export default function SiteNav() {
       const { data } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
       setProfile((data as UserProfile | null) ?? null);
     }
-    load();
+    void load();
     const { data: sub } = supabase.auth.onAuthStateChange(() => {
-      load();
+      void load();
     });
     return () => sub.subscription.unsubscribe();
   }, [pathname]);
@@ -53,112 +53,208 @@ export default function SiteNav() {
     return null;
   }
 
-  const isDashboard = pathname === "/" || pathname === "";
-  const isForms = pathname?.startsWith("/forms");
-  const isTickets = pathname?.startsWith("/tickets");
-  const isSubmissions = pathname === "/admin" || pathname === "/admin/";
-  const isUsers = pathname?.startsWith("/users");
-  const isFormBuilder = pathname?.startsWith("/admin/forms");
-  const isSettings = pathname?.startsWith("/maintenance");
   const isStaff = profile?.role === "admin" || profile?.role === "maintenance";
+  const isAdminPanelRoute =
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/users") ||
+    pathname?.startsWith("/maintenance");
 
-  const navContent = (
+  // ==========================================================================
+  // MODE 1: COMPACT USER PORTAL PILL (When on Home, Forms, or Tickets)
+  // No cluttered sidebar; Forms & Tickets are chosen directly from Home.
+  // ==========================================================================
+  if (!isAdminPanelRoute) {
+    const isHome = pathname === "/" || pathname === "";
+    return (
+      <header className="user-nav-header" aria-label="Workspace Header">
+        <div className="user-nav-pill">
+          <div className="user-nav-left">
+            <Link href="/" className="user-nav-brand" aria-label="Forms MESRC Home">
+              <BrandLogo size="sm" />
+            </Link>
+            {!isHome && (
+              <Link href="/" className="pill-btn">
+                &larr; Home
+              </Link>
+            )}
+          </div>
+
+          <div className="user-nav-right">
+            {isStaff && (
+              <Link href="/admin/" className="pill-btn pill-btn-admin">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="14" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                </svg>
+                Admin Panel
+              </Link>
+            )}
+
+            {profile ? (
+              <button type="button" className="pill-btn" onClick={handleSignOut}>
+                Sign out
+              </button>
+            ) : (
+              <Link href="/sign-in/" className="pill-btn pill-btn-admin">
+                Sign in
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+    );
+  }
+
+  // ==========================================================================
+  // MODE 2: DEDICATED ADMIN PANEL FLOATING SIDEBAR
+  // Appears only when inside /admin, /users, or /maintenance
+  // ==========================================================================
+  const isSubmissions = pathname === "/admin" || pathname === "/admin/";
+  const isFormBuilder = pathname?.startsWith("/admin/forms");
+  const isUsers = pathname?.startsWith("/users");
+  const isSettings = pathname?.startsWith("/maintenance");
+
+  const adminSidebarContent = (
     <>
       <div className="sidebar-brand">
-        <Link href="/" className="sidebar-brand-link" aria-label="Forms MESRC Home">
-          <BrandLogo size="md" subtitle="Workspace" />
+        <Link href="/admin/" className="sidebar-brand-link" aria-label="Forms MESRC Admin Panel">
+          <BrandLogo size="md" subtitle="Admin Panel" />
         </Link>
       </div>
 
-      <nav className="sidebar-menu" aria-label="Main Navigation">
-        <div className="sidebar-section-label">Workspace</div>
-        <Link href="/" className={`sidebar-item ${isDashboard ? "active" : ""}`}>
-          <svg className="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
+      <nav className="sidebar-menu" aria-label="Admin Navigation">
+        <div className="sidebar-section-label">Operations</div>
+
+        <Link href="/admin/" className={`sidebar-item ${isSubmissions ? "active" : ""}`}>
+          <svg
+            className="sidebar-item-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+            <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
           </svg>
-          <span className="sidebar-item-text">Dashboard</span>
+          <span className="sidebar-item-text">Submissions</span>
         </Link>
 
-        <Link href="/forms/" className={`sidebar-item ${isForms ? "active" : ""}`}>
-          <svg className="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-            <path d="M9 12h6" />
-            <path d="M9 16h6" />
+        <Link href="/admin/forms/" className={`sidebar-item ${isFormBuilder ? "active" : ""}`}>
+          <svg
+            className="sidebar-item-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="12" y1="18" x2="12" y2="12" />
+            <line x1="9" y1="15" x2="15" y2="15" />
           </svg>
-          <span className="sidebar-item-text">Company Forms</span>
+          <span className="sidebar-item-text">Forms &amp; Builder</span>
         </Link>
 
-        <Link href="/tickets/" className={`sidebar-item ${isTickets ? "active" : ""}`}>
-          <svg className="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <Link href="/users/" className={`sidebar-item ${isUsers ? "active" : ""}`}>
+          <svg
+            className="sidebar-item-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          <span className="sidebar-item-text">Users &amp; Invites</span>
+        </Link>
+
+        <Link href="/tickets/" className="sidebar-item">
+          <svg
+            className="sidebar-item-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <span className="sidebar-item-text">Complaints &amp; Appeals</span>
+          <span className="sidebar-item-text">Tickets Queue</span>
         </Link>
-
-        {isStaff && (
-          <>
-            <div className="sidebar-section-label">Management</div>
-            <Link href="/admin/" className={`sidebar-item ${isSubmissions ? "active" : ""}`}>
-              <svg className="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-                <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-              </svg>
-              <span className="sidebar-item-text">Submissions</span>
-            </Link>
-
-            <Link href="/users/" className={`sidebar-item ${isUsers ? "active" : ""}`}>
-              <svg className="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-              <span className="sidebar-item-text">Users &amp; Invites</span>
-            </Link>
-
-            <Link href="/admin/forms/" className={`sidebar-item ${isFormBuilder ? "active" : ""}`}>
-              <svg className="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-              </svg>
-              <span className="sidebar-item-text">Form Builder</span>
-            </Link>
-          </>
-        )}
 
         {profile?.role === "maintenance" && (
           <>
-            <div className="sidebar-section-label">System</div>
-            <Link href="/maintenance/settings/" className={`sidebar-item ${isSettings ? "active" : ""}`}>
-              <svg className="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <div className="sidebar-section-label">Configuration</div>
+            <Link
+              href="/maintenance/settings/"
+              className={`sidebar-item ${isSettings ? "active" : ""}`}
+            >
+              <svg
+                className="sidebar-item-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <circle cx="12" cy="12" r="3" />
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
-              <span className="sidebar-item-text">Storage &amp; Settings</span>
+              <span className="sidebar-item-text">Settings &amp; Storage</span>
             </Link>
           </>
         )}
       </nav>
 
       <div className="sidebar-footer">
-        {profile ? (
+        <Link href="/" className="btn btn-secondary sidebar-signout-btn">
+          &larr; Back to Home
+        </Link>
+
+        {profile && (
           <div className="sidebar-profile-box">
             <div className="sidebar-user-info">
-              <span className="sidebar-user-email" title={profile.email}>{profile.email}</span>
+              <span className="sidebar-user-email" title={profile.email}>
+                {profile.email}
+              </span>
               <span className="badge badge-role">{profile.role}</span>
             </div>
-            <button type="button" className="btn btn-secondary sidebar-signout-btn" onClick={handleSignOut}>
+            <button
+              type="button"
+              className="btn btn-secondary sidebar-signout-btn"
+              onClick={handleSignOut}
+            >
               Sign out
             </button>
           </div>
-        ) : (
-          <Link href="/sign-in/" className="btn btn-primary sidebar-signin-btn">
-            Sign in
-          </Link>
         )}
       </div>
     </>
@@ -166,34 +262,30 @@ export default function SiteNav() {
 
   return (
     <>
-      {/* Mobile Top Floating Bar */}
-      <div className="mobile-floating-bar" aria-label="Mobile Navigation Bar">
-        <Link href="/" className="mobile-bar-brand">
-          <BrandLogo size="sm" />
+      <div className="mobile-floating-bar" aria-label="Mobile Admin Navigation">
+        <Link href="/admin/" className="mobile-bar-brand">
+          <BrandLogo size="sm" subtitle="Admin" />
         </Link>
         <button
           type="button"
           className="btn btn-secondary mobile-toggle-btn"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-expanded={mobileOpen}
-          aria-label="Toggle navigation menu"
         >
-          {mobileOpen ? "✕ Close" : "☰ Menu"}
+          {mobileOpen ? "Close" : "Admin Menu"}
         </button>
       </div>
 
-      {/* Mobile Floating Drawer */}
       {mobileOpen && (
         <div className="mobile-drawer-overlay" onClick={() => setMobileOpen(false)}>
           <aside className="mobile-drawer-paper" onClick={(e) => e.stopPropagation()}>
-            {navContent}
+            {adminSidebarContent}
           </aside>
         </div>
       )}
 
-      {/* Desktop Floating Sidebar */}
-      <aside className="floating-sidebar" aria-label="Main Navigation">
-        {navContent}
+      <aside className="floating-sidebar" aria-label="Admin Sidebar">
+        {adminSidebarContent}
       </aside>
     </>
   );

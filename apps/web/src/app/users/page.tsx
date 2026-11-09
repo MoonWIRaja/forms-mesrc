@@ -20,6 +20,7 @@ export default function UsersDirectoryPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [users, setUsers] = useState<MemberProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"members" | "invites">("members");
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -46,7 +47,16 @@ export default function UsersDirectoryPage() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    let active = true;
+    async function init() {
+      if (active) {
+        await loadData();
+      }
+    }
+    void init();
+    return () => {
+      active = false;
+    };
   }, [loadData]);
 
   async function handleToggleActive(targetUser: MemberProfile) {
@@ -84,7 +94,7 @@ export default function UsersDirectoryPage() {
   if (loading) {
     return (
       <ChunkLoader
-        title="Users & Team Directory"
+        title="Users & Invites"
         subtitle="Loading workspace members..."
       />
     );
@@ -100,7 +110,7 @@ export default function UsersDirectoryPage() {
           </p>
           <div className="row-actions">
             <Link href="/" className="btn btn-primary">
-              Return to Dashboard
+              Return Home
             </Link>
           </div>
         </section>
@@ -114,56 +124,36 @@ export default function UsersDirectoryPage() {
     return matchSearch && matchRole;
   });
 
-  const activeCount = users.filter((u) => u.is_active).length;
-  const maintenanceCount = users.filter((u) => u.role === "maintenance").length;
-  const adminCount = users.filter((u) => u.role === "admin").length;
-  const userCount = users.filter((u) => u.role === "user").length;
-
   return (
     <div className="stack">
-      {/* Header Banner */}
-      <section className="card row-between" style={{ alignItems: "flex-start" }}>
+      {/* Header with Clean Tab Switcher */}
+      <section className="card row-between">
         <div>
-          <span className="badge" style={{ marginBottom: "0.5rem" }}>
-            Workspace Directory
+          <span className="badge" style={{ marginBottom: "0.4rem" }}>
+            Admin Panel
           </span>
-          <h1>Team &amp; User Management</h1>
+          <h1>Users &amp; Invites</h1>
           <p className="notice">
-            Manage company member roles, view active accounts, and issue secure email invitations.
+            Manage team member accounts, roles, and email invitations.
           </p>
         </div>
         <div className="row-actions">
-          <a href="#invite-section" className="btn btn-primary">
-            + Invite New Member
-          </a>
+          <button
+            type="button"
+            className={`btn ${activeTab === "members" ? "btn-primary" : "btn-secondary"}`}
+            onClick={() => setActiveTab("members")}
+          >
+            Members ({users.length})
+          </button>
+          <button
+            type="button"
+            className={`btn ${activeTab === "invites" ? "btn-primary" : "btn-secondary"}`}
+            onClick={() => setActiveTab("invites")}
+          >
+            + Send &amp; Manage Invites
+          </button>
         </div>
       </section>
-
-      {/* Metrics Row */}
-      <div className="grid-4">
-        <div className="card stat-card">
-          <span className="stat-label">Total Members</span>
-          <strong className="stat-value">{users.length}</strong>
-          <span className="notice" style={{ fontSize: "0.78rem" }}>
-            {activeCount} active
-          </span>
-        </div>
-        <div className="card stat-card">
-          <span className="stat-label">Maintenance</span>
-          <strong className="stat-value">{maintenanceCount}</strong>
-          <span className="notice" style={{ fontSize: "0.78rem" }}>Full Authority</span>
-        </div>
-        <div className="card stat-card">
-          <span className="stat-label">Admins</span>
-          <strong className="stat-value">{adminCount}</strong>
-          <span className="notice" style={{ fontSize: "0.78rem" }}>Managers</span>
-        </div>
-        <div className="card stat-card">
-          <span className="stat-label">Users</span>
-          <strong className="stat-value">{userCount}</strong>
-          <span className="notice" style={{ fontSize: "0.78rem" }}>Requesters</span>
-        </div>
-      </div>
 
       {actionError && (
         <p className="alert alert-error" role="alert">
@@ -176,135 +166,140 @@ export default function UsersDirectoryPage() {
         </p>
       )}
 
-      {/* Users Table */}
-      <section className="card stack">
-        <div className="row-between" style={{ flexWrap: "wrap", gap: "0.75rem" }}>
-          <h2>Registered Members ({filteredUsers.length})</h2>
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-            <input
-              type="text"
-              placeholder="Search by email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ minWidth: "220px", padding: "0.35rem 0.65rem", fontSize: "0.88rem" }}
-            />
-            <select
-              value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
-              style={{ padding: "0.35rem 0.65rem", fontSize: "0.88rem" }}
-            >
-              <option value="all">All Roles</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="admin">Admin</option>
-              <option value="user">User</option>
-            </select>
+      {activeTab === "members" ? (
+        <section className="card stack">
+          <div className="row-between" style={{ flexWrap: "wrap", gap: "0.75rem" }}>
+            <h2>Registered Members ({filteredUsers.length})</h2>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <input
+                type="text"
+                placeholder="Search by email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ minWidth: "210px", padding: "0.4rem 0.7rem", fontSize: "0.86rem" }}
+              />
+              <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                style={{ padding: "0.4rem 0.7rem", fontSize: "0.86rem" }}
+              >
+                <option value="all">All Roles</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+              </select>
+            </div>
           </div>
-        </div>
 
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Member</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Joined Date</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.length === 0 ? (
+          <div className="table-wrap">
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={5} className="notice" style={{ textAlign: "center", padding: "1.5rem" }}>
-                    No members match your search criteria.
-                  </td>
+                  <th>Member</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th>Action</th>
                 </tr>
-              ) : (
-                filteredUsers.map((u) => {
-                  const isSelf = u.id === profile.id;
-                  const canManage =
-                    profile.role === "maintenance" || (profile.role === "admin" && u.role === "user");
+              </thead>
+              <tbody>
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="notice" style={{ textAlign: "center", padding: "2rem" }}>
+                      No members match your search criteria.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredUsers.map((u) => {
+                    const isSelf = u.id === profile.id;
+                    const canManage =
+                      profile.role === "maintenance" ||
+                      (profile.role === "admin" && u.role === "user");
 
-                  return (
-                    <tr key={u.id}>
-                      <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                          <div className="member-avatar">
-                            {u.email.slice(0, 2).toUpperCase()}
+                    return (
+                      <tr key={u.id}>
+                        <td>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                            <div className="member-avatar">
+                              {u.email.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <strong style={{ fontSize: "0.9rem", color: "var(--ink)" }}>
+                                {u.email}
+                              </strong>
+                              {isSelf && (
+                                <span
+                                  style={{
+                                    fontSize: "0.74rem",
+                                    marginLeft: "0.45rem",
+                                    color: "var(--muted)",
+                                  }}
+                                >
+                                  (You)
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <strong style={{ fontSize: "0.92rem" }}>{u.email}</strong>
-                            {isSelf && (
-                              <span style={{ fontSize: "0.74rem", marginLeft: "0.45rem", color: "var(--muted)" }}>
-                                (You)
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span
-                          className={`badge ${
-                            u.role === "maintenance"
-                              ? "badge-configured"
-                              : u.role === "admin"
-                              ? "badge-admin"
-                              : "badge-not_configured"
-                          }`}
-                        >
-                          {u.role}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`badge ${
-                            u.is_active ? "badge-configured" : "badge-connection_failed"
-                          }`}
-                        >
-                          {u.is_active ? "Active" : "Suspended"}
-                        </span>
-                      </td>
-                      <td style={{ fontSize: "0.86rem", color: "var(--muted)" }}>
-                        {new Date(u.created_at).toLocaleDateString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </td>
-                      <td>
-                        {isSelf ? (
-                          <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Active Self</span>
-                        ) : canManage ? (
-                          <button
-                            type="button"
-                            className={`btn ${u.is_active ? "btn-secondary" : "btn-primary"}`}
-                            style={{ fontSize: "0.78rem", padding: "0.25rem 0.6rem" }}
-                            disabled={busyId === u.id}
-                            onClick={() => handleToggleActive(u)}
+                        </td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              u.role === "maintenance"
+                                ? "badge-configured"
+                                : u.role === "admin"
+                                ? "badge-admin"
+                                : "badge-not_configured"
+                            }`}
                           >
-                            {busyId === u.id
-                              ? "Updating..."
-                              : u.is_active
-                              ? "Deactivate"
-                              : "Reactivate"}
-                          </button>
-                        ) : (
-                          <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Invitations Section */}
-      <section id="invite-section" className="card stack">
-        <InvitationManager callerRole={profile.role} />
-      </section>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              u.is_active ? "badge-configured" : "badge-connection_failed"
+                            }`}
+                          >
+                            {u.is_active ? "Active" : "Suspended"}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: "0.84rem", color: "var(--muted)" }}>
+                          {new Date(u.created_at).toLocaleDateString()}
+                        </td>
+                        <td>
+                          {isSelf ? (
+                            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Current</span>
+                          ) : canManage ? (
+                            <button
+                              type="button"
+                              className={`btn ${u.is_active ? "btn-secondary" : "btn-primary"}`}
+                              style={{ fontSize: "0.78rem", padding: "0.26rem 0.65rem" }}
+                              disabled={busyId === u.id}
+                              onClick={() => handleToggleActive(u)}
+                            >
+                              {busyId === u.id
+                                ? "Updating..."
+                                : u.is_active
+                                ? "Deactivate"
+                                : "Reactivate"}
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : (
+        <section className="card">
+          <InvitationManager callerRole={profile.role} />
+        </section>
+      )}
     </div>
   );
 }

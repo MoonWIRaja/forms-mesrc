@@ -24,6 +24,7 @@ interface IntegrationStatusPayload {
 export default function MaintenanceSettingsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [status, setStatus] = useState<IntegrationStatusPayload | null>(null);
+  const [activeTab, setActiveTab] = useState<"drive" | "smtp">("drive");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,26 +78,27 @@ export default function MaintenanceSettingsPage() {
   if (loading) {
     return (
       <ChunkLoader
-        title="Maintenance Integration Settings"
-        subtitle="Loading settings..."
+        title="Settings & Storage"
+        subtitle="Loading configuration..."
       />
     );
   }
 
   if (!profile || profile.role !== "maintenance") {
     return (
-      <section className="card stack">
-        <h1>Access Denied</h1>
-        <p className="notice">
-          Only Maintenance accounts have access to Integration Settings. Admins do not have access
-          to this page.
-        </p>
-        <div className="row-actions">
-          <Link href="/sign-in/" className="btn btn-primary">
-            Sign in
-          </Link>
-        </div>
-      </section>
+      <div className="center-stage">
+        <section className="card stack">
+          <h1>Access Restricted</h1>
+          <p className="notice">
+            Only Maintenance accounts have access to System &amp; Storage Settings.
+          </p>
+          <div className="row-actions">
+            <Link href="/" className="btn btn-primary">
+              Return Home
+            </Link>
+          </div>
+        </section>
+      </div>
     );
   }
 
@@ -105,15 +107,30 @@ export default function MaintenanceSettingsPage() {
       <section className="card stack">
         <div className="row-between">
           <div>
-            <h1>Maintenance Integration Settings</h1>
+            <span className="badge" style={{ marginBottom: "0.4rem" }}>
+              Admin Panel
+            </span>
+            <h1>Settings &amp; Storage</h1>
             <p className="notice">
-              Configure Google Workspace Shared Drive storage and review email/OTP delivery guidance.
-              Secrets are write-only and never returned after saving.
+              Configure Google Workspace Shared Drive storage and email/OTP settings.
             </p>
           </div>
-          <Link href="/maintenance/" className="btn btn-secondary">
-            Back to Maintenance
-          </Link>
+          <div className="row-actions">
+            <button
+              type="button"
+              className={`btn ${activeTab === "drive" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setActiveTab("drive")}
+            >
+              Google Drive Storage
+            </button>
+            <button
+              type="button"
+              className={`btn ${activeTab === "smtp" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setActiveTab("smtp")}
+            >
+              Email &amp; OTP Guide
+            </button>
+          </div>
         </div>
         {error && (
           <p className="alert alert-error" role="alert">
@@ -122,20 +139,22 @@ export default function MaintenanceSettingsPage() {
         )}
       </section>
 
-      <section className="card stack">
-        <h2>Google Workspace Shared Drive Integration</h2>
-        <GoogleDriveSetupForm
-          initialConfig={status?.google_drive.config_public}
-          initialHasSecret={status?.google_drive.has_secret}
-          initialValidationState={status?.google_drive.validation_state}
-          lastCheckedAt={status?.google_drive.last_checked_at}
-          onSaved={refreshStatus}
-        />
-      </section>
-
-      <section className="card stack">
-        <SmtpOtpGuideCard />
-      </section>
+      {activeTab === "drive" ? (
+        <section className="card stack">
+          <h2>Google Workspace Shared Drive</h2>
+          <GoogleDriveSetupForm
+            initialConfig={status?.google_drive.config_public}
+            initialHasSecret={status?.google_drive.has_secret}
+            initialValidationState={status?.google_drive.validation_state}
+            lastCheckedAt={status?.google_drive.last_checked_at}
+            onSaved={refreshStatus}
+          />
+        </section>
+      ) : (
+        <section className="card stack">
+          <SmtpOtpGuideCard />
+        </section>
+      )}
     </div>
   );
 }
