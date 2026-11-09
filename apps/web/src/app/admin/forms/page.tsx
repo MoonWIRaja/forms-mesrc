@@ -15,19 +15,33 @@ import {
 } from "@/lib/form-types";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
-const PALETTE: { type: FieldType; label: string }[] = [
-  { type: "heading", label: "Heading" },
-  { type: "instructions", label: "Instructions" },
-  { type: "section", label: "Section Divider" },
-  { type: "short_text", label: "Short Text" },
-  { type: "long_text", label: "Long Text" },
-  { type: "email", label: "Email" },
-  { type: "number", label: "Number" },
-  { type: "date", label: "Date" },
-  { type: "dropdown", label: "Dropdown" },
-  { type: "single_choice", label: "Single Choice" },
-  { type: "multiple_choice", label: "Multiple Choice" },
-  { type: "file_upload", label: "File Upload (1 GiB)" },
+interface PaletteItem {
+  type: FieldType;
+  label: string;
+  category: "structure" | "inputs" | "choice" | "media";
+  desc: string;
+}
+
+const PALETTE_ITEMS: PaletteItem[] = [
+  // Structure
+  { type: "heading", label: "Heading", category: "structure", desc: "Section title" },
+  { type: "instructions", label: "Instructions", category: "structure", desc: "Helper paragraph" },
+  { type: "section", label: "Section Divider", category: "structure", desc: "Break line" },
+
+  // Inputs
+  { type: "short_text", label: "Short Text", category: "inputs", desc: "Single line text" },
+  { type: "long_text", label: "Long Text", category: "inputs", desc: "Multi-line paragraph" },
+  { type: "email", label: "Email Address", category: "inputs", desc: "Valid email input" },
+  { type: "number", label: "Numeric Value", category: "inputs", desc: "Numbers & amounts" },
+  { type: "date", label: "Date Picker", category: "inputs", desc: "Calendar date" },
+
+  // Choice
+  { type: "dropdown", label: "Dropdown Select", category: "choice", desc: "Pick from list" },
+  { type: "single_choice", label: "Single Choice (Radio)", category: "choice", desc: "One of many" },
+  { type: "multiple_choice", label: "Multi Choice (Checkbox)", category: "choice", desc: "Check all that apply" },
+
+  // Media
+  { type: "file_upload", label: "File Upload", category: "media", desc: "Google Drive (up to 1 GiB)" },
 ];
 
 export default function AdminFormBuilderPage() {
@@ -36,10 +50,11 @@ export default function AdminFormBuilderPage() {
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Form State
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [title, setTitle] = useState("New Company Form");
   const [slug, setSlug] = useState("new-company-form");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState("Please fill out this form with accurate information.");
   const [kind, setKind] = useState<FormKind>("general");
   const [allowSaveDraft, setAllowSaveDraft] = useState(true);
   const [allowAppeal, setAllowAppeal] = useState(false);
@@ -52,14 +67,17 @@ export default function AdminFormBuilderPage() {
     density: "comfortable",
   });
 
-  const seqRef = useRef(1);
+  // UI Studio State
+  const [activeTab, setActiveTab] = useState<"studio" | "catalog" | "settings">("studio");
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [previewMode, setPreviewMode] = useState<"none" | "phone" | "desktop">("none");
+  const [previewDevice, setPreviewDevice] = useState<"canvas" | "phone" | "desktop">("canvas");
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, unknown>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
+  const seqRef = useRef(1);
 
   useEffect(() => {
     let active = true;
@@ -131,6 +149,8 @@ export default function AdminFormBuilderPage() {
         setTheme(((ver as { theme_json: FormTheme }).theme_json ?? {}) as FormTheme);
       }
       setSelectedNodeId(null);
+      setActiveTab("studio");
+      setInfo(`Loaded form "${f.title}" in Studio.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load form.");
     } finally {
@@ -143,17 +163,20 @@ export default function AdminFormBuilderPage() {
     if (!tpl) return;
     setSelectedFormId(null);
     setTitle(tpl.title);
-    seqRef.current += 1; setSlug(`${tpl.slug}-${forms.length + seqRef.current}`);
+    seqRef.current += 1;
+    setSlug(`${tpl.slug}-${forms.length + seqRef.current}`);
     setDescription(tpl.description);
     setKind(tpl.kind);
     setAllowAppeal(tpl.allowAppeal);
     setNodes(tpl.nodes.map((n) => ({ ...n })));
     setSelectedNodeId(null);
+    setActiveTab("studio");
     setInfo(`Loaded template: ${tpl.name}`);
   }
 
   function handleAddNode(type: FieldType) {
-    seqRef.current += 1; const id = `fld_${nodes.length + seqRef.current}`;
+    seqRef.current += 1;
+    const id = `fld_${nodes.length + seqRef.current}`;
     const defaultOptions =
       type === "dropdown" || type === "single_choice" || type === "multiple_choice"
         ? ["Option 1", "Option 2", "Option 3"]
@@ -168,6 +191,21 @@ export default function AdminFormBuilderPage() {
     };
     setNodes((prev) => [...prev, newNode]);
     setSelectedNodeId(id);
+  }
+
+  function handleDuplicateNode(nodeToCopy: FormFieldNode) {
+    seqRef.current += 1;
+    const newId = `fld_${nodes.length + seqRef.current}`;
+    const cloned: FormFieldNode = {
+      ...nodeToCopy,
+      id: newId,
+      label: `${nodeToCopy.label} (Copy)`,
+    };
+    const idx = nodes.findIndex((n) => n.id === nodeToCopy.id);
+    const updated = [...nodes];
+    updated.splice(idx + 1, 0, cloned);
+    setNodes(updated);
+    setSelectedNodeId(newId);
   }
 
   function handleMoveNode(fromIdx: number, toIdx: number) {
@@ -248,33 +286,28 @@ export default function AdminFormBuilderPage() {
       const formId = (saveRes as { form_id: string }).form_id;
       setSelectedFormId(formId);
 
-      const { data: pubRes, error: pubErr } = await supabase.rpc("publish_form_version", {
+      const { data: pubData, error: pubErr } = await supabase.rpc("publish_form_version", {
         p_form_id: formId,
       });
       if (pubErr) throw pubErr;
-      const pub = pubRes as { published_version: number };
-      setInfo(
-        `Published immutable version v${pub.published_version}. Future edits will automatically create a new draft version.`,
-      );
+      const pRes = pubData as { published_version: number };
+      setInfo(`Published version v${pRes.published_version} is now LIVE for members!`);
       await refreshFormsList();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to publish form.");
+      setError(err instanceof Error ? err.message : "Failed to publish form version.");
     } finally {
       setBusy(false);
     }
   }
 
   async function handleArchive(formId: string) {
+    if (!confirm("Are you sure you want to archive this form?")) return;
     setBusy(true);
-    setError(null);
     try {
       const supabase = getSupabase();
-      const { error: rpcErr } = await supabase.rpc("set_form_state", {
-        p_form_id: formId,
-        p_state: "archived",
-      });
+      const { error: rpcErr } = await supabase.rpc("archive_form", { p_form_id: formId });
       if (rpcErr) throw rpcErr;
-      setInfo("Form archived. Existing submissions remain preserved.");
+      setInfo("Form archived successfully.");
       await refreshFormsList();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to archive form.");
@@ -284,525 +317,853 @@ export default function AdminFormBuilderPage() {
   }
 
   if (loading) {
-    return (
-      <ChunkLoader
-        title="Visual Form Builder"
-        subtitle="Loading builder..."
-      />
-    );
+    return <ChunkLoader title="Form Studio" subtitle="Loading visual builder..." />;
   }
 
   if (!profile || (profile.role !== "admin" && profile.role !== "maintenance")) {
     return (
-      <section className="card stack">
-        <h1>Access Denied</h1>
-        <p className="notice">Only Admin or Maintenance accounts can build or publish forms.</p>
-      </section>
+      <div className="center-stage">
+        <section className="card stack">
+          <h1>Access Restricted</h1>
+          <p className="notice">Only Admin or Maintenance accounts may access the Form Studio.</p>
+          <div className="row-actions">
+            <Link href="/" className="btn btn-primary">
+              Return Home
+            </Link>
+          </div>
+        </section>
+      </div>
     );
   }
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
+  const currentFormRecord = forms.find((f) => f.id === selectedFormId);
 
   return (
-    <div className="stack">
-      <section className="card row-between">
-        <div>
-          <h1>Visual Form Builder &amp; Version Manager</h1>
-          <p className="notice">
-            Build mobile-first forms with templates, drag-and-drop canvas nodes, email allowlists,
-            and immutable published versions.
-          </p>
-        </div>
-        <div className="row-actions">
-          <Link href="/admin/" className="btn btn-secondary">
-            Back to Admin Workspace
-          </Link>
-        </div>
-      </section>
-
-      {error && (
-        <p className="alert alert-error" role="alert">
-          {error}
-        </p>
-      )}
-      {info && (
-        <p className="alert alert-ok" role="status">
-          {info}
-        </p>
-      )}
-
-      <section className="card stack">
-        <div className="row-between">
-          <h2>Existing Forms ({forms.length})</h2>
-          <div className="row-actions">
-            {FORM_TEMPLATES.map((tpl) => (
-              <button
-                key={tpl.key}
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => handleLoadTemplate(tpl.key)}
-              >
-                + Template: {tpl.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Slug</th>
-                <th>Kind</th>
-                <th>State</th>
-                <th>Versions</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {forms.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="notice">
-                    No forms created yet. Choose a template above or save the form below.
-                  </td>
-                </tr>
-              ) : (
-                forms.map((f) => (
-                  <tr key={f.id}>
-                    <td>
-                      <strong>{f.title}</strong>
-                    </td>
-                    <td>
-                      <code>{f.slug}</code>
-                    </td>
-                    <td>{f.kind}</td>
-                    <td>
-                      <span
-                        className={`badge ${f.state === "published" ? "badge-configured" : "badge-not_configured"}`}
-                      >
-                        {f.state}
-                      </span>
-                    </td>
-                    <td>
-                      Latest: v{f.latest_version} | Live:{" "}
-                      {f.current_published_version ? `v${f.current_published_version}` : "—"}
-                    </td>
-                    <td className="row-actions">
-                      <button
-                        type="button"
-                        className="btn-link"
-                        onClick={() => handleSelectExistingForm(f)}
-                      >
-                        Edit in Builder
-                      </button>
-                      {f.state !== "archived" && (
-                        <button
-                          type="button"
-                          className="btn-link"
-                          onClick={() => handleArchive(f.id)}
-                        >
-                          Archive
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="card stack">
-        <h2>
-          Form Settings &amp; Access Policy{" "}
-          {selectedFormId ? `(Editing ID: ${selectedFormId.slice(0, 8)}...)` : "(New Form)"}
-        </h2>
-
-        <div className="grid-2">
-          <div className="field">
-            <label htmlFor="fb-title">Form Title</label>
+    <div className="studio-shell">
+      <div className="studio-wrapper">
+        {/* ==================================================================
+            TOP COMMAND TOOLBAR (FIGMA / N8N / CANVA HEADER)
+            ================================================================== */}
+        <header className="studio-toolbar" aria-label="Studio Command Bar">
+          <div className="studio-toolbar-left">
             <input
-              id="fb-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              className="studio-title-input"
+              title="Click to rename form title"
+              placeholder="Form Title..."
             />
-          </div>
-          <div className="field">
-            <label htmlFor="fb-slug">URL Slug</label>
-            <input
-              id="fb-slug"
-              type="text"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="field">
-          <label htmlFor="fb-desc">Form Description</label>
-          <input
-            id="fb-desc"
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
-        <div className="grid-2">
-          <div className="field">
-            <label htmlFor="fb-kind">Form Category / Workflow Kind</label>
-            <select
-              id="fb-kind"
-              value={kind}
-              onChange={(e) => setKind(e.target.value as FormKind)}
+            <span
+              className={`badge ${
+                currentFormRecord?.state === "published"
+                  ? "badge-configured"
+                  : "badge-not_configured"
+              }`}
             >
-              <option value="general">General Form</option>
-              <option value="appeal_enabled">Appeal-Enabled Form</option>
-              <option value="complaint">Complaint Ticket Form</option>
-            </select>
+              {currentFormRecord
+                ? `v${currentFormRecord.latest_version} (${currentFormRecord.state})`
+                : "New Draft"}
+            </span>
           </div>
 
-          <div className="field">
-            <label htmlFor="fb-color">Brand Accent Color</label>
-            <select
-              id="fb-color"
-              value={theme.primaryColor ?? "#1d4ed8"}
-              onChange={(e) => setTheme({ ...theme, primaryColor: e.target.value })}
-            >
-              <option value="#1d4ed8">Royal Blue (#1d4ed8)</option>
-              <option value="#0f766e">Teal (#0f766e)</option>
-              <option value="#7c3aed">Violet (#7c3aed)</option>
-              <option value="#b45309">Amber (#b45309)</option>
-              <option value="#be123c">Crimson (#be123c)</option>
-              <option value="#111827">Slate (#111827)</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="row-actions">
-          <label style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            <input
-              type="checkbox"
-              checked={allowSaveDraft}
-              onChange={(e) => setAllowSaveDraft(e.target.checked)}
-            />
-            Allow Users to save draft before submitting
-          </label>
-          <label style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            <input
-              type="checkbox"
-              checked={allowAppeal}
-              onChange={(e) => setAllowAppeal(e.target.checked)}
-            />
-            Enable formal appeal review on submissions
-          </label>
-        </div>
-
-        <div className="grid-2">
-          <div className="field">
-            <label>Associated Company Services (for filtering &amp; reporting)</label>
-            <div className="row-actions">
-              {services.map((svc) => {
-                const checked = selectedServices.includes(svc.id);
-                return (
-                  <label
-                    key={svc.id}
-                    style={{
-                      fontWeight: 400,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "0.35rem",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={(e) =>
-                        setSelectedServices((prev) =>
-                          e.target.checked ? [...prev, svc.id] : prev.filter((x) => x !== svc.id),
-                        )
-                      }
-                    />
-                    {svc.name}
-                  </label>
-                );
-              })}
+          <div className="studio-toolbar-center">
+            <div className="studio-tab-group" role="tablist">
+              <button
+                type="button"
+                className={`studio-tab-btn ${activeTab === "studio" ? "active" : ""}`}
+                onClick={() => setActiveTab("studio")}
+              >
+                Canvas Studio
+              </button>
+              <button
+                type="button"
+                className={`studio-tab-btn ${activeTab === "catalog" ? "active" : ""}`}
+                onClick={() => setActiveTab("catalog")}
+              >
+                Forms Catalog ({forms.length})
+              </button>
+              <button
+                type="button"
+                className={`studio-tab-btn ${activeTab === "settings" ? "active" : ""}`}
+                onClick={() => setActiveTab("settings")}
+              >
+                Settings &amp; Access
+              </button>
             </div>
           </div>
 
-          <div className="field">
-            <label htmlFor="fb-allowlist">
-              Email Allowlist (Leave empty so all active invited Users can access)
-            </label>
-            <textarea
-              id="fb-allowlist"
-              rows={3}
-              placeholder="Optional: one email per line. When populated, ONLY listed emails can view or submit this form (enforced by RLS)."
-              value={allowlistText}
-              onChange={(e) => setAllowlistText(e.target.value)}
-            />
-          </div>
-        </div>
-      </section>
+          <div className="studio-toolbar-right">
+            {activeTab === "studio" && (
+              <div className="studio-tab-group">
+                <button
+                  type="button"
+                  className={`studio-tab-btn ${previewDevice === "canvas" ? "active" : ""}`}
+                  onClick={() => setPreviewDevice("canvas")}
+                  title="Canvas Builder"
+                >
+                  Canvas
+                </button>
+                <button
+                  type="button"
+                  className={`studio-tab-btn ${previewDevice === "phone" ? "active" : ""}`}
+                  onClick={() => setPreviewDevice("phone")}
+                  title="Phone Preview (375px)"
+                >
+                  📱 Mobile
+                </button>
+                <button
+                  type="button"
+                  className={`studio-tab-btn ${previewDevice === "desktop" ? "active" : ""}`}
+                  onClick={() => setPreviewDevice("desktop")}
+                  title="Desktop Preview (760px)"
+                >
+                  💻 Desktop
+                </button>
+              </div>
+            )}
 
-      <section className="card stack">
-        <div className="row-between">
-          <h2>Canvas, Node Tree &amp; Property Editor</h2>
-          <div className="row-actions">
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => setPreviewMode(previewMode === "phone" ? "none" : "phone")}
-            >
-              {previewMode === "phone" ? "Close Phone Preview" : "Phone Preview (375px)"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setPreviewMode(previewMode === "desktop" ? "none" : "desktop")}
-            >
-              {previewMode === "desktop" ? "Close Desktop Preview" : "Desktop Preview"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
+              style={{ padding: "0.45rem 0.85rem", fontSize: "0.82rem" }}
               disabled={busy}
               onClick={handleSaveDraft}
             >
-              Save Draft Version
+              {busy ? "Saving..." : "Save Draft"}
             </button>
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-accent"
+              style={{ padding: "0.45rem 0.95rem", fontSize: "0.82rem" }}
               disabled={busy}
               onClick={handlePublish}
             >
-              Publish Immutable Version
+              Publish Live &rarr;
             </button>
           </div>
-        </div>
+        </header>
 
-        <div className="row-actions">
-          {PALETTE.map((item) => (
-            <button
-              key={item.type}
-              type="button"
-              className="btn btn-secondary"
-              style={{ padding: "0.35rem 0.65rem", fontSize: "0.85rem" }}
-              onClick={() => handleAddNode(item.type)}
-            >
-              + {item.label}
-            </button>
-          ))}
-        </div>
+        {error && (
+          <p className="alert alert-error" role="alert">
+            {error}
+          </p>
+        )}
+        {info && (
+          <p className="alert alert-ok" role="status">
+            {info}
+          </p>
+        )}
 
-        <div className="grid-2">
-          <div className="stack">
-            <h3>Canvas Nodes (Drag to reorder or click to inspect)</h3>
-            {nodes.map((node, idx) => (
-              <div
-                key={node.id}
-                draggable
-                onDragStart={() => setDragIndex(idx)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => {
-                  if (dragIndex !== null) handleMoveNode(dragIndex, idx);
-                  setDragIndex(null);
-                }}
-                onClick={() => setSelectedNodeId(node.id)}
-                className="card"
-                style={{
-                  margin: 0,
-                  padding: "0.75rem",
-                  cursor: "grab",
-                  borderColor: selectedNodeId === node.id ? "var(--primary)" : "var(--border)",
-                  borderWidth: selectedNodeId === node.id ? "2px" : "1px",
-                }}
-              >
-                <div className="row-between">
-                  <div>
-                    <strong>{node.label}</strong>{" "}
-                    <span className="notice" style={{ fontSize: "0.8rem" }}>
-                      ({node.type}
-                      {node.required ? ", required" : ""})
-                    </span>
-                  </div>
-                  <div className="row-actions">
+        {/* ==================================================================
+            VIEW 1: CANVAS STUDIO (3-COLUMN FIGMA / CANVA / N8N WORKSPACE)
+            ================================================================== */}
+        {activeTab === "studio" && (
+          <div className="studio-grid">
+            {/* COLUMN 1: ELEMENTS PALETTE (Canva / Figma Components) */}
+            <aside className="studio-palette" aria-label="Component Elements Palette">
+              <div>
+                <span className="palette-section-title">Form Elements</span>
+                <p className="notice" style={{ fontSize: "0.78rem", marginBottom: "0.75rem" }}>
+                  Click to add directly onto the canvas.
+                </p>
+              </div>
+
+              <div>
+                <div className="palette-section-title">Structure</div>
+                <div className="palette-items-list">
+                  {PALETTE_ITEMS.filter((i) => i.category === "structure").map((item) => (
                     <button
+                      key={item.type}
                       type="button"
-                      className="btn-link"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMoveNode(idx, idx - 1);
-                      }}
+                      className="palette-item-card"
+                      onClick={() => handleAddNode(item.type)}
+                      title={`Add ${item.label} (${item.desc})`}
                     >
-                      &uarr;
+                      <span>{item.label}</span>
+                      <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>+ Add</span>
                     </button>
-                    <button
-                      type="button"
-                      className="btn-link"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMoveNode(idx, idx + 1);
-                      }}
-                    >
-                      &darr;
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-link"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteNode(node.id);
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
 
-          <div className="stack">
-            <h3>Node Property Inspector</h3>
-            {!selectedNode ? (
-              <p className="notice">Select any node on the canvas to configure its properties.</p>
-            ) : (
-              <div className="card stack" style={{ margin: 0 }}>
-                <div className="field">
-                  <label htmlFor="np-label">Label / Text</label>
-                  <input
-                    id="np-label"
-                    type="text"
-                    value={selectedNode.label}
-                    onChange={(e) =>
-                      setNodes((prev) =>
-                        prev.map((n) =>
-                          n.id === selectedNode.id ? { ...n, label: e.target.value } : n,
-                        ),
-                      )
+              <div>
+                <div className="palette-section-title">Text &amp; Inputs</div>
+                <div className="palette-items-list">
+                  {PALETTE_ITEMS.filter((i) => i.category === "inputs").map((item) => (
+                    <button
+                      key={item.type}
+                      type="button"
+                      className="palette-item-card"
+                      onClick={() => handleAddNode(item.type)}
+                      title={`Add ${item.label} (${item.desc})`}
+                    >
+                      <span>{item.label}</span>
+                      <span style={{ fontSize: "0.75rem", color: "var(--accent)" }}>+ Add</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="palette-section-title">Choices &amp; Dropdowns</div>
+                <div className="palette-items-list">
+                  {PALETTE_ITEMS.filter((i) => i.category === "choice").map((item) => (
+                    <button
+                      key={item.type}
+                      type="button"
+                      className="palette-item-card"
+                      onClick={() => handleAddNode(item.type)}
+                      title={`Add ${item.label} (${item.desc})`}
+                    >
+                      <span>{item.label}</span>
+                      <span style={{ fontSize: "0.75rem", color: "var(--amber)" }}>+ Add</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="palette-section-title">Attachments</div>
+                <div className="palette-items-list">
+                  {PALETTE_ITEMS.filter((i) => i.category === "media").map((item) => (
+                    <button
+                      key={item.type}
+                      type="button"
+                      className="palette-item-card"
+                      onClick={() => handleAddNode(item.type)}
+                      title={`Add ${item.label} (${item.desc})`}
+                    >
+                      <span>{item.label}</span>
+                      <span style={{ fontSize: "0.75rem", color: "var(--ok-text)" }}>+ Add</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </aside>
+
+            {/* COLUMN 2: CENTER CANVAS STAGE (Figma / n8n Stage) */}
+            <main className="studio-canvas-stage" aria-label="Visual Artboard Canvas">
+              {previewDevice === "phone" ? (
+                // Realistic Mobile Device Simulator (375px frame)
+                <div className="device-frame-phone">
+                  <div className="row-between" style={{ marginBottom: "1rem" }}>
+                    <span className="badge badge-configured">Mobile Simulator (375px)</span>
+                    <button
+                      type="button"
+                      className="btn-link"
+                      onClick={() => setPreviewDevice("canvas")}
+                    >
+                      Exit Preview
+                    </button>
+                  </div>
+                  <FormRenderer
+                    nodes={nodes}
+                    theme={theme}
+                    answers={previewAnswers}
+                    onChange={(fid, val) =>
+                      setPreviewAnswers((prev) => ({ ...prev, [fid]: val }))
                     }
                   />
                 </div>
+              ) : previewDevice === "desktop" ? (
+                // Desktop Frame Simulator (760px frame)
+                <div className="device-frame-desktop">
+                  <div className="row-between" style={{ marginBottom: "1.25rem" }}>
+                    <span className="badge badge-configured">Desktop Simulator (760px)</span>
+                    <button
+                      type="button"
+                      className="btn-link"
+                      onClick={() => setPreviewDevice("canvas")}
+                    >
+                      Exit Preview
+                    </button>
+                  </div>
+                  <FormRenderer
+                    nodes={nodes}
+                    theme={theme}
+                    answers={previewAnswers}
+                    onChange={(fid, val) =>
+                      setPreviewAnswers((prev) => ({ ...prev, [fid]: val }))
+                    }
+                  />
+                </div>
+              ) : (
+                // Primary Visual Node Artboard (Interactive Nodes & Drag to Reorder)
+                <div className="studio-artboard">
+                  <div className="artboard-header">
+                    <h2 className="artboard-title">{title}</h2>
+                    <p className="artboard-desc">{description || "No description provided."}</p>
+                  </div>
 
-                {selectedNode.type !== "heading" &&
-                  selectedNode.type !== "instructions" &&
-                  selectedNode.type !== "section" && (
-                    <>
-                      <div className="field">
-                        <label htmlFor="np-help">Help Text</label>
-                        <input
-                          id="np-help"
-                          type="text"
-                          value={selectedNode.helpText ?? ""}
-                          onChange={(e) =>
-                            setNodes((prev) =>
-                              prev.map((n) =>
-                                n.id === selectedNode.id ? { ...n, helpText: e.target.value } : n,
-                              ),
-                            )
-                          }
-                        />
-                      </div>
+                  {nodes.length === 0 ? (
+                    <div className="canvas-empty-state">
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <line x1="12" y1="8" x2="12" y2="16" />
+                        <line x1="8" y1="12" x2="16" y2="12" />
+                      </svg>
+                      <strong>Canvas is Empty</strong>
+                      <span>Select any element from the left palette to start assembling your form.</span>
+                    </div>
+                  ) : (
+                    nodes.map((node, idx) => {
+                      const isSelected = selectedNodeId === node.id;
+                      return (
+                        <div
+                          key={node.id}
+                          draggable
+                          onDragStart={() => setDragIndex(idx)}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => {
+                            if (dragIndex !== null) handleMoveNode(dragIndex, idx);
+                            setDragIndex(null);
+                          }}
+                          onClick={() => setSelectedNodeId(node.id)}
+                          className={`canvas-node-card ${isSelected ? "selected" : ""}`}
+                        >
+                          {isSelected && (
+                            <span className="node-selection-badge">Selected Node</span>
+                          )}
 
-                      <div className="field">
-                        <label htmlFor="np-ph">Placeholder</label>
-                        <input
-                          id="np-ph"
-                          type="text"
-                          value={selectedNode.placeholder ?? ""}
-                          onChange={(e) =>
-                            setNodes((prev) =>
-                              prev.map((n) =>
-                                n.id === selectedNode.id
-                                  ? { ...n, placeholder: e.target.value }
-                                  : n,
-                              ),
-                            )
-                          }
-                        />
-                      </div>
+                          <div className="canvas-node-top">
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.55rem" }}>
+                              <span
+                                className="canvas-node-drag-handle"
+                                title="Drag up or down to reorder"
+                              >
+                                ⠿
+                              </span>
+                              <strong style={{ fontSize: "0.92rem", color: "var(--ink)" }}>
+                                {node.label}
+                              </strong>
+                              <span
+                                className="badge"
+                                style={{ fontSize: "0.68rem", padding: "0.08rem 0.4rem" }}
+                              >
+                                {node.type}
+                              </span>
+                              {node.required && (
+                                <span
+                                  className="badge badge-admin"
+                                  style={{ fontSize: "0.68rem", padding: "0.08rem 0.4rem" }}
+                                >
+                                  Required
+                                </span>
+                              )}
+                            </div>
 
-                      <label style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                        <input
-                          type="checkbox"
-                          checked={Boolean(selectedNode.required)}
-                          onChange={(e) =>
-                            setNodes((prev) =>
-                              prev.map((n) =>
-                                n.id === selectedNode.id
-                                  ? { ...n, required: e.target.checked }
-                                  : n,
-                              ),
-                            )
-                          }
-                        />
-                        Required field
-                      </label>
-                    </>
+                            <div className="canvas-node-actions">
+                              <button
+                                type="button"
+                                className="node-tool-btn"
+                                title="Move up"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMoveNode(idx, idx - 1);
+                                }}
+                                disabled={idx === 0}
+                              >
+                                &uarr;
+                              </button>
+                              <button
+                                type="button"
+                                className="node-tool-btn"
+                                title="Move down"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMoveNode(idx, idx + 1);
+                                }}
+                                disabled={idx === nodes.length - 1}
+                              >
+                                &darr;
+                              </button>
+                              <button
+                                type="button"
+                                className="node-tool-btn"
+                                title="Duplicate field"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDuplicateNode(node);
+                                }}
+                              >
+                                ⧉
+                              </button>
+                              <button
+                                type="button"
+                                className="node-tool-btn danger"
+                                title="Delete field"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteNode(node.id);
+                                }}
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="canvas-node-preview">
+                            {node.type === "heading" ? (
+                              <h3 style={{ margin: "0.2rem 0" }}>{node.label}</h3>
+                            ) : node.type === "instructions" ? (
+                              <p className="notice" style={{ fontSize: "0.85rem" }}>
+                                {node.helpText || "Instruction text here..."}
+                              </p>
+                            ) : node.type === "section" ? (
+                              <hr style={{ border: "none", borderTop: "1px dashed var(--border)" }} />
+                            ) : (
+                              <div
+                                style={{
+                                  padding: "0.4rem 0.65rem",
+                                  border: "1px solid var(--border)",
+                                  borderRadius: "6px",
+                                  background: "var(--surface-muted)",
+                                  fontSize: "0.85rem",
+                                  color: "var(--muted)",
+                                }}
+                              >
+                                {node.placeholder || `[${node.type} input placeholder]`}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
                   )}
+                </div>
+              )}
+            </main>
 
-                {(selectedNode.type === "dropdown" ||
-                  selectedNode.type === "single_choice" ||
-                  selectedNode.type === "multiple_choice") && (
+            {/* COLUMN 3: PROPERTIES INSPECTOR (Figma / n8n Inspector) */}
+            <aside className="studio-inspector" aria-label="Properties Inspector">
+              <div className="inspector-header">
+                <span className="inspector-title">
+                  {selectedNode ? "Field Properties" : "Form Overview"}
+                </span>
+                {selectedNode && (
+                  <button
+                    type="button"
+                    className="btn-link"
+                    style={{ fontSize: "0.78rem" }}
+                    onClick={() => setSelectedNodeId(null)}
+                  >
+                    Deselect
+                  </button>
+                )}
+              </div>
+
+              {selectedNode ? (
+                // Field Inspector
+                <div className="stack" style={{ gap: "0.85rem" }}>
                   <div className="field">
-                    <label htmlFor="np-opts">Choices (one per line)</label>
-                    <textarea
-                      id="np-opts"
-                      rows={4}
-                      value={(selectedNode.options ?? []).join("\n")}
+                    <label htmlFor="prop-type">Field Type</label>
+                    <input
+                      id="prop-type"
+                      type="text"
+                      value={selectedNode.type}
+                      disabled
+                      style={{ background: "var(--surface-muted)", cursor: "not-allowed" }}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="prop-label">Label / Prompt Text</label>
+                    <input
+                      id="prop-label"
+                      type="text"
+                      value={selectedNode.label}
                       onChange={(e) =>
                         setNodes((prev) =>
                           prev.map((n) =>
-                            n.id === selectedNode.id
-                              ? {
-                                  ...n,
-                                  options: e.target.value
-                                    .split("\n")
-                                    .map((s) => s.trim())
-                                    .filter(Boolean),
-                                }
-                              : n,
+                            n.id === selectedNode.id ? { ...n, label: e.target.value } : n,
                           ),
                         )
                       }
                     />
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
 
-        {previewMode !== "none" && (
-          <div
-            className="card stack"
-            style={{
-              maxWidth: previewMode === "phone" ? "390px" : "100%",
-              margin: "1rem auto 0",
-              border: "2px solid var(--primary)",
-            }}
-          >
-            <div className="row-between">
-              <strong>
-                {previewMode === "phone" ? "Mobile Preview (375px)" : "Desktop Preview"}: {title}
-              </strong>
-              <span className="badge badge-configured">Interactive Preview</span>
-            </div>
-            {description && <p className="notice">{description}</p>}
-            <FormRenderer
-              nodes={nodes}
-              theme={theme}
-              answers={previewAnswers}
-              onChange={(fid, val) => setPreviewAnswers((prev) => ({ ...prev, [fid]: val }))}
-            />
+                  {selectedNode.type !== "heading" &&
+                    selectedNode.type !== "instructions" &&
+                    selectedNode.type !== "section" && (
+                      <>
+                        <div className="field">
+                          <label htmlFor="prop-ph">Placeholder Text</label>
+                          <input
+                            id="prop-ph"
+                            type="text"
+                            placeholder="e.g. Enter your department name..."
+                            value={selectedNode.placeholder ?? ""}
+                            onChange={(e) =>
+                              setNodes((prev) =>
+                                prev.map((n) =>
+                                  n.id === selectedNode.id
+                                    ? { ...n, placeholder: e.target.value }
+                                    : n,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+
+                        <div className="field">
+                          <label htmlFor="prop-help">Help / Subtitle Text</label>
+                          <input
+                            id="prop-help"
+                            type="text"
+                            placeholder="Optional instructions below input..."
+                            value={selectedNode.helpText ?? ""}
+                            onChange={(e) =>
+                              setNodes((prev) =>
+                                prev.map((n) =>
+                                  n.id === selectedNode.id
+                                    ? { ...n, helpText: e.target.value }
+                                    : n,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+
+                        <label style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontWeight: 600, fontSize: "0.86rem" }}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(selectedNode.required)}
+                            onChange={(e) =>
+                              setNodes((prev) =>
+                                prev.map((n) =>
+                                  n.id === selectedNode.id
+                                    ? { ...n, required: e.target.checked }
+                                    : n,
+                                ),
+                              )
+                            }
+                          />
+                          Mandatory / Required Field
+                        </label>
+                      </>
+                    )}
+
+                  {(selectedNode.type === "dropdown" ||
+                    selectedNode.type === "single_choice" ||
+                    selectedNode.type === "multiple_choice") && (
+                    <div className="field">
+                      <label htmlFor="prop-opts">Options (One choice per line)</label>
+                      <textarea
+                        id="prop-opts"
+                        rows={4}
+                        value={(selectedNode.options ?? []).join("\n")}
+                        onChange={(e) =>
+                          setNodes((prev) =>
+                            prev.map((n) =>
+                              n.id === selectedNode.id
+                                ? {
+                                    ...n,
+                                    options: e.target.value
+                                      .split("\n")
+                                      .map((s) => s.trim())
+                                      .filter(Boolean),
+                                  }
+                                : n,
+                            ),
+                          )
+                        }
+                      />
+                    </div>
+                  )}
+
+                  <div className="profile-dropdown-divider" />
+
+                  <div className="row-actions" style={{ justifyContent: "space-between" }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ fontSize: "0.8rem", padding: "0.35rem 0.75rem" }}
+                      onClick={() => handleDuplicateNode(selectedNode)}
+                    >
+                      Duplicate Field
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ fontSize: "0.8rem", padding: "0.35rem 0.75rem", color: "var(--err-text)" }}
+                      onClick={() => handleDeleteNode(selectedNode.id)}
+                    >
+                      Delete Field
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // Form Overview Inspector (when no single node is selected)
+                <div className="stack" style={{ gap: "0.85rem" }}>
+                  <p className="notice" style={{ fontSize: "0.82rem" }}>
+                    Click any field on the canvas to inspect its validation and choices.
+                  </p>
+
+                  <div className="field">
+                    <label htmlFor="ins-slug">URL Slug</label>
+                    <input
+                      id="ins-slug"
+                      type="text"
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="ins-kind">Workflow Category</label>
+                    <select
+                      id="ins-kind"
+                      value={kind}
+                      onChange={(e) => setKind(e.target.value as FormKind)}
+                    >
+                      <option value="general">General Form</option>
+                      <option value="appeal_enabled">Appeal-Enabled Form</option>
+                      <option value="complaint">Complaint Form</option>
+                    </select>
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="ins-color">Theme Accent</label>
+                    <select
+                      id="ins-color"
+                      value={theme.primaryColor ?? "#1d4ed8"}
+                      onChange={(e) => setTheme({ ...theme, primaryColor: e.target.value })}
+                    >
+                      <option value="#1d4ed8">Royal Blue (#1d4ed8)</option>
+                      <option value="#0f766e">Teal (#0f766e)</option>
+                      <option value="#7c3aed">Violet (#7c3aed)</option>
+                      <option value="#b45309">Amber (#b45309)</option>
+                      <option value="#be123c">Crimson (#be123c)</option>
+                      <option value="#18181b">Obsidian (#18181b)</option>
+                    </select>
+                  </div>
+
+                  <div className="profile-dropdown-divider" />
+
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontSize: "0.84rem" }}>
+                    <input
+                      type="checkbox"
+                      checked={allowSaveDraft}
+                      onChange={(e) => setAllowSaveDraft(e.target.checked)}
+                    />
+                    Allow Users to save draft
+                  </label>
+
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontSize: "0.84rem" }}>
+                    <input
+                      type="checkbox"
+                      checked={allowAppeal}
+                      onChange={(e) => setAllowAppeal(e.target.checked)}
+                    />
+                    Enable formal appeal review
+                  </label>
+                </div>
+              )}
+            </aside>
           </div>
         )}
-      </section>
+
+        {/* ==================================================================
+            VIEW 2: FORMS CATALOG & TEMPLATES
+            ================================================================== */}
+        {activeTab === "catalog" && (
+          <section className="card stack">
+            <div className="row-between">
+              <div>
+                <h2>All Created Forms ({forms.length})</h2>
+                <p className="notice">
+                  Choose a published form to edit in the Studio, or start from an official company template.
+                </p>
+              </div>
+              <div className="row-actions">
+                {FORM_TEMPLATES.map((tpl) => (
+                  <button
+                    key={tpl.key}
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleLoadTemplate(tpl.key)}
+                  >
+                    + Template: {tpl.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Slug</th>
+                    <th>Kind</th>
+                    <th>State</th>
+                    <th>Versions</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {forms.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="notice" style={{ textAlign: "center", padding: "2rem" }}>
+                        No forms created yet. Choose a template above or start drafting in Canvas Studio.
+                      </td>
+                    </tr>
+                  ) : (
+                    forms.map((f) => (
+                      <tr key={f.id}>
+                        <td>
+                          <strong style={{ color: "var(--ink)" }}>{f.title}</strong>
+                        </td>
+                        <td>
+                          <code>{f.slug}</code>
+                        </td>
+                        <td>{f.kind}</td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              f.state === "published"
+                                ? "badge-configured"
+                                : "badge-not_configured"
+                            }`}
+                          >
+                            {f.state}
+                          </span>
+                        </td>
+                        <td>
+                          Latest: v{f.latest_version} | Live:{" "}
+                          {f.current_published_version ? `v${f.current_published_version}` : "—"}
+                        </td>
+                        <td className="row-actions">
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            style={{ padding: "0.26rem 0.65rem", fontSize: "0.78rem" }}
+                            onClick={() => handleSelectExistingForm(f)}
+                          >
+                            Open in Studio &rarr;
+                          </button>
+                          {f.state !== "archived" && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              style={{ padding: "0.26rem 0.65rem", fontSize: "0.78rem", color: "var(--err-text)" }}
+                              onClick={() => handleArchive(f.id)}
+                            >
+                              Archive
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {/* ==================================================================
+            VIEW 3: DETAILED SETTINGS & ACCESS ALLOWLIST
+            ================================================================== */}
+        {activeTab === "settings" && (
+          <section className="card stack">
+            <div className="row-between">
+              <div>
+                <h2>Form Settings &amp; Access Policy</h2>
+                <p className="notice">
+                  Configure department routing, email allowlist, and submission lifecycle policies.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid-2">
+              <div className="field">
+                <label htmlFor="fb-title">Form Title</label>
+                <input
+                  id="fb-title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="fb-slug">URL Slug</label>
+                <input
+                  id="fb-slug"
+                  type="text"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="field">
+              <label htmlFor="fb-desc">Form Description</label>
+              <textarea
+                id="fb-desc"
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            <div className="grid-2">
+              <div className="field">
+                <label>Associated Services (Operations)</label>
+                <div className="row-actions" style={{ marginTop: "0.35rem" }}>
+                  {services.length === 0 ? (
+                    <span className="notice" style={{ fontSize: "0.85rem" }}>No company services defined yet.</span>
+                  ) : (
+                    services.map((svc) => {
+                      const checked = selectedServices.includes(svc.id);
+                      return (
+                        <label
+                          key={svc.id}
+                          style={{
+                            fontWeight: 500,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.35rem",
+                            fontSize: "0.86rem",
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) =>
+                              setSelectedServices((prev) =>
+                                e.target.checked
+                                  ? [...prev, svc.id]
+                                  : prev.filter((x) => x !== svc.id),
+                              )
+                            }
+                          />
+                          {svc.name}
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div className="field">
+                <label htmlFor="fb-allowlist">
+                  Email Allowlist (Leave empty so all active invited Users can access)
+                </label>
+                <textarea
+                  id="fb-allowlist"
+                  rows={3}
+                  placeholder="Optional: one email per line. When populated, ONLY listed emails can view or submit this form."
+                  value={allowlistText}
+                  onChange={(e) => setAllowlistText(e.target.value)}
+                />
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

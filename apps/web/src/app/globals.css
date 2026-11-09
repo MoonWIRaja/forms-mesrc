@@ -213,6 +213,12 @@ a:hover {
   position: relative;
 }
 
+/* Full-Width Canvas for Studio & Visual Builder Surfaces (No Wasted Side Margins) */
+.app-frame:has(.studio-shell),
+.app-frame.studio-mode {
+  max-width: 100%;
+}
+
 .shell {
   flex: 1;
   min-width: 0;
@@ -223,6 +229,11 @@ a:hover {
   display: flex;
   flex-direction: column;
   animation: paperMidLayerIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.shell.studio-shell {
+  max-width: 100%;
+  padding: 0.85rem 1.35rem 2rem;
 }
 
 .center-stage {
@@ -1444,4 +1455,407 @@ textarea:focus {
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* ============================================================================
+   FIGMA / CANVA / N8N VISUAL FORM STUDIO
+   ============================================================================ */
+.studio-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+/* Studio Command Bar (Top Toolbar) */
+.studio-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1.15rem;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-cut-sm);
+  z-index: 10;
+}
+
+.studio-toolbar-left,
+.studio-toolbar-center,
+.studio-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.studio-title-input {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.5rem;
+  outline: none;
+  transition: all 0.12s ease;
+}
+
+.studio-title-input:hover,
+.studio-title-input:focus {
+  background: var(--surface-muted);
+  border-color: var(--border-strong);
+}
+
+.studio-tab-group {
+  display: inline-flex;
+  padding: 0.22rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.studio-tab-btn {
+  padding: 0.35rem 0.8rem;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--ink-secondary);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.studio-tab-btn:hover {
+  color: var(--ink);
+}
+
+.studio-tab-btn.active {
+  background: var(--surface-elevated);
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.08);
+}
+
+/* 3-Column Studio Grid */
+.studio-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr 320px;
+  gap: 1rem;
+  min-height: calc(100vh - 160px);
+  align-items: start;
+}
+
+@media (max-width: 1240px) {
+  .studio-grid {
+    grid-template-columns: 240px 1fr 280px;
+  }
+}
+
+@media (max-width: 980px) {
+  .studio-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Column 1: Component Palette (Canva / Figma Elements) */
+.studio-palette {
+  position: sticky;
+  top: 1.35rem;
+  max-height: calc(100vh - 170px);
+  overflow-y: auto;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 0.95rem;
+  box-shadow: var(--shadow-cut-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.palette-section-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.palette-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.palette-item-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: grab;
+  text-align: left;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  box-shadow: 0 1px 0 #ffffff inset;
+  transition: all 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.palette-item-card:hover {
+  background: var(--surface-elevated);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1.5px);
+  box-shadow: 0 2px 5px rgba(24, 24, 27, 0.06);
+}
+
+.palette-item-card:active {
+  cursor: grabbing;
+}
+
+.palette-item-icon {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+/* Column 2: Center Visual Canvas (Figma / n8n Stage) */
+.studio-canvas-stage {
+  min-height: calc(100vh - 170px);
+  background-color: #f7f5f0;
+  background-image: radial-gradient(rgba(24, 24, 27, 0.12) 1px, transparent 1px);
+  background-size: 20px 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 2.2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow-x: auto;
+}
+
+.studio-artboard {
+  width: 100%;
+  max-width: 660px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 2rem 2.2rem;
+  box-shadow:
+    0 1px 0 #ffffff inset,
+    6px 6px 0 var(--paper-back),
+    6px 6px 0 1px var(--paper-back-edge),
+    0 20px 36px -10px rgba(24, 24, 27, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-height: 480px;
+}
+
+.artboard-header {
+  border-bottom: 2px dashed var(--border-subtle);
+  padding-bottom: 1.1rem;
+  margin-bottom: 0.4rem;
+}
+
+.artboard-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  margin: 0 0 0.35rem;
+  color: var(--ink);
+}
+
+.artboard-desc {
+  font-size: 0.92rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Studio Canvas Visual Nodes */
+.canvas-node-card {
+  position: relative;
+  padding: 0.95rem 1.15rem;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
+  transition: all 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
+}
+
+.canvas-node-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 3px 8px rgba(24, 24, 27, 0.05);
+}
+
+.canvas-node-card.selected {
+  border-color: var(--accent);
+  background: #fcfdfe;
+  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.18), 0 4px 12px rgba(29, 78, 216, 0.08);
+}
+
+.node-selection-badge {
+  position: absolute;
+  top: -9px;
+  left: 14px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.08rem 0.45rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.canvas-node-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.canvas-node-drag-handle {
+  cursor: grab;
+  color: var(--muted);
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+}
+
+.canvas-node-drag-handle:active {
+  cursor: grabbing;
+}
+
+.canvas-node-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  opacity: 0.6;
+  transition: opacity 0.14s ease;
+}
+
+.canvas-node-card:hover .canvas-node-actions,
+.canvas-node-card.selected .canvas-node-actions {
+  opacity: 1;
+}
+
+.node-tool-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--ink-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.1s ease;
+}
+
+.node-tool-btn:hover {
+  background: var(--surface-elevated);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.node-tool-btn.danger:hover {
+  background: var(--err-bg);
+  border-color: var(--err-border);
+  color: var(--err-text);
+}
+
+.canvas-node-preview {
+  margin-top: 0.35rem;
+  pointer-events: none;
+}
+
+/* Empty Canvas Dropzone */
+.canvas-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  text-align: center;
+  gap: 0.5rem;
+  color: var(--muted);
+}
+
+/* Column 3: Properties Inspector (Figma Design Inspector) */
+.studio-inspector {
+  position: sticky;
+  top: 1.35rem;
+  max-height: calc(100vh - 170px);
+  overflow-y: auto;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1rem;
+  box-shadow: var(--shadow-cut-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.65rem;
+}
+
+.inspector-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  margin: 0;
+}
+
+/* Interactive Device Simulator Frame */
+.device-frame-phone {
+  width: 375px;
+  min-height: 640px;
+  background: #ffffff;
+  border: 10px solid #18181b;
+  border-radius: 40px;
+  padding: 1.5rem 1.25rem;
+  box-shadow: 0 25px 50px -12px rgba(24, 24, 27, 0.25);
+  margin: 0 auto;
+}
+
+.device-frame-desktop {
+  width: 100%;
+  max-width: 760px;
+  background: #ffffff;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-paper-stack);
+  margin: 0 auto;
 }
