@@ -25,8 +25,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <a className="skip-link" href="#main">Skip to content</a>
-        <SiteNav />
-        <main id="main" className="shell">{children}</main>
+        <div className="app-frame">
+          <SiteNav />
+          <main id="main" className="shell">{children}</main>
+        </div>
         <ServiceWorkerRegister />
       </body>
     </html>

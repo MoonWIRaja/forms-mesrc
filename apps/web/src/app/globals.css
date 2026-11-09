@@ -125,13 +125,20 @@ a:hover {
   box-shadow: var(--shadow-sm);
 }
 
-/* Layout Shell */
+/* Layout Shell & App Frame */
+.app-frame {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
 .shell {
   flex: 1;
   width: 100%;
-  max-width: 920px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 2rem var(--space) 3.5rem;
+  padding: 1.75rem var(--space) 3.5rem;
   display: flex;
   flex-direction: column;
   animation: pageIn 0.2s ease-out;
@@ -147,33 +154,226 @@ a:hover {
   margin-bottom: 0;
 }
 
-/* Navigation Bar */
-.nav {
+/* ============================================================================
+   REFINED NEO-BRUTALIST 3D FLOATING SIDEBAR
+   ============================================================================ */
+.floating-sidebar {
+  position: sticky;
+  top: 1.25rem;
+  height: calc(100vh - 2.5rem);
+  width: 250px;
+  min-width: 250px;
+  margin: 1.25rem 0 1.25rem 1.25rem;
   background: var(--surface);
-  border-bottom: 2px solid var(--ink);
-  padding: 0.85rem 1.5rem;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-md);
+  box-shadow: 4px 4px 0px var(--ink);
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  padding: 1.15rem 0.95rem;
+  z-index: 40;
 }
 
-.nav-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.25rem;
-  align-items: center;
+.sidebar-brand {
+  padding-bottom: 0.85rem;
+  border-bottom: 1.5px solid var(--border-subtle);
+  margin-bottom: 0.65rem;
 }
 
-.nav-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
+.sidebar-brand-link {
   text-decoration: none;
-  font-size: 1.05rem;
+  color: inherit;
+  display: block;
+}
+
+.sidebar-brand-link:hover {
+  text-decoration: none;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.sidebar-section-label {
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 0.55rem 0.5rem 0.15rem;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid transparent;
+  text-decoration: none;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.92rem;
+  transition: all 0.1s ease;
+}
+
+.sidebar-item-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.sidebar-item:hover {
+  background: #efeae0;
+  border-color: var(--ink);
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 2px 2px 0px var(--ink);
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.sidebar-item.active {
+  background: #fef3c7;
+  border-color: var(--ink);
+  color: var(--ink);
+  font-weight: 800;
+  box-shadow: 2.5px 2.5px 0px var(--ink);
+  transform: translate(-1px, -1px);
+}
+
+.sidebar-footer {
+  padding-top: 0.75rem;
+  border-top: 1.5px solid var(--border-subtle);
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebar-profile-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  background: var(--surface-muted);
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius-sm);
+}
+
+.sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidebar-user-email {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.badge-role {
+  align-self: flex-start;
+  font-size: 0.68rem;
+  padding: 0.1rem 0.45rem;
+  text-transform: uppercase;
+}
+
+.sidebar-signout-btn,
+.sidebar-signin-btn {
+  width: 100%;
+  justify-content: center;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.65rem;
+}
+
+/* Mobile Floating Bar & Drawer */
+.mobile-floating-bar {
+  display: none;
+}
+
+.mobile-drawer-overlay {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .app-frame {
+    flex-direction: column;
+  }
+
+  .floating-sidebar {
+    display: none;
+  }
+
+  .mobile-floating-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0.85rem var(--space) 0;
+    padding: 0.65rem 1rem;
+    background: var(--surface);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-sm);
+    box-shadow: 3px 3px 0px var(--ink);
+    z-index: 40;
+  }
+
+  .mobile-bar-brand {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .mobile-toggle-btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .mobile-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(28, 25, 23, 0.45);
+    z-index: 100;
+    backdrop-filter: blur(2px);
+    display: flex;
+    animation: fadeIn 0.15s ease;
+  }
+
+  .mobile-drawer-paper {
+    width: min(300px, 85vw);
+    height: 100%;
+    background: var(--surface);
+    border-right: 2px solid var(--ink);
+    padding: 1.5rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 6px 0px 0px var(--ink);
+    animation: slideInLeft 0.18s ease;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 /* Brand Logo Mark */
@@ -217,23 +417,6 @@ a:hover {
   letter-spacing: 0.06em;
   color: var(--muted);
   margin-top: 0.1rem;
-}
-
-.nav-links a:not(.btn):not(.nav-brand) {
-  text-decoration: none;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--muted);
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid transparent;
-  transition: all 0.12s ease;
-}
-
-.nav-links a:not(.btn):not(.nav-brand):hover {
-  color: var(--ink);
-  background: var(--surface-muted);
-  border-color: var(--ink);
 }
 
 /* 3D Paper Journal Card */
