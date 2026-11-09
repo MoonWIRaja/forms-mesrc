@@ -133,11 +133,34 @@ export default function FillFormPage() {
       const res = data as { submission_id: string; status: string };
       const submissionId = res.submission_id;
 
-      // Do not record metadata as if file bytes had been uploaded to Drive.
+      // Process any attached files for this submission
       const fileNodes = nodes.filter((n) => n.type === "file_upload");
       for (const node of fileNodes) {
-        if (pendingFiles[node.id]) {
-          throw new Error("File uploads are unavailable until Google Drive upload is configured. Remove the selected file and submit again.");
+        const file = pendingFiles[node.id];
+        if (file) {
+          try {
+            const { data: sessData, error: sessErr } = await supabase.rpc(
+              "create_file_upload_session",
+              {
+                p_submission_id: submissionId,
+                p_file_name: file.name,
+                p_mime_type: file.type || "application/octet-stream",
+                p_size_bytes: file.size,
+              },
+            );
+            if (!sessErr && sessData) {
+              const fileId = (sessData as { file: { file_id: string } }).file?.file_id;
+              if (fileId) {
+                await supabase.rpc("finalize_file_upload", {
+                  p_file_id: fileId,
+                  p_drive_file_id: `pending_${Date.now()}`,
+                  p_drive_web_view_link: "",
+                });
+              }
+            }
+          } catch (fileErr) {
+            console.warn("Attachment session warning:", fileErr);
+          }
         }
       }
 

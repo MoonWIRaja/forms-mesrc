@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
+import { parseServiceAccountKey, testGoogleDriveConnection } from "@/lib/google-drive";
 import InfoPopover from "./InfoPopover";
 
 export interface DriveConfigPublic {
@@ -19,6 +20,13 @@ interface GoogleDriveSetupFormProps {
   lastCheckedAt?: string | null;
   isWizardStep?: boolean;
   onSaved?: () => void;
+}
+
+function sanitizeDriveId(val: string): string {
+  const trimmed = val.trim();
+  const match = trimmed.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if (match) return match[1];
+  return trimmed;
 }
 
 export default function GoogleDriveSetupForm({
@@ -41,8 +49,62 @@ export default function GoogleDriveSetupForm({
   const [validationState, setValidationState] = useState(initialValidationState);
   const [checkedAt, setCheckedAt] = useState<string | null>(lastCheckedAt);
   const [busy, setBusy] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const key = parseServiceAccountKey(text);
+        setSecretJson(text);
+        if (key.client_email) setAccountEmail(key.client_email);
+        if (key.client_id) setClientId(key.client_id);
+        if (!sharedDriveId && key.project_id === "youtube-api-488502") {
+          setSharedDriveId("0AL9n4yWizR-iUk9PVA");
+        }
+        if (!rootFolderId && key.project_id === "youtube-api-488502") {
+          setRootFolderId("1TKnjrw302tolfcti8BTbWE1oIHvVI3oa");
+        }
+        setMessage(`✓ Loaded key file "${file.name}" for ${key.client_email} (${key.project_id}).`);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to parse Google Service Account JSON.");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  async function handleTestConnection() {
+    if (!secretJson && !hasSecret) {
+      setError("Please select or paste your Google Service Account JSON key first.");
+      return;
+    }
+    setTesting(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await testGoogleDriveConnection(secretJson, sharedDriveId, rootFolderId);
+      if (res.ok) {
+        setValidationState("configured");
+        setCheckedAt(new Date().toISOString());
+        setMessage(`✓ ${res.message}`);
+      } else {
+        setValidationState("connection_failed");
+        setError(`Connection Test Failed: ${res.message}`);
+      }
+    } catch (err) {
+      setValidationState("connection_failed");
+      setError(err instanceof Error ? err.message : "Connection test failed.");
+    } finally {
+      setTesting(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -170,6 +232,34 @@ export default function GoogleDriveSetupForm({
       )}
 
       <div className="field">
+        <label>
+          Quick Import: Service Account Key File (.json)
+          <InfoPopover title="Automatic Key Parsing">
+            Select or drop the Google Service Account JSON key you downloaded from Google Cloud Console. The email, Client ID, and private key will be parsed automatically.
+          </InfoPopover>
+        </label>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            style={{ display: "none" }}
+            onChange={handleFileSelect}
+          />
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            📂 Select Key File (.json)
+          </button>
+          <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
+            Select downloaded service account credentials (e.g. youtube-api-488502-...json)
+          </span>
+        </div>
+      </div>
+
+      <div className="field">
         <label htmlFor="gd-email">
           Company Google / Service Account Email
           <InfoPopover title="Integration Account Email">
@@ -203,7 +293,7 @@ export default function GoogleDriveSetupForm({
             required
             placeholder="0A1B2C3D4E5F6G7H8I9J"
             value={sharedDriveId}
-            onChange={(e) => setSharedDriveId(e.target.value)}
+            onChange={(e) => setSharedDriveId(sanitizeDriveId(e.target.value))}
           />
         </div>
 
@@ -221,7 +311,7 @@ export default function GoogleDriveSetupForm({
             required
             placeholder="1AbCdEfGhIjKlMnOpQrStUvWxYz"
             value={rootFolderId}
-            onChange={(e) => setRootFolderId(e.target.value)}
+            onChange={(e) => setRootFolderId(sanitizeDriveId(e.target.value))}
           />
         </div>
       </div>
@@ -272,18 +362,27 @@ export default function GoogleDriveSetupForm({
       </div>
 
       <div className="row-actions">
-        <button type="submit" className="btn btn-primary" disabled={busy}>
+        <button type="submit" className="btn btn-primary" disabled={busy || testing}>
           {busy
             ? "Saving..."
             : isWizardStep
               ? "Save Google Drive Setup & Finish Wizard"
               : "Save Google Drive Settings"}
         </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          disabled={busy || testing || (!secretJson && !hasSecret)}
+          onClick={handleTestConnection}
+          title="Verify service account credentials and Drive access live"
+        >
+          {testing ? "Testing Connection..." : "⚡ Test Connection"}
+        </button>
         {hasSecret && (
           <button
             type="button"
             className="btn btn-secondary"
-            disabled={busy}
+            disabled={busy || testing}
             onClick={handleClearSecret}
           >
             Clear Stored Secret
