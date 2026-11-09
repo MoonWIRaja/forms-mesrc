@@ -76,6 +76,18 @@ export default function AdminFormBuilderPage() {
 
   const seqRef = useRef(1);
 
+  // Full-bleed studio breakout: remove standard shell constraints
+  useEffect(() => {
+    const frame = document.querySelector(".app-frame");
+    const shell = document.querySelector(".shell");
+    frame?.classList.add("studio-mode");
+    shell?.classList.add("studio-mode");
+    return () => {
+      frame?.classList.remove("studio-mode");
+      shell?.classList.remove("studio-mode");
+    };
+  }, []);
+
   useEffect(() => {
     let active = true;
     (async () => {
@@ -337,7 +349,7 @@ export default function AdminFormBuilderPage() {
   const currentFormRecord = forms.find((f) => f.id === selectedFormId);
 
   return (
-    <div className="studio-shell">
+    <div className="studio-shell studio-mode">
       <div className="studio-wrapper">
         {/* ==================================================================
             TOP COMMAND TOOLBAR (FIGMA / N8N / CANVA HEADER)
