@@ -202,35 +202,25 @@ a:hover {
 }
 
 /* ============================================================================
-   LAYOUT SHELL & APP FRAME (ALWAYS FLOATING SIDEBAR ON DESKTOP)
+   LAYOUT SHELL & APP FRAME (ALWAYS FLOATING SIDEBAR ON DESKTOP, FULL SCREEN WIDTH)
    ============================================================================ */
 .app-frame {
   display: flex;
   min-height: 100dvh;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 1.25rem 0 0;
   position: relative;
-}
-
-/* Full-Width Canvas for Studio & Visual Builder Surfaces (No Wasted Side Margins) */
-.app-frame.studio-mode,
-.app-frame:has(.studio-shell),
-.app-frame:has(.studio-wrapper) {
-  max-width: 100% !important;
-  width: 100% !important;
-  margin: 0 !important;
-  padding-left: 0 !important;
-  padding-right: 1.25rem !important;
 }
 
 .shell {
   flex: 1;
   min-width: 0;
   width: 100%;
-  max-width: 1040px;
-  margin: 0 auto;
-  padding: 1.5rem 2rem 4rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 1.35rem 1.75rem 3.5rem 1.25rem;
   display: flex;
   flex-direction: column;
   animation: paperMidLayerIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -239,11 +229,7 @@ a:hover {
 .shell.studio-mode,
 .shell:has(.studio-shell),
 .shell:has(.studio-wrapper) {
-  max-width: 100% !important;
-  width: 100% !important;
-  margin: 0 !important;
-  padding: 0.85rem 1.25rem 2.5rem 0.85rem !important;
-  flex: 1 !important;
+  padding: 0.85rem 1.25rem 2.5rem 0.85rem;
 }
 
 .studio-shell {
@@ -253,7 +239,7 @@ a:hover {
 .center-stage {
   margin: auto;
   width: 100%;
-  max-width: 540px;
+  max-width: 560px;
   padding: 1.5rem 0;
 }
 
@@ -901,6 +887,11 @@ a:hover {
 
 .stack > .card {
   margin-bottom: 0;
+}
+
+.fill-form-container {
+  width: 100%;
+  max-width: 860px;
 }
 
 .notice {

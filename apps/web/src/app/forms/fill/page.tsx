@@ -231,7 +231,7 @@ export default function FillFormPage() {
   }
 
   return (
-    <section className="card stack">
+    <section className="card stack fill-form-container">
       <div className="row-between">
         <div>
           <h1>{form.title}</h1>
