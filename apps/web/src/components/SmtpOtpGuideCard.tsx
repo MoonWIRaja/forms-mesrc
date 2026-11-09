@@ -108,7 +108,7 @@ export default function SmtpOtpGuideCard() {
       </div>
 
       <div className="grid-2">
-        <div className="stack" style={{ padding: "1rem", border: "1.5px solid var(--ink)", borderRadius: "var(--radius-sm)", background: "var(--surface-elevated)" }}>
+        <div className="stack" style={{ padding: "1rem", border: "1px solid var(--border)", borderRadius: "var(--radius)", background: "var(--surface-muted)" }}>
           <strong>1. Custom SMTP (Google Workspace / Gmail)</strong>
           <p className="notice" style={{ fontSize: "0.86rem" }}>
             Open{" "}
@@ -131,7 +131,7 @@ export default function SmtpOtpGuideCard() {
           </div>
         </div>
 
-        <div className="stack" style={{ padding: "1rem", border: "1.5px solid var(--ink)", borderRadius: "var(--radius-sm)", background: "var(--surface-elevated)" }}>
+        <div className="stack" style={{ padding: "1rem", border: "1px solid var(--border)", borderRadius: "var(--radius)", background: "var(--surface-muted)" }}>
           <strong>2. Clean OTP Email Template (Sign Up &amp; Magic Link)</strong>
           <p className="notice" style={{ fontSize: "0.86rem" }}>
             Open{" "}

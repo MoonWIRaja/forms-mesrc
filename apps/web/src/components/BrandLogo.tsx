@@ -20,39 +20,31 @@ export default function BrandLogo({ size = "md", subtitle }: BrandLogoProps) {
         aria-hidden="true"
         className="brand-mark-icon"
       >
-        <rect width="64" height="64" rx="12" fill="#f3efe6" stroke="#1c1917" strokeWidth="3" />
-        <rect x="15" y="14" width="36" height="41" rx="4" fill="#1c1917" />
-        <rect
-          x="11"
-          y="10"
-          width="36"
-          height="41"
-          rx="4"
-          fill="#faf8f5"
-          stroke="#1c1917"
-          strokeWidth="3"
-        />
-        <rect x="12.5" y="11.5" width="33" height="7" fill="#fef3c7" />
-        <line x1="11" y1="19" x2="47" y2="19" stroke="#1c1917" strokeWidth="2.8" />
+        <defs>
+          <linearGradient id="mesrc-bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#0f172a" />
+            <stop offset="100%" stopColor="#1e293b" />
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="14" fill="url(#mesrc-bg)" />
+        {/* Back accent sheet */}
+        <rect x="19" y="12" width="32" height="40" rx="6" fill="#2563eb" opacity="0.85" />
+        {/* Front document card */}
+        <rect x="13" y="14" width="34" height="40" rx="6" fill="#ffffff" />
+        {/* Header stripe */}
+        <rect x="19" y="21" width="14" height="3.5" rx="1.75" fill="#2563eb" />
+        {/* Monogram M & lines */}
         <path
-          d="M18 38 V26 L24.5 33 L31 26 V38"
+          d="M19 41 V30 L25 36.5 L31 30 V41"
           fill="none"
-          stroke="#1c1917"
-          strokeWidth="3.5"
-          strokeLinecap="square"
-          strokeLinejoin="miter"
-        />
-        <rect x="35" y="26" width="6" height="5" fill="#1c1917" />
-        <rect x="35" y="33.5" width="6" height="4.5" fill="#57534e" />
-        <line
-          x1="17"
-          y1="44"
-          x2="41"
-          y2="44"
-          stroke="#1c1917"
-          strokeWidth="2.8"
+          stroke="#0f172a"
+          strokeWidth="3.2"
           strokeLinecap="round"
+          strokeLinejoin="round"
         />
+        <rect x="35" y="30" width="6" height="3.2" rx="1.6" fill="#64748b" />
+        <rect x="35" y="36.5" width="6" height="3.2" rx="1.6" fill="#94a3b8" />
+        <rect x="19" y="46" width="22" height="2.6" rx="1.3" fill="#cbd5e1" />
       </svg>
       <div className="brand-mark-text">
         <span className="brand-mark-title">Forms MESRC</span>
