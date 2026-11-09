@@ -1859,3 +1859,93 @@ textarea:focus {
   box-shadow: var(--shadow-paper-stack);
   margin: 0 auto;
 }
+
+/* Sleek Phone Device Frame for Visual Studio (Widened for Desktop) */
+.phone-device-chassis {
+  width: 100%;
+  max-width: 500px;
+  min-height: 720px;
+  background: #18181b;
+  border-radius: 46px;
+  padding: 10px 10px 14px;
+  box-shadow:
+    0 25px 60px -15px rgba(24, 24, 27, 0.25),
+    0 0 0 1px rgba(24, 24, 27, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin: 0 auto;
+  transition: max-width 0.2s ease;
+}
+
+.phone-island-notch {
+  width: 110px;
+  height: 22px;
+  background: #09090b;
+  border-radius: 20px;
+  margin: 4px auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.phone-camera-lens {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1e1e24;
+  box-shadow: 0 0 0 1.5px #2a2a32 inset;
+}
+
+.phone-screen-content {
+  background: var(--surface-elevated);
+  border-radius: 36px;
+  padding: 1.5rem 1.25rem 2.2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.phone-home-indicator {
+  width: 130px;
+  height: 4.5px;
+  background: #71717a;
+  border-radius: 999px;
+  margin: 12px auto 2px;
+  opacity: 0.6;
+}
+
+/* Realistic Node Field Previews Inside Phone Frame */
+.phone-mock-input {
+  padding: 0.52rem 0.75rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  transition: border-color 0.12s ease;
+}
+
+.phone-mock-select {
+  cursor: pointer;
+}
+
+.phone-mock-file {
+  padding: 0.75rem 1rem;
+  background: #fafafa;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  text-align: center;
+}

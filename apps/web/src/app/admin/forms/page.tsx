@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ChunkLoader from "@/components/ChunkLoader";
-import FormRenderer from "@/components/FormRenderer";
 import {
   FORM_TEMPLATES,
   type FieldType,
@@ -71,8 +70,6 @@ export default function AdminFormBuilderPage() {
   const [activeTab, setActiveTab] = useState<"studio" | "catalog" | "settings">("studio");
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [previewDevice, setPreviewDevice] = useState<"canvas" | "phone" | "desktop">("canvas");
-  const [previewAnswers, setPreviewAnswers] = useState<Record<string, unknown>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -395,35 +392,6 @@ export default function AdminFormBuilderPage() {
           </div>
 
           <div className="studio-toolbar-right">
-            {activeTab === "studio" && (
-              <div className="studio-tab-group">
-                <button
-                  type="button"
-                  className={`studio-tab-btn ${previewDevice === "canvas" ? "active" : ""}`}
-                  onClick={() => setPreviewDevice("canvas")}
-                  title="Canvas Builder"
-                >
-                  Canvas
-                </button>
-                <button
-                  type="button"
-                  className={`studio-tab-btn ${previewDevice === "phone" ? "active" : ""}`}
-                  onClick={() => setPreviewDevice("phone")}
-                  title="Phone Preview (375px)"
-                >
-                  📱 Mobile
-                </button>
-                <button
-                  type="button"
-                  className={`studio-tab-btn ${previewDevice === "desktop" ? "active" : ""}`}
-                  onClick={() => setPreviewDevice("desktop")}
-                  title="Desktop Preview (760px)"
-                >
-                  💻 Desktop
-                </button>
-              </div>
-            )}
-
             <button
               type="button"
               className="btn btn-secondary"
@@ -543,69 +511,30 @@ export default function AdminFormBuilderPage() {
               </div>
             </aside>
 
-            {/* COLUMN 2: CENTER CANVAS STAGE (Figma / n8n Stage) */}
-            <main className="studio-canvas-stage" aria-label="Visual Artboard Canvas">
-              {previewDevice === "phone" ? (
-                // Realistic Mobile Device Simulator (375px frame)
-                <div className="device-frame-phone">
-                  <div className="row-between" style={{ marginBottom: "1rem" }}>
-                    <span className="badge badge-configured">Mobile Simulator (375px)</span>
-                    <button
-                      type="button"
-                      className="btn-link"
-                      onClick={() => setPreviewDevice("canvas")}
-                    >
-                      Exit Preview
-                    </button>
-                  </div>
-                  <FormRenderer
-                    nodes={nodes}
-                    theme={theme}
-                    answers={previewAnswers}
-                    onChange={(fid, val) =>
-                      setPreviewAnswers((prev) => ({ ...prev, [fid]: val }))
-                    }
-                  />
+            {/* COLUMN 2: CENTER CANVAS STAGE (Phone Device Frame - Widened for Desktop) */}
+            <main className="studio-canvas-stage" aria-label="Visual Form Studio Canvas">
+              <div className="phone-device-chassis">
+                {/* Top Dynamic Island Notch */}
+                <div className="phone-island-notch" aria-hidden="true">
+                  <span className="phone-camera-lens" />
                 </div>
-              ) : previewDevice === "desktop" ? (
-                // Desktop Frame Simulator (760px frame)
-                <div className="device-frame-desktop">
-                  <div className="row-between" style={{ marginBottom: "1.25rem" }}>
-                    <span className="badge badge-configured">Desktop Simulator (760px)</span>
-                    <button
-                      type="button"
-                      className="btn-link"
-                      onClick={() => setPreviewDevice("canvas")}
-                    >
-                      Exit Preview
-                    </button>
-                  </div>
-                  <FormRenderer
-                    nodes={nodes}
-                    theme={theme}
-                    answers={previewAnswers}
-                    onChange={(fid, val) =>
-                      setPreviewAnswers((prev) => ({ ...prev, [fid]: val }))
-                    }
-                  />
-                </div>
-              ) : (
-                // Primary Visual Node Artboard (Interactive Nodes & Drag to Reorder)
-                <div className="studio-artboard">
+
+                {/* Phone Screen Inner Content / Canvas */}
+                <div className="phone-screen-content">
                   <div className="artboard-header">
-                    <h2 className="artboard-title">{title}</h2>
-                    <p className="artboard-desc">{description || "No description provided."}</p>
+                    <h2 className="artboard-title">{title || "Untitled Form"}</h2>
+                    <p className="artboard-desc">{description || "Please fill out this form."}</p>
                   </div>
 
                   {nodes.length === 0 ? (
                     <div className="canvas-empty-state">
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                         <line x1="12" y1="8" x2="12" y2="16" />
                         <line x1="8" y1="12" x2="16" y2="12" />
                       </svg>
-                      <strong>Canvas is Empty</strong>
-                      <span>Select any element from the left palette to start assembling your form.</span>
+                      <strong style={{ fontSize: "0.95rem" }}>Phone Form is Empty</strong>
+                      <span style={{ fontSize: "0.8rem" }}>Click any element from the left palette to add fields to this form.</span>
                     </div>
                   ) : (
                     nodes.map((node, idx) => {
@@ -624,33 +553,22 @@ export default function AdminFormBuilderPage() {
                           className={`canvas-node-card ${isSelected ? "selected" : ""}`}
                         >
                           {isSelected && (
-                            <span className="node-selection-badge">Selected Node</span>
+                            <span className="node-selection-badge">Selected Field</span>
                           )}
 
                           <div className="canvas-node-top">
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.55rem" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                               <span
                                 className="canvas-node-drag-handle"
                                 title="Drag up or down to reorder"
                               >
                                 ⠿
                               </span>
-                              <strong style={{ fontSize: "0.92rem", color: "var(--ink)" }}>
+                              <strong style={{ fontSize: "0.88rem", color: "var(--ink)" }}>
                                 {node.label}
                               </strong>
-                              <span
-                                className="badge"
-                                style={{ fontSize: "0.68rem", padding: "0.08rem 0.4rem" }}
-                              >
-                                {node.type}
-                              </span>
                               {node.required && (
-                                <span
-                                  className="badge badge-admin"
-                                  style={{ fontSize: "0.68rem", padding: "0.08rem 0.4rem" }}
-                                >
-                                  Required
-                                </span>
+                                <span style={{ color: "var(--err-text)", fontWeight: 700 }} title="Required field">*</span>
                               )}
                             </div>
 
@@ -706,25 +624,65 @@ export default function AdminFormBuilderPage() {
 
                           <div className="canvas-node-preview">
                             {node.type === "heading" ? (
-                              <h3 style={{ margin: "0.2rem 0" }}>{node.label}</h3>
+                              <h3 style={{ margin: "0.2rem 0", color: "var(--ink)", fontWeight: 800 }}>{node.label}</h3>
                             ) : node.type === "instructions" ? (
-                              <p className="notice" style={{ fontSize: "0.85rem" }}>
-                                {node.helpText || "Instruction text here..."}
+                              <p className="notice" style={{ fontSize: "0.82rem", margin: "0.2rem 0" }}>
+                                {node.helpText || "Instruction text for the applicant..."}
                               </p>
                             ) : node.type === "section" ? (
-                              <hr style={{ border: "none", borderTop: "1px dashed var(--border)" }} />
+                              <div style={{ borderTop: "2px dashed var(--border-strong)", margin: "0.5rem 0" }} />
+                            ) : node.type === "long_text" ? (
+                              <div className="phone-mock-input" style={{ minHeight: "56px", alignItems: "flex-start" }}>
+                                <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>
+                                  {node.placeholder || "Enter detailed response..."}
+                                </span>
+                              </div>
+                            ) : node.type === "dropdown" ? (
+                              <div className="phone-mock-input phone-mock-select">
+                                <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
+                                  {node.placeholder || "Select an option..."}
+                                </span>
+                                <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>▼</span>
+                              </div>
+                            ) : node.type === "single_choice" ? (
+                              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", marginTop: "0.3rem" }}>
+                                {(node.options ?? ["Option 1", "Option 2"]).map((opt, i) => (
+                                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.82rem", color: "var(--ink-secondary)" }}>
+                                    <span style={{ width: "14px", height: "14px", borderRadius: "50%", border: "1.5px solid var(--border-strong)", display: "inline-block" }} />
+                                    <span>{opt}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : node.type === "multiple_choice" ? (
+                              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", marginTop: "0.3rem" }}>
+                                {(node.options ?? ["Option A", "Option B"]).map((opt, i) => (
+                                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.82rem", color: "var(--ink-secondary)" }}>
+                                    <span style={{ width: "14px", height: "14px", borderRadius: "3px", border: "1.5px solid var(--border-strong)", display: "inline-block" }} />
+                                    <span>{opt}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : node.type === "date" ? (
+                              <div className="phone-mock-input phone-mock-select">
+                                <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>dd/mm/yyyy</span>
+                                <span style={{ fontSize: "0.85rem" }}>📅</span>
+                              </div>
+                            ) : node.type === "file_upload" ? (
+                              <div className="phone-mock-file">
+                                <span style={{ fontSize: "0.82rem", fontWeight: 600 }}>Choose file or drag here</span>
+                                <span style={{ fontSize: "0.72rem", color: "var(--muted)" }}>Google Drive upload up to 1 GiB</span>
+                              </div>
                             ) : (
-                              <div
-                                style={{
-                                  padding: "0.4rem 0.65rem",
-                                  border: "1px solid var(--border)",
-                                  borderRadius: "6px",
-                                  background: "var(--surface-muted)",
-                                  fontSize: "0.85rem",
-                                  color: "var(--muted)",
-                                }}
-                              >
-                                {node.placeholder || `[${node.type} input placeholder]`}
+                              <div className="phone-mock-input">
+                                <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>
+                                  {node.placeholder || `Enter ${node.label.toLowerCase()}...`}
+                                </span>
+                              </div>
+                            )}
+
+                            {node.helpText && node.type !== "instructions" && (
+                              <div style={{ fontSize: "0.74rem", color: "var(--muted)", marginTop: "0.35rem" }}>
+                                {node.helpText}
                               </div>
                             )}
                           </div>
@@ -733,7 +691,10 @@ export default function AdminFormBuilderPage() {
                     })
                   )}
                 </div>
-              )}
+
+                {/* Bottom Home Indicator */}
+                <div className="phone-home-indicator" aria-hidden="true" />
+              </div>
             </main>
 
             {/* COLUMN 3: PROPERTIES INSPECTOR (Figma / n8n Inspector) */}
