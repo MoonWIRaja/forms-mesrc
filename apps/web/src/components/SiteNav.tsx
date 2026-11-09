@@ -59,74 +59,18 @@ export default function SiteNav() {
     pathname?.startsWith("/users") ||
     pathname?.startsWith("/maintenance");
 
-  // ==========================================================================
-  // MODE 1: COMPACT USER PORTAL PILL (When on Home, Forms, or Tickets)
-  // No cluttered sidebar; Forms & Tickets are chosen directly from Home.
-  // ==========================================================================
-  if (!isAdminPanelRoute) {
-    const isHome = pathname === "/" || pathname === "";
-    return (
-      <header className="user-nav-header" aria-label="Workspace Header">
-        <div className="user-nav-pill">
-          <div className="user-nav-left">
-            <Link href="/" className="user-nav-brand" aria-label="Forms MESRC Home">
-              <BrandLogo size="sm" />
-            </Link>
-            {!isHome && (
-              <Link href="/" className="pill-btn">
-                &larr; Home
-              </Link>
-            )}
-          </div>
-
-          <div className="user-nav-right">
-            {isStaff && (
-              <Link href="/admin/" className="pill-btn pill-btn-admin">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="3" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="14" width="7" height="7" rx="1" />
-                  <rect x="3" y="14" width="7" height="7" rx="1" />
-                </svg>
-                Admin Panel
-              </Link>
-            )}
-
-            {profile ? (
-              <button type="button" className="pill-btn" onClick={handleSignOut}>
-                Sign out
-              </button>
-            ) : (
-              <Link href="/sign-in/" className="pill-btn pill-btn-admin">
-                Sign in
-              </Link>
-            )}
-          </div>
-        </div>
-      </header>
-    );
-  }
-
-  // ==========================================================================
-  // MODE 2: DEDICATED ADMIN PANEL FLOATING SIDEBAR
-  // Appears only when inside /admin, /users, or /maintenance
-  // ==========================================================================
+  const isDashboard = pathname === "/" || pathname === "";
   const isSubmissions = pathname === "/admin" || pathname === "/admin/";
   const isFormBuilder = pathname?.startsWith("/admin/forms");
   const isUsers = pathname?.startsWith("/users");
   const isSettings = pathname?.startsWith("/maintenance");
 
-  const adminSidebarContent = (
+  // ==========================================================================
+  // SIDEBAR CONTENT: SWITCHES INTELLIGENTLY BETWEEN USER & ADMIN MODES
+  // (Always floating on the left — NO top bar anywhere)
+  // ==========================================================================
+  const sidebarContent = isAdminPanelRoute ? (
+    // MODE 2: ADMIN PANEL DEDICATED SIDEBAR
     <>
       <div className="sidebar-brand">
         <Link href="/admin/" className="sidebar-brand-link" aria-label="Forms MESRC Admin Panel">
@@ -258,13 +202,93 @@ export default function SiteNav() {
         )}
       </div>
     </>
+  ) : (
+    // MODE 1: COMPACT USER FLOATING SIDEBAR (Home / Forms / Tickets)
+    // Ultra-clean on the side — Forms & Tickets removed because they are in the center of Home!
+    <>
+      <div className="sidebar-brand">
+        <Link href="/" className="sidebar-brand-link" aria-label="Forms MESRC Home">
+          <BrandLogo size="md" subtitle="Workspace" />
+        </Link>
+      </div>
+
+      <nav className="sidebar-menu" aria-label="Main Navigation">
+        <div className="sidebar-section-label">Navigation</div>
+
+        <Link href="/" className={`sidebar-item ${isDashboard ? "active" : ""}`}>
+          <svg
+            className="sidebar-item-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <span className="sidebar-item-text">Dashboard</span>
+        </Link>
+
+        {isStaff && (
+          <>
+            <div className="sidebar-section-label">Management</div>
+            <Link href="/admin/" className="sidebar-item">
+              <svg
+                className="sidebar-item-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+              </svg>
+              <span className="sidebar-item-text">Admin Panel</span>
+            </Link>
+          </>
+        )}
+      </nav>
+
+      <div className="sidebar-footer">
+        {profile ? (
+          <div className="sidebar-profile-box">
+            <div className="sidebar-user-info">
+              <span className="sidebar-user-email" title={profile.email}>
+                {profile.email}
+              </span>
+              <span className="badge badge-role">{profile.role}</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary sidebar-signout-btn"
+              onClick={handleSignOut}
+            >
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <Link href="/sign-in/" className="btn btn-primary sidebar-signin-btn">
+            Sign in
+          </Link>
+        )}
+      </div>
+    </>
   );
 
   return (
     <>
-      <div className="mobile-floating-bar" aria-label="Mobile Admin Navigation">
-        <Link href="/admin/" className="mobile-bar-brand">
-          <BrandLogo size="sm" subtitle="Admin" />
+      {/* Mobile Floating Bar (< 920px) */}
+      <div className="mobile-floating-bar" aria-label="Mobile Navigation Bar">
+        <Link href="/" className="mobile-bar-brand">
+          <BrandLogo size="sm" subtitle={isAdminPanelRoute ? "Admin" : "Workspace"} />
         </Link>
         <button
           type="button"
@@ -272,20 +296,22 @@ export default function SiteNav() {
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-expanded={mobileOpen}
         >
-          {mobileOpen ? "Close" : "Admin Menu"}
+          {mobileOpen ? "Close" : "Menu"}
         </button>
       </div>
 
+      {/* Mobile Drawer Overlay */}
       {mobileOpen && (
         <div className="mobile-drawer-overlay" onClick={() => setMobileOpen(false)}>
           <aside className="mobile-drawer-paper" onClick={(e) => e.stopPropagation()}>
-            {adminSidebarContent}
+            {sidebarContent}
           </aside>
         </div>
       )}
 
-      <aside className="floating-sidebar" aria-label="Admin Sidebar">
-        {adminSidebarContent}
+      {/* Desktop Floating Sidebar (Always on the left across all pages) */}
+      <aside className="floating-sidebar" aria-label="Main Navigation">
+        {sidebarContent}
       </aside>
     </>
   );

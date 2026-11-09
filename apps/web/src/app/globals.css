@@ -202,7 +202,7 @@ a:hover {
 }
 
 /* ============================================================================
-   LAYOUT SHELL & CONTEXT-AWARE FRAME
+   LAYOUT SHELL & APP FRAME (ALWAYS FLOATING SIDEBAR ON DESKTOP)
    ============================================================================ */
 .app-frame {
   display: flex;
@@ -213,16 +213,11 @@ a:hover {
   position: relative;
 }
 
-/* When in User Mode (Home / Forms / Tickets), stack vertically with compact top pill */
-.app-frame:has(.user-nav-header) {
-  flex-direction: column;
-}
-
 .shell {
   flex: 1;
   min-width: 0;
   width: 100%;
-  max-width: 1020px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 1.5rem 2rem 4rem;
   display: flex;
@@ -238,85 +233,7 @@ a:hover {
 }
 
 /* ============================================================================
-   MODE 1: COMPACT USER FLOATING PILL (HOME ONLY / NO CLUTTER)
-   ============================================================================ */
-.user-nav-header {
-  width: 100%;
-  max-width: 880px;
-  margin: 1.25rem auto 0;
-  padding: 0 2rem;
-  z-index: 40;
-  animation: paperBackLayerIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.user-nav-pill {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.55rem 0.85rem 0.55rem 1rem;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: 9999px;
-  box-shadow:
-    0 1px 0 #ffffff inset,
-    0 3px 0 var(--paper-back),
-    0 3px 0 1px var(--paper-back-edge),
-    0 8px 20px rgba(24, 24, 27, 0.06);
-}
-
-.user-nav-left,
-.user-nav-right {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.user-nav-brand {
-  text-decoration: none;
-  color: inherit;
-  display: flex;
-  align-items: center;
-}
-
-.pill-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.38rem 0.85rem;
-  border-radius: 9999px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-muted);
-  color: var(--ink);
-  box-shadow: 0 1.5px 0 var(--paper-back-edge);
-  transition: transform 0.14s ease, background-color 0.14s ease, box-shadow 0.14s ease;
-}
-
-.pill-btn:hover {
-  transform: translateY(-1px);
-  background: var(--surface-elevated);
-  color: var(--ink);
-  box-shadow: 0 2.5px 0 var(--paper-back-edge);
-}
-
-.pill-btn-admin {
-  background: var(--ink);
-  color: var(--surface);
-  border-color: var(--ink);
-  box-shadow: 0 2px 0 #000000;
-}
-
-.pill-btn-admin:hover {
-  background: var(--primary-hover);
-  color: #ffffff;
-}
-
-/* ============================================================================
-   MODE 2: ADMIN PANEL FLOATING PAPER SIDEBAR (DEDICATED ADMIN CONSOLE)
+   TACTILE PAPER FLOATING SIDEBAR (ALWAYS FLOATING ON THE LEFT)
    ============================================================================ */
 .floating-sidebar {
   position: sticky;
