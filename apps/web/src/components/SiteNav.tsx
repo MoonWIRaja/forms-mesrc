@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import BrandLogo from "./BrandLogo";
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
 export default function SiteNav() {
@@ -49,7 +50,7 @@ export default function SiteNav() {
     <nav className="nav" aria-label="Primary">
       <div className="nav-links">
         <Link href="/" className="nav-brand">
-          <strong>Forms MESRC</strong>
+          <BrandLogo size="sm" />
         </Link>
         <Link href="/forms/">Forms</Link>
         <Link href="/tickets/">Tickets</Link>

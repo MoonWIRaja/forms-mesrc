@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import OtpBoxInput from "@/components/OtpBoxInput";
 import {
   getSupabase,
@@ -145,6 +146,7 @@ export default function SignInPage() {
   return (
     <div className="center-stage">
       <section className="card stack">
+      <BrandLogo size="md" subtitle="Invite-Only Workspace" />
       <h1>Sign in to Forms MESRC</h1>
       <p className="notice">
         Invite-only access via email one-time passcode (OTP). Passwords are not used.

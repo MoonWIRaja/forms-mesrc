@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="12" fill="#f3efe6"/>
+  <!-- 3D Hard Shadow -->
+  <rect x="14" y="13" width="38" height="44" rx="5" fill="#1c1917"/>
+  <!-- Stacked Back Sheet -->
+  <rect x="12" y="11" width="38" height="44" rx="5" fill="#efeae0" stroke="#1c1917" stroke-width="2.5"/>
+  <!-- Front Paper Sheet -->
+  <rect x="9" y="8" width="38" height="44" rx="5" fill="#faf8f5" stroke="#1c1917" stroke-width="2.5"/>
+  <!-- Top Header Strip (Warm Amber) -->
+  <path d="M11.5 13 C11.5 10.5 12.5 10.5 14 10.5 H42 C43.5 10.5 44.5 10.5 44.5 13 V17 H11.5 Z" fill="#fef3c7"/>
+  <line x1="9" y1="17" x2="47" y2="17" stroke="#1c1917" stroke-width="2.2"/>
+  <!-- Geometric M / Form Lines -->
+  <path d="M17 36 V24 L23.5 31.5 L30 24 V36" fill="none" stroke="#1c1917" stroke-width="3.2" stroke-linecap="square" stroke-linejoin="miter"/>
+  <rect x="34" y="24" width="6" height="5" fill="#1c1917"/>
+  <rect x="34" y="32" width="6" height="4" fill="#57534e"/>
+  <line x1="16" y1="43" x2="40" y2="43" stroke="#1c1917" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

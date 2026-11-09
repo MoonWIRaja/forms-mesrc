@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import OtpBoxInput from "@/components/OtpBoxInput";
 import { getSupabase, verifyFourDigitOtp } from "@/lib/supabase";
 
@@ -107,6 +108,7 @@ export default function InviteAcceptPage() {
   return (
     <div className="center-stage">
       <section className="card stack">
+        <BrandLogo size="md" subtitle="Workspace Invitation" />
         <h1>Accept Invitation</h1>
       {error && (
         <p className="alert alert-error" role="alert">

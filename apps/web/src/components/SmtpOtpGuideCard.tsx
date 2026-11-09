@@ -27,7 +27,7 @@ export const OTP_EMAIL_HTML = `<!DOCTYPE html>
                     </strong>
                   </td>
                   <td align="right">
-                    <span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border: 1.5px solid #1c1917; border-radius: 4px; background-color: #faf8f5; color: #1c1917;">
+                    <span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border: 1.5px solid #1c1917; border-radius: 4px; background-color: #fef3c7; color: #1c1917;">
                       4-DIGIT OTP
                     </span>
                   </td>
@@ -46,12 +46,10 @@ export const OTP_EMAIL_HTML = `<!DOCTYPE html>
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; border: 2px solid #1c1917; border-radius: 4px; box-shadow: 3px 3px 0px #1c1917; margin: 0 0 22px 0;">
                 <tr>
                   <td style="padding: 22px; text-align: center;">
-                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #57534e; margin-bottom: 6px;">
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #57534e; margin-bottom: 8px;">
                       4-Digit Passcode
                     </div>
-                    <span style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 38px; font-weight: 800; letter-spacing: 10px; color: #1c1917;">
-                      {{ slice .Token 0 4 }}
-                    </span>
+                    <div style="display: inline-block; max-width: 4ch; overflow: hidden; white-space: nowrap; font-family: 'Courier New', Courier, monospace; font-size: 40px; font-weight: 800; letter-spacing: 6px; color: #1c1917; line-height: 1.1;">{{ slice .Token 0 4 }}</div>
                   </td>
                 </tr>
               </table>

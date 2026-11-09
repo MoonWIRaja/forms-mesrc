@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import ChunkLoader from "@/components/ChunkLoader";
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
@@ -50,10 +51,11 @@ export default function HomePage() {
     return (
       <div className="center-stage">
         <section className="card stack">
-          <div>
-            <span className="badge" style={{ marginBottom: "0.6rem" }}>Initial Setup Required</span>
-            <h1>Welcome to Forms MESRC</h1>
+          <div className="row-between">
+            <BrandLogo size="lg" subtitle="Invite-Only Workspace" />
+            <span className="badge">Initial Setup Required</span>
           </div>
+          <h1>Welcome to Forms MESRC</h1>
           <p className="notice">
             This system has not been initialized yet. Before anyone can sign in, complete the
             first-time setup wizard to register the initial Maintenance account via email OTP and
@@ -72,7 +74,7 @@ export default function HomePage() {
   return (
     <div className="center-stage">
       <section className="card stack">
-        <h1>Forms MESRC</h1>
+        <BrandLogo size="lg" subtitle="Invite-Only Workspace" />
         <p className="notice">
           Company forms, appeals, and operational complaint tickets. Access is by invitation only.
         </p>

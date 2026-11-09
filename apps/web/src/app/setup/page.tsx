@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import ChunkLoader from "@/components/ChunkLoader";
 import GoogleDriveSetupForm from "@/components/GoogleDriveSetupForm";
 import InfoPopover from "@/components/InfoPopover";
@@ -168,6 +169,7 @@ export default function FirstTimeSetupPage() {
   return (
     <div className="center-stage">
       <section className="card stack">
+      <BrandLogo size="md" subtitle="System Initialization" />
       <div>
         <h1>First-Time System Setup Wizard</h1>
         <p className="notice">
