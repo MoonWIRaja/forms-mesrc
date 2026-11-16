@@ -764,24 +764,45 @@ a:hover {
 }
 
 .app-home-footer {
-  margin-top: 1.5rem;
-  text-align: center;
+  position: fixed;
+  bottom: 1.25rem;
+  left: 1.25rem;
+  z-index: 40;
+  margin: 0;
+  text-align: left;
+}
+
+@media (min-width: 921px) {
+  .app-home-footer {
+    left: calc(260px + 2rem);
+  }
 }
 
 .app-home-signout-btn {
-  background: transparent;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
   color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 500;
+  font-size: 0.78rem;
+  font-weight: 600;
   cursor: pointer;
-  padding: 0.35rem 0.75rem;
+  padding: 0.4rem 0.85rem;
   border-radius: 9999px;
-  transition: color 0.12s ease;
+  box-shadow: 0 1px 3px rgba(24, 24, 27, 0.05);
+  transition: all 0.15s ease;
 }
 
 .app-home-signout-btn:hover {
   color: var(--ink);
+  border-color: var(--ink);
+  background: var(--surface-muted);
+  transform: translateY(-1px);
+}
+
+.app-home-signout-btn:active {
+  transform: scale(0.97);
 }
 
 /* Mobile View: Sleek Native App Rows */
