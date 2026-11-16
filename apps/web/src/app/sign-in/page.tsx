@@ -147,7 +147,7 @@ export default function SignInPage() {
     <div className="center-stage">
       <section className="card stack">
       <BrandLogo size="md" subtitle="Invite-Only Workspace" />
-      <h1>Sign in to Forms MESRC</h1>
+      <h1>Sign In</h1>
       <p className="notice">
         Invite-only access via email one-time passcode (OTP). Passwords are not used.
       </p>

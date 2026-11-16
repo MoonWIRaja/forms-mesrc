@@ -563,32 +563,45 @@ a:hover {
 @media (max-width: 920px) {
   .app-frame {
     flex-direction: column;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .shell {
-    padding: 1.25rem 1rem 3rem;
+    padding: 0.75rem 1rem 2.5rem !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .user-nav-header {
     padding: 0 1rem;
     margin-top: 0.85rem;
+    width: 100%;
+    max-width: 480px;
+    align-self: center;
   }
 
   .floating-sidebar {
-    display: none;
+    display: none !important;
   }
 
   .mobile-floating-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin: 0.85rem 1rem 0;
-    padding: 0.6rem 1rem;
+    width: calc(100% - 2rem);
+    max-width: 480px;
+    margin: 0.85rem auto 0;
+    padding: 0.65rem 1rem;
     background: var(--surface);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
-    box-shadow: var(--shadow-cut-sm);
+    box-shadow: 0 1px 3px rgba(24, 24, 27, 0.05);
     z-index: 40;
+    align-self: center;
   }
 
   .mobile-bar-brand {
@@ -619,6 +632,26 @@ a:hover {
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-paper-stack);
+  }
+
+  .center-stage {
+    min-height: calc(100dvh - 140px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 1rem 0;
+  }
+
+  .card {
+    width: 100%;
+    box-shadow:
+      0 1px 0 #ffffff inset,
+      0 1px 3px rgba(24, 24, 27, 0.05),
+      0 8px 24px -4px rgba(24, 24, 27, 0.08);
   }
 }
 

@@ -54,14 +54,14 @@ export default function HomePage() {
             <BrandLogo size="lg" subtitle="System Initialization" />
             <span className="badge badge-admin">Setup Required</span>
           </div>
-          <h1>Initialize Forms MESRC</h1>
+          <h1>First-Time System Setup</h1>
           <p className="notice">
             Complete the guided 3-step setup wizard to verify the first Maintenance email and
             connect your company Google Workspace Shared Drive.
           </p>
           <div className="row-actions">
             <Link href="/setup/" className="btn btn-primary">
-              Launch Setup Wizard
+              Launch Setup Wizard &rarr;
             </Link>
           </div>
         </section>
@@ -75,14 +75,16 @@ export default function HomePage() {
       <div className="center-stage">
         <section className="card stack" style={{ textAlign: "center", alignItems: "center" }}>
           <BrandLogo size="lg" subtitle="Invite-Only Workspace" />
-          <h1 style={{ marginTop: "0.25rem" }}>Forms MESRC</h1>
-          <p className="notice" style={{ maxWidth: "42ch" }}>
-            Internal company portal for official forms, operational complaints, and appeals. Sign in
-            with your invited email address to continue.
+          <h1 style={{ fontSize: "1.25rem", margin: "0.55rem 0 0.2rem", fontWeight: 700 }}>
+            Sign in to get started
+          </h1>
+          <p className="notice" style={{ maxWidth: "38ch", margin: "0.25rem 0 0.5rem" }}>
+            Company portal for official forms, complaints, and appeals. Sign in with your invited
+            email to continue.
           </p>
-          <div className="row-actions" style={{ justifyContent: "center", marginTop: "0.25rem" }}>
-            <Link href="/sign-in/" className="btn btn-primary">
-              Sign in with Email OTP
+          <div className="row-actions" style={{ justifyContent: "center", width: "100%", marginTop: "0.5rem" }}>
+            <Link href="/sign-in/" className="btn btn-primary" style={{ minWidth: "220px", justifyContent: "center" }}>
+              Sign in with Email OTP &rarr;
             </Link>
           </div>
         </section>
