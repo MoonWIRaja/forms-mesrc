@@ -39,8 +39,8 @@ interface SubmittedVote {
 }
 
 const ACTIVE_WEDNESDAY_SESSION: WednesdayPresenterGroup = {
-  topic: "Transformasi Digital & Automasi AI di MESRC",
-  date: "Rabu, Sesi Mingguan",
+  topic: "Digital Transformation & AI Automation at MESRC",
+  date: "Wednesday Weekly Session",
   speaker: "Muhammad Faiz",
   coordinator: "Siti Nurul Huda",
   emcee: "Hariz Danial",
@@ -62,7 +62,7 @@ const INITIAL_SAMPLE_VOTES: SubmittedVote[] = [
   {
     id: "v-sample-1",
     sessionId: "wed-wk46",
-    sessionTitle: "Transformasi Digital & Automasi AI di MESRC",
+    sessionTitle: "Digital Transformation & AI Automation at MESRC",
     voterEmail: "ahmad@mesrc.com.my",
     voterName: "Ahmad",
     submittedAt: "2026-11-16T04:00:00.000Z",
@@ -75,7 +75,7 @@ const INITIAL_SAMPLE_VOTES: SubmittedVote[] = [
       coordinator_readiness: 8,
       emcee_protocol: 9,
       emcee_clarity: 9,
-      feedback: "Slaid sangat kemas dan padat. Perkongsian yang sangat membantu!",
+      feedback: "Slides were crisp and clear. Very informative session!",
     },
     totalScore: 69,
     maxScore: 80,
@@ -83,7 +83,7 @@ const INITIAL_SAMPLE_VOTES: SubmittedVote[] = [
   {
     id: "v-sample-2",
     sessionId: "wed-wk46",
-    sessionTitle: "Transformasi Digital & Automasi AI di MESRC",
+    sessionTitle: "Digital Transformation & AI Automation at MESRC",
     voterEmail: "azlina@mesrc.com.my",
     voterName: "Azlina",
     submittedAt: "2026-11-16T06:00:00.000Z",
@@ -96,7 +96,7 @@ const INITIAL_SAMPLE_VOTES: SubmittedVote[] = [
       coordinator_readiness: 9,
       emcee_protocol: 8,
       emcee_clarity: 8,
-      feedback: "Penyampaian jelas dan santai. Tahniah kumpulan pembentang!",
+      feedback: "Engaging delivery and clear explanations. Kudos to the presenters!",
     },
     totalScore: 65,
     maxScore: 80,
@@ -228,9 +228,9 @@ export default function VotingPage() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
-          <span>Menu Utama</span>
+          <span>Main Menu</span>
         </Link>
-        <span className="app-mobile-nav-title">Penilaian &amp; Undian</span>
+        <span className="app-mobile-nav-title">Voting &amp; Evaluation</span>
         <div style={{ width: 40 }} />
       </div>
 
@@ -239,15 +239,15 @@ export default function VotingPage() {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
             <span className="badge badge-role" style={{ background: "#ecfdf5", color: "#047857", borderColor: "#a7f3d0" }}>
-              SISTEM PERMAKHAN &amp; UNDIAN
+              SCORING &amp; VOTING SYSTEM
             </span>
-            <span className="badge badge-active">Sesi Aktif</span>
+            <span className="badge badge-active">Active Session</span>
           </div>
           <h1 style={{ fontSize: "1.75rem", fontWeight: 800, margin: 0, letterSpacing: "-0.025em" }}>
             Voting &amp; Staff Evaluation
           </h1>
           <p className="notice" style={{ marginTop: "0.25rem" }}>
-            Beri markah dan penilaian sesi pembentangan mingguan, undian MCEP, serta kaji selidik tahunan.
+            Evaluate weekly Wednesday presentations, participate in company polls, and view analytical reports.
           </p>
         </div>
 
@@ -266,7 +266,7 @@ export default function VotingPage() {
           onClick={() => setActiveTab("wednesday")}
           style={{ whiteSpace: "nowrap" }}
         >
-          ⭐ Sesi Pembentangan Rabu
+          ⭐ Wednesday Presentations
         </button>
         <button
           type="button"
@@ -274,7 +274,7 @@ export default function VotingPage() {
           onClick={() => setActiveTab("polls")}
           style={{ whiteSpace: "nowrap" }}
         >
-          🗳️ Undian Pilihan (Polls)
+          🗳️ Polls &amp; Surveys
         </button>
         <button
           type="button"
@@ -282,7 +282,7 @@ export default function VotingPage() {
           onClick={() => setActiveTab("my-votes")}
           style={{ whiteSpace: "nowrap" }}
         >
-          📋 Rekod Markah ({votesList.filter((v) => v.voterEmail === profile.email).length})
+          📋 My Scoring Records ({votesList.filter((v) => v.voterEmail === profile.email).length})
         </button>
         {isStaff && (
           <button
@@ -291,15 +291,15 @@ export default function VotingPage() {
             onClick={() => setActiveTab("admin-report")}
             style={{ whiteSpace: "nowrap", background: activeTab === "admin-report" ? "#047857" : undefined, color: activeTab === "admin-report" ? "#ffffff" : undefined }}
           >
-            📊 Laporan &amp; Analytics (Admin)
+            📊 Reports &amp; Analytics (Admin)
           </button>
         )}
       </div>
 
-      {/* TAB 1: SESI PEMBENTANGAN RABU (PENILAIAN 3 PERANAN: SPEAKER, COORDINATOR, EMCEE) */}
+      {/* TAB 1: WEDNESDAY PRESENTATION (GRADING 3 ROLES: SPEAKER, COORDINATOR, EMCEE) */}
       {activeTab === "wednesday" && (
         <div>
-          {/* BANNER KUMPULAN PEMBENTANG */}
+          {/* PRESENTERS GROUP BANNER */}
           <div
             className="card"
             style={{
@@ -318,7 +318,7 @@ export default function VotingPage() {
                   {ACTIVE_WEDNESDAY_SESSION.topic}
                 </h2>
                 <p className="notice">
-                  Setiap pembentangan dinilai berdasarkan 3 peranan utama. Sila berikan markah yang adil dan objektif.
+                  Each presentation is evaluated across 3 key roles. Please provide fair and objective ratings.
                 </p>
               </div>
               <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
@@ -338,13 +338,13 @@ export default function VotingPage() {
           {submitSuccess ? (
             <div className="card stack" style={{ textAlign: "center", padding: "2.5rem 1.5rem" }}>
               <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>🎉</div>
-              <h2 style={{ margin: 0, fontSize: "1.4rem" }}>Markah Berjaya Dihantar!</h2>
+              <h2 style={{ margin: 0, fontSize: "1.4rem" }}>Evaluation Submitted Successfully!</h2>
               <p className="notice" style={{ maxWidth: "46ch", margin: "0.5rem auto 1.5rem" }}>
-                Terima kasih atas penilaian anda. Skor anda sebanyak <strong>{calculateTotal()} / 80</strong> telah direkodkan ke dalam sistem pemarkahan syarikat.
+                Thank you for your evaluation. Your score of <strong>{calculateTotal()} / 80</strong> has been recorded into the company scoring system.
               </p>
               <div className="row-actions" style={{ justifyContent: "center", gap: "0.75rem", flexWrap: "wrap" }}>
                 <Link href="/" className="btn btn-primary">
-                  Kembali ke Menu Utama &rarr;
+                  Return to Main Menu &rarr;
                 </Link>
                 <button
                   type="button"
@@ -354,14 +354,14 @@ export default function VotingPage() {
                     setScores(DEFAULT_SCORES);
                   }}
                 >
-                  Nilai Sesi Lain
+                  Evaluate Another Session
                 </button>
                 <button
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => setActiveTab("my-votes")}
                 >
-                  Lihat Rekod Markah
+                  View My Records
                 </button>
               </div>
             </div>
@@ -372,10 +372,10 @@ export default function VotingPage() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <span className="badge badge-role" style={{ background: "#eff6ff", color: "#1d4ed8", borderColor: "#bfdbfe" }}>
-                      PERANAN 1: SPEAKER
+                      ROLE 1: SPEAKER
                     </span>
                     <h3 style={{ fontSize: "1.15rem", fontWeight: 700, margin: "0.25rem 0" }}>
-                      Penilaian Pembentang: {ACTIVE_WEDNESDAY_SESSION.speaker}
+                      Speaker Evaluation: {ACTIVE_WEDNESDAY_SESSION.speaker}
                     </h3>
                   </div>
                 </div>
@@ -383,7 +383,7 @@ export default function VotingPage() {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginTop: "0.5rem" }}>
                   <div className="field">
                     <label style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span>🎨 Kualiti &amp; Rekaan Slaid</span>
+                      <span>🎨 Slide Quality &amp; Design</span>
                       <strong>{scores.speaker_slides} / 10</strong>
                     </label>
                     <input
@@ -394,12 +394,12 @@ export default function VotingPage() {
                       onChange={(e) => handleScoreChange("speaker_slides", Number(e.target.value))}
                       style={{ width: "100%", accentColor: "#1d4ed8" }}
                     />
-                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Kejelasan tipografi, visual, dan daya tarikan slaid</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Typography clarity, visuals, and slide appeal</span>
                   </div>
 
                   <div className="field">
                     <label style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span>💡 Penguasaan Kandungan &amp; Fakta</span>
+                      <span>💡 Content Mastery &amp; Accuracy</span>
                       <strong>{scores.speaker_content} / 10</strong>
                     </label>
                     <input
@@ -410,12 +410,12 @@ export default function VotingPage() {
                       onChange={(e) => handleScoreChange("speaker_content", Number(e.target.value))}
                       style={{ width: "100%", accentColor: "#1d4ed8" }}
                     />
-                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Kedalaman topik, contoh relevan, dan kefahaman</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Depth of topic, relevant examples, and understanding</span>
                   </div>
 
                   <div className="field">
                     <label style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span>🗣️ Gaya Penyampaian &amp; Suara</span>
+                      <span>🗣️ Delivery Style &amp; Vocal Dynamics</span>
                       <strong>{scores.speaker_delivery} / 10</strong>
                     </label>
                     <input
@@ -426,12 +426,12 @@ export default function VotingPage() {
                       onChange={(e) => handleScoreChange("speaker_delivery", Number(e.target.value))}
                       style={{ width: "100%", accentColor: "#1d4ed8" }}
                     />
-                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Keyakinan, intonasi, bahasa badan, dan kejelasan</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Confidence, intonation, body language, and clarity</span>
                   </div>
 
                   <div className="field">
                     <label style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span>⏱️ Pengurusan Masa Sesi</span>
+                      <span>⏱️ Time Management</span>
                       <strong>{scores.speaker_time} / 10</strong>
                     </label>
                     <input
@@ -442,7 +442,7 @@ export default function VotingPage() {
                       onChange={(e) => handleScoreChange("speaker_time", Number(e.target.value))}
                       style={{ width: "100%", accentColor: "#1d4ed8" }}
                     />
-                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Menepati tempoh masa pembentangan yang ditetapkan</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Adhering to allocated presentation time limit</span>
                   </div>
                 </div>
               </div>
@@ -452,10 +452,10 @@ export default function VotingPage() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <span className="badge badge-role" style={{ background: "#fffbeb", color: "#b45309", borderColor: "#fde68a" }}>
-                      PERANAN 2: COORDINATOR
+                      ROLE 2: COORDINATOR
                     </span>
                     <h3 style={{ fontSize: "1.15rem", fontWeight: 700, margin: "0.25rem 0" }}>
-                      Penilaian Penyelaras: {ACTIVE_WEDNESDAY_SESSION.coordinator}
+                      Coordinator Evaluation: {ACTIVE_WEDNESDAY_SESSION.coordinator}
                     </h3>
                   </div>
                 </div>
@@ -463,7 +463,7 @@ export default function VotingPage() {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginTop: "0.5rem" }}>
                   <div className="field">
                     <label style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span>💻 Kelancaran Teknikal &amp; Media</span>
+                      <span>💻 Technical &amp; AV Operations</span>
                       <strong>{scores.coordinator_technical} / 10</strong>
                     </label>
                     <input
@@ -474,12 +474,12 @@ export default function VotingPage() {
                       onChange={(e) => handleScoreChange("coordinator_technical", Number(e.target.value))}
                       style={{ width: "100%", accentColor: "#b45309" }}
                     />
-                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Pengurusan skrin, audio-visual, dan sambungan projector</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Screen management, AV equipment, and projector connectivity</span>
                   </div>
 
                   <div className="field">
                     <label style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span>📦 Kesiapsiagaan &amp; Logistik</span>
+                      <span>📦 Readiness &amp; Logistics</span>
                       <strong>{scores.coordinator_readiness} / 10</strong>
                     </label>
                     <input
@@ -490,7 +490,7 @@ export default function VotingPage() {
                       onChange={(e) => handleScoreChange("coordinator_readiness", Number(e.target.value))}
                       style={{ width: "100%", accentColor: "#b45309" }}
                     />
-                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Penyediaan fail, nota pembentangan, dan sokongan kumpulan</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>File preparation, handout readiness, and team support</span>
                   </div>
                 </div>
               </div>
@@ -500,10 +500,10 @@ export default function VotingPage() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <span className="badge badge-role" style={{ background: "#ecfdf5", color: "#047857", borderColor: "#a7f3d0" }}>
-                      PERANAN 3: PENGACARA MAJLIS (EMCEE)
+                      ROLE 3: EMCEE (MASTER OF CEREMONIES)
                     </span>
                     <h3 style={{ fontSize: "1.15rem", fontWeight: 700, margin: "0.25rem 0" }}>
-                      Penilaian Emcee: {ACTIVE_WEDNESDAY_SESSION.emcee}
+                      Emcee Evaluation: {ACTIVE_WEDNESDAY_SESSION.emcee}
                     </h3>
                   </div>
                 </div>
@@ -511,7 +511,7 @@ export default function VotingPage() {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginTop: "0.5rem" }}>
                   <div className="field">
                     <label style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span>🎙️ Pengawalan Majlis &amp; Interaksi</span>
+                      <span>🎙️ Stage Presence &amp; Audience Engagement</span>
                       <strong>{scores.emcee_protocol} / 10</strong>
                     </label>
                     <input
@@ -522,12 +522,12 @@ export default function VotingPage() {
                       onChange={(e) => handleScoreChange("emcee_protocol", Number(e.target.value))}
                       style={{ width: "100%", accentColor: "#047857" }}
                     />
-                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Suasana majlis, pembukaan bersemangat, dan kawalan audiens</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Atmosphere setting, energetic opening, and crowd management</span>
                   </div>
 
                   <div className="field">
                     <label style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span>📢 Kejelasan Suara &amp; Aliran Acara</span>
+                      <span>📢 Articulation &amp; Event Flow</span>
                       <strong>{scores.emcee_clarity} / 10</strong>
                     </label>
                     <input
@@ -538,23 +538,23 @@ export default function VotingPage() {
                       onChange={(e) => handleScoreChange("emcee_clarity", Number(e.target.value))}
                       style={{ width: "100%", accentColor: "#047857" }}
                     />
-                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Sebutan jelas, peralihan segmen lancar, dan penutupan kemas</span>
+                    <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Clear pronunciation, seamless segment transitions, and punctual closing</span>
                   </div>
                 </div>
               </div>
 
-              {/* SECTION 4: MAKLUM BALAS MEMBINA */}
+              {/* SECTION 4: CONSTRUCTIVE FEEDBACK */}
               <div className="card stack" style={{ padding: "1.5rem" }}>
                 <h3 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0 }}>
-                  💬 Maklum Balas Membina &amp; Cadangan Penambahbaikan
+                  💬 Constructive Feedback &amp; Suggestions
                 </h3>
                 <p className="notice" style={{ margin: 0 }}>
-                  Kongsi pujian atau aspek yang boleh diperbaiki untuk membantu rakan sekerja terus berkembang.
+                  Share compliments or areas for improvement to help colleagues grow.
                 </p>
                 <div className="field">
                   <textarea
                     rows={3}
-                    placeholder="Contoh: Pembentangan sangat interaktif, cuma slaid pada bahagian graf boleh diringkaskan sedikit fontnya..."
+                    placeholder="Example: Great presentation and energy! The font size on slide 4 charts could be slightly larger for better readability..."
                     value={scores.feedback}
                     onChange={(e) => handleScoreChange("feedback", e.target.value)}
                   />
@@ -575,7 +575,7 @@ export default function VotingPage() {
                 }}
               >
                 <div>
-                  <span style={{ fontSize: "0.85rem", color: "var(--muted)" }}>Jumlah Keseluruhan Markah:</span>
+                  <span style={{ fontSize: "0.85rem", color: "var(--muted)" }}>Total Evaluation Score:</span>
                   <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--ink)" }}>
                     {calculateTotal()} <span style={{ fontSize: "0.95rem", fontWeight: 500, color: "var(--muted)" }}>/ 80</span>
                   </div>
@@ -583,7 +583,7 @@ export default function VotingPage() {
 
                 <div className="row-actions">
                   <button type="submit" className="btn btn-primary" disabled={submitting} style={{ padding: "0.65rem 1.8rem" }}>
-                    {submitting ? "Merekod Markah..." : "Hantar Markah Penilaian ⭐"}
+                    {submitting ? "Recording Score..." : "Submit Evaluation ⭐"}
                   </button>
                 </div>
               </div>
@@ -592,18 +592,18 @@ export default function VotingPage() {
         </div>
       )}
 
-      {/* TAB 2: UNDIAN PILIHAN (LOCATION POLLS / MCEP / YEAR-END) */}
+      {/* TAB 2: POLLS (LOCATION POLLS / MCEP / YEAR-END) */}
       {activeTab === "polls" && (
         <div className="stack" style={{ gap: "1.5rem" }}>
           <div className="card stack" style={{ padding: "1.75rem" }}>
             <span className="badge badge-role" style={{ alignSelf: "flex-start", background: "#eff6ff", color: "#1d4ed8", borderColor: "#bfdbfe" }}>
-              UNDIAN LOKASI MESRC 2026
+              MESRC 2026 RETREAT POLL
             </span>
             <h2 style={{ fontSize: "1.35rem", fontWeight: 800, margin: 0 }}>
-              Pemilihan Lokasi Team Building &amp; Annual Retreat
+              Annual Company Retreat Location Vote
             </h2>
             <p className="notice">
-              Pilih lokasi kegemaran anda untuk aktiviti tahunan syarikat. Undian dibuka kepada semua kakitangan.
+              Select your preferred destination for the annual team retreat. Open to all staff members.
             </p>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem", marginTop: "0.5rem" }}>
@@ -628,7 +628,7 @@ export default function VotingPage() {
                   />
                   <strong style={{ fontSize: "1rem" }}>🌊 Desaru Coast, Johor</strong>
                 </div>
-                <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>Resort pantai, sukan air, dan dewan seminar berhawa dingin.</span>
+                <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>Beachfront resort, water sports, and air-conditioned meeting facilities.</span>
               </label>
 
               <label
@@ -652,7 +652,7 @@ export default function VotingPage() {
                   />
                   <strong style={{ fontSize: "1rem" }}>🍓 Cameron Highlands</strong>
                 </div>
-                <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>Udara sejuk tanah tinggi, ladang teh, dan suasana santai.</span>
+                <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>Cool highland climate, tea plantations, and relaxed scenic atmosphere.</span>
               </label>
 
               <label
@@ -674,9 +674,9 @@ export default function VotingPage() {
                     checked={selectedLocation === "pangkor"}
                     onChange={() => setSelectedLocation("pangkor")}
                   />
-                  <strong style={{ fontSize: "1rem" }}>🏝️ Pulau Pangkor, Perak</strong>
+                  <strong style={{ fontSize: "1rem" }}>🏝️ Pangkor Island, Perak</strong>
                 </div>
-                <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>Pulau bebas cukai, aktiviti snorkeling &amp; bbq tepi pantai.</span>
+                <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>Duty-free island, snorkeling activities, and beachfront BBQ gathering.</span>
               </label>
             </div>
 
@@ -686,37 +686,37 @@ export default function VotingPage() {
                 className="btn btn-primary"
                 onClick={() => setLocationVoted(true)}
               >
-                {locationVoted ? "Undian Direkodkan ✔️" : "Hantar Pilihan Undian"}
+                {locationVoted ? "Vote Recorded ✔️" : "Submit Location Vote"}
               </button>
             </div>
             {locationVoted && (
               <p className="alert alert-ok" style={{ margin: "0.5rem 0 0" }}>
-                Pilihan anda telah direkodkan ke dalam pangkalan data undian syarikat.
+                Your choice has been recorded into the company polling database.
               </p>
             )}
           </div>
         </div>
       )}
 
-      {/* TAB 3: REKOD MARKAH SAYA */}
+      {/* TAB 3: MY SCORING RECORDS */}
       {activeTab === "my-votes" && (
         <div className="stack" style={{ gap: "1rem" }}>
           <div className="card stack" style={{ padding: "1.5rem" }}>
-            <h2 style={{ fontSize: "1.25rem", margin: 0 }}>Sejarah Pemarkahan Anda</h2>
+            <h2 style={{ fontSize: "1.25rem", margin: 0 }}>Your Scoring History</h2>
             <p className="notice" style={{ margin: 0 }}>
-              Senarai sesi penilaian yang telah anda lengkapkan menggunakan akaun <strong>{profile.email}</strong>.
+              List of evaluation sessions submitted using your account (<strong>{profile.email}</strong>).
             </p>
 
             {votesList.filter((v) => v.voterEmail === profile.email).length === 0 ? (
               <div style={{ padding: "2rem", textAlign: "center", background: "#faf8f5", borderRadius: "12px" }}>
-                <p className="notice">Anda belum menghantar sebarang markah penilaian lagi.</p>
+                <p className="notice">You have not submitted any evaluations yet.</p>
                 <button
                   type="button"
                   className="btn btn-primary"
                   onClick={() => setActiveTab("wednesday")}
                   style={{ marginTop: "0.75rem" }}
                 >
-                  Mula Nilai Sesi Rabu Sekarang
+                  Evaluate Wednesday Session Now
                 </button>
               </div>
             ) : (
@@ -741,7 +741,7 @@ export default function VotingPage() {
                       <div>
                         <strong>{vote.sessionTitle}</strong>
                         <div style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: "0.2rem" }}>
-                          Dihantar pada {new Date(vote.submittedAt).toLocaleDateString()} jam {new Date(vote.submittedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          Submitted on {new Date(vote.submittedAt).toLocaleDateString()} at {new Date(vote.submittedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </div>
                         {vote.scores.feedback && (
                           <div style={{ fontSize: "0.82rem", fontStyle: "italic", marginTop: "0.35rem", color: "var(--ink)" }}>
@@ -763,48 +763,48 @@ export default function VotingPage() {
         </div>
       )}
 
-      {/* TAB 4: LAPORAN & ANALYTICS (ADMIN ONLY) */}
+      {/* TAB 4: REPORTS & ANALYTICS (ADMIN ONLY) */}
       {activeTab === "admin-report" && isStaff && (
         <div className="stack" style={{ gap: "1.5rem" }}>
           {/* STATS OVERVIEW */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
             <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Jumlah Pengundi</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Total Voters</span>
               <div style={{ fontSize: "1.85rem", fontWeight: 800, color: "var(--ink)", marginTop: "0.25rem" }}>{totalVotesCount}</div>
             </div>
             <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Purata Keseluruhan</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Overall Average</span>
               <div style={{ fontSize: "1.85rem", fontWeight: 800, color: "#047857", marginTop: "0.25rem" }}>{avgTotal} <span style={{ fontSize: "0.95rem", color: "var(--muted)" }}>/ 80</span></div>
             </div>
             <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Slaid Speaker</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Speaker Slides</span>
               <div style={{ fontSize: "1.85rem", fontWeight: 800, color: "#1d4ed8", marginTop: "0.25rem" }}>{avgSpeakerSlides} <span style={{ fontSize: "0.95rem", color: "var(--muted)" }}>/ 10</span></div>
             </div>
             <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Isi Kandungan</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Speaker Content</span>
               <div style={{ fontSize: "1.85rem", fontWeight: 800, color: "#1d4ed8", marginTop: "0.25rem" }}>{avgSpeakerContent} <span style={{ fontSize: "0.95rem", color: "var(--muted)" }}>/ 10</span></div>
             </div>
             <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Penyampaian Suara</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Speaker Delivery</span>
               <div style={{ fontSize: "1.85rem", fontWeight: 800, color: "#1d4ed8", marginTop: "0.25rem" }}>{avgSpeakerDelivery} <span style={{ fontSize: "0.95rem", color: "var(--muted)" }}>/ 10</span></div>
             </div>
             <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Teknikal Coordinator</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Coordinator Tech</span>
               <div style={{ fontSize: "1.85rem", fontWeight: 800, color: "#b45309", marginTop: "0.25rem" }}>{avgCoordinatorTech} <span style={{ fontSize: "0.95rem", color: "var(--muted)" }}>/ 10</span></div>
             </div>
             <div className="card" style={{ padding: "1.25rem", textAlign: "center" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Kelancaran Emcee</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Emcee Clarity</span>
               <div style={{ fontSize: "1.85rem", fontWeight: 800, color: "#047857", marginTop: "0.25rem" }}>{avgEmceeClarity} <span style={{ fontSize: "0.95rem", color: "var(--muted)" }}>/ 10</span></div>
             </div>
           </div>
 
-          {/* DETAILED LEADERBOARD & REVIEWS */}
+          {/* DETAILED AUDIT TABLE */}
           <div className="card stack" style={{ padding: "1.5rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.25rem" }}>Senarai Pemarkahan Masuk (Admin Audit)</h3>
+                <h3 style={{ margin: 0, fontSize: "1.25rem" }}>Incoming Scoring Entries (Admin Audit)</h3>
                 <p className="notice" style={{ margin: "0.2rem 0 0" }}>
-                  Keputusan penuh undian yang telah dikemukakan oleh kakitangan untuk sesi mingguan.
+                  Full audit log of scores submitted by staff members for the weekly session.
                 </p>
               </div>
             </div>
@@ -813,12 +813,12 @@ export default function VotingPage() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
                 <thead>
                   <tr style={{ background: "#f3efe6", borderBottom: "2px solid var(--border-strong)", textAlign: "left" }}>
-                    <th style={{ padding: "0.6rem 0.8rem" }}>Pengundi</th>
-                    <th style={{ padding: "0.6rem 0.8rem" }}>Speaker (Slaid/Isi/Suara)</th>
-                    <th style={{ padding: "0.6rem 0.8rem" }}>Coordinator</th>
-                    <th style={{ padding: "0.6rem 0.8rem" }}>Emcee</th>
-                    <th style={{ padding: "0.6rem 0.8rem" }}>Jumlah</th>
-                    <th style={{ padding: "0.6rem 0.8rem" }}>Catatan Maklum Balas</th>
+                    <th style={{ padding: "0.6rem 0.8rem" }}>Voter</th>
+                    <th style={{ padding: "0.6rem 0.8rem" }}>Speaker (Slides/Content/Delivery)</th>
+                    <th style={{ padding: "0.6rem 0.8rem" }}>Coordinator (Tech/Readiness)</th>
+                    <th style={{ padding: "0.6rem 0.8rem" }}>Emcee (Protocol/Clarity)</th>
+                    <th style={{ padding: "0.6rem 0.8rem" }}>Total</th>
+                    <th style={{ padding: "0.6rem 0.8rem" }}>Feedback Notes</th>
                   </tr>
                 </thead>
                 <tbody>

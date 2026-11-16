@@ -182,9 +182,9 @@ export default function TicketsPage() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
-          <span>Menu Utama</span>
+          <span>Main Menu</span>
         </Link>
-        <span className="app-mobile-nav-title">Aduan Staf</span>
+        <span className="app-mobile-nav-title">Staff Complaints</span>
         <div style={{ width: 40 }} />
       </div>
 
@@ -224,7 +224,7 @@ export default function TicketsPage() {
         <div className="alert alert-ok" role="status" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
           <span>{successMsg}</span>
           <Link href="/" className="btn btn-secondary btn-sm" style={{ padding: "0.2rem 0.5rem", fontSize: "0.78rem" }}>
-            Kembali ke Menu Utama &rarr;
+            Return to Main Menu &rarr;
           </Link>
         </div>
       )}
@@ -260,8 +260,8 @@ export default function TicketsPage() {
                     value={kind}
                     onChange={(e) => setKind(e.target.value as "complaint" | "appeal")}
                   >
-                    <option value="complaint">Operational Complaint (Aduan Operasi)</option>
-                    <option value="appeal">Application / Submission Appeal (Rayuan)</option>
+                    <option value="complaint">Operational Complaint / Misconduct</option>
+                    <option value="appeal">Application / Submission Appeal</option>
                   </select>
                 </div>
 

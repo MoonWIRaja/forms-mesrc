@@ -97,7 +97,7 @@ export default function HomePage() {
     );
   }
 
-  // 3. Signed-In Home: 3 Pure Centered Choices (Borang Syarikat, Aduan Staf, Penilaian & Undian)
+  // 3. Signed-In Home: 3 Pure Centered Choices (Company Forms, Staff Complaints, Voting & Evaluation)
   return (
     <div className="app-home-stage">
       <div className="app-choice-grid">
@@ -113,8 +113,8 @@ export default function HomePage() {
             </svg>
           </div>
           <div className="app-choice-info">
-            <h2 className="app-choice-title">Borang Syarikat</h2>
-            <p className="app-choice-desc">Borang rasmi, permohonan servis &amp; rekod</p>
+            <h2 className="app-choice-title">Company Forms</h2>
+            <p className="app-choice-desc">Official company forms, service requests &amp; records</p>
           </div>
           <div className="app-choice-chevron" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -133,8 +133,8 @@ export default function HomePage() {
             </svg>
           </div>
           <div className="app-choice-info">
-            <h2 className="app-choice-title">Aduan Staf</h2>
-            <p className="app-choice-desc">Aduan sulit, salah laku &amp; rayuan tiket</p>
+            <h2 className="app-choice-title">Staff Complaints</h2>
+            <p className="app-choice-desc">Confidential reporting, misconduct &amp; ticket appeals</p>
           </div>
           <div className="app-choice-chevron" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -151,8 +151,8 @@ export default function HomePage() {
             </svg>
           </div>
           <div className="app-choice-info">
-            <h2 className="app-choice-title">Penilaian &amp; Undian</h2>
-            <p className="app-choice-desc">Markah sesi Rabu, undian staf &amp; laporan</p>
+            <h2 className="app-choice-title">Voting &amp; Evaluation</h2>
+            <p className="app-choice-desc">Wednesday presentation grading, polls &amp; reports</p>
           </div>
           <div className="app-choice-chevron" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -169,7 +169,7 @@ export default function HomePage() {
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
-          <span>Log Keluar ({profile.email})</span>
+          <span>Sign out ({profile.email})</span>
         </button>
       </div>
     </div>
