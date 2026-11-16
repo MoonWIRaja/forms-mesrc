@@ -3,6 +3,20 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import ChunkLoader from "@/components/ChunkLoader";
+import {
+  PixelArrowLeftIcon,
+  PixelArrowRightIcon,
+  PixelLockIcon,
+  PixelPauseIcon,
+  PixelPlusIcon,
+  PixelShieldAlertIcon,
+  PixelSparkleIcon,
+} from "@/components/PixelIcons";
+import {
+  resolveFormCategory,
+  type FormRow,
+  type FormTheme,
+} from "@/lib/form-types";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
 interface TicketRow {
@@ -20,11 +34,6 @@ interface TicketRow {
   updated_at: string;
 }
 
-interface FormOption {
-  id: string;
-  title: string;
-}
-
 interface SubmissionOption {
   id: string;
   form_id: string;
@@ -34,13 +43,15 @@ interface SubmissionOption {
 export default function TicketsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
-  const [forms, setForms] = useState<FormOption[]>([]);
+  const [allForms, setAllForms] = useState<FormRow[]>([]);
+  const [complaintForms, setComplaintForms] = useState<FormRow[]>([]);
+  const [themesMap, setThemesMap] = useState<Record<string, FormTheme>>({});
   const [submissions, setSubmissions] = useState<SubmissionOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // New Ticket Composer State
+  // Quick Direct Ticket Composer State
   const [showComposer, setShowComposer] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("new") === "1";
@@ -66,7 +77,11 @@ export default function TicketsPage() {
         await Promise.all([
           supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
           supabase.from("tickets").select("*").order("created_at", { ascending: false }),
-          supabase.from("forms").select("id,title").order("title", { ascending: true }),
+          supabase
+            .from("forms")
+            .select("*")
+            .eq("state", "published")
+            .order("title", { ascending: true }),
           supabase
             .from("submissions")
             .select("id,form_id,created_at")
@@ -77,10 +92,40 @@ export default function TicketsPage() {
       const typedProf = (prof as UserProfile | null) ?? null;
       setProfile(typedProf);
 
-      const formList = (fRows as FormOption[] | null) ?? [];
-      setForms(formList);
+      const formList = (fRows as FormRow[] | null) ?? [];
+      setAllForms(formList);
+
+      const tMap: Record<string, FormTheme> = {};
       if (formList.length > 0) {
-        setSelectedFormId((prev) => prev || formList[0].id);
+        const { data: verRows } = await supabase
+          .from("form_versions")
+          .select("form_id,version_number,theme_json")
+          .in(
+            "form_id",
+            formList.map((f) => f.id),
+          )
+          .eq("is_published", true);
+
+        for (const f of formList) {
+          const match = (
+            verRows as { form_id: string; version_number: number; theme_json: FormTheme }[] | null
+          )?.find(
+            (v) =>
+              v.form_id === f.id &&
+              v.version_number === (f.current_published_version ?? f.latest_version),
+          );
+          if (match?.theme_json) tMap[f.id] = match.theme_json;
+        }
+      }
+      setThemesMap(tMap);
+
+      const cForms = formList.filter(
+        (f) => resolveFormCategory(f, tMap[f.id]) === "staff_complaints",
+      );
+      setComplaintForms(cForms);
+
+      if (formList.length > 0) {
+        setSelectedFormId((prev) => prev || cForms[0]?.id || formList[0].id);
       }
 
       setSubmissions((subRows as SubmissionOption[] | null) ?? []);
@@ -139,7 +184,7 @@ export default function TicketsPage() {
       setSelectedSubmissionId("");
       setShowComposer(false);
       setSuccessMsg(
-        `Your ${kind === "complaint" ? "complaint" : "appeal"} ticket has been submitted to the support team.`,
+        `Your ${kind === "complaint" ? "complaint" : "appeal"} has been logged under ${profile?.email ?? "your account"}. Track real-time updates below.`,
       );
       await loadTicketsData();
     } catch (err) {
@@ -150,7 +195,7 @@ export default function TicketsPage() {
   }
 
   if (loading) {
-    return <ChunkLoader title="Complaints & Appeals" subtitle="Loading support desk..." />;
+    return <ChunkLoader title="Staff Complaints" subtitle="Loading complaints & status desk..." />;
   }
 
   if (!profile) {
@@ -159,11 +204,11 @@ export default function TicketsPage() {
         <section className="card stack">
           <h1>Sign In Required</h1>
           <p className="notice">
-            Please sign in with your invited company email to submit or view complaints and appeals.
+            Please sign in with your invited company email to submit or track complaints and appeals.
           </p>
           <div className="row-actions">
-            <Link href="/sign-in/" className="btn btn-accent">
-              Sign in with Email Passcode
+            <Link href="/sign-in/" className="pixel-paper-btn primary">
+              Sign in with Email OTP
             </Link>
           </div>
         </section>
@@ -172,16 +217,14 @@ export default function TicketsPage() {
   }
 
   const isAdminOrMaint = profile.role === "admin" || profile.role === "maintenance";
-  const formMap = Object.fromEntries(forms.map((f) => [f.id, f.title]));
+  const formMap = Object.fromEntries(allForms.map((f) => [f.id, f.title]));
   const matchingSubmissions = submissions.filter((s) => s.form_id === selectedFormId);
 
   return (
     <div className="stack">
       <div className="app-mobile-nav">
-        <Link href="/" className="app-back-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
+        <Link href="/" className="pixel-paper-btn compact">
+          <PixelArrowLeftIcon size={13} />
           <span>Main Menu</span>
         </Link>
         <span className="app-mobile-nav-title">Staff Complaints</span>
@@ -189,29 +232,46 @@ export default function TicketsPage() {
       </div>
 
       {/* Header Banner */}
-      <section className="card row-between">
-        <div>
-          <span className="badge badge-admin" style={{ marginBottom: "0.45rem" }}>
-            Support &amp; Resolution Desk
-          </span>
-          <h1>Complaints &amp; Appeals</h1>
-          <p className="notice">
-            {isAdminOrMaint
-              ? "Review incoming operational complaints and application appeals, claim open tickets, and respond to members."
-              : "Submit a new operational complaint or appeal a form decision, and track real-time responses from staff."}
-          </p>
+      <section className="card stack">
+        <div className="row-between" style={{ alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.35rem" }}>
+              <PixelShieldAlertIcon size={18} />
+              <span className="pixel-tag-pill">COMPLAINTS &amp; STATUS TRACKER</span>
+            </div>
+            <h1 style={{ margin: "0 0 0.25rem" }}>Staff Complaints &amp; Appeals</h1>
+            <p className="notice" style={{ margin: 0 }}>
+              {isAdminOrMaint
+                ? "Review incoming staff complaints, claim open tickets, and update resolution statuses."
+                : "Submit a confidential report or check real-time status on your submitted complaints."}
+            </p>
+          </div>
+
+          <div className="row-actions" style={{ gap: "0.5rem" }}>
+            <button
+              type="button"
+              className={`pixel-paper-btn ${showComposer ? "" : "primary"}`}
+              onClick={() => {
+                setShowComposer((prev) => !prev);
+                setError(null);
+              }}
+            >
+              <PixelPlusIcon size={14} />
+              <span>{showComposer ? "Close Quick Report" : "Quick Complaint / Appeal"}</span>
+            </button>
+            <Link href="/" className="pixel-paper-btn compact">
+              <PixelArrowLeftIcon size={13} />
+              <span>Home</span>
+            </Link>
+          </div>
         </div>
-        <div className="row-actions">
-          <button
-            type="button"
-            className={`btn ${showComposer ? "btn-secondary" : "btn-primary"}`}
-            onClick={() => {
-              setShowComposer((prev) => !prev);
-              setError(null);
-            }}
-          >
-            {showComposer ? "Close Form" : "+ New Complaint / Appeal"}
-          </button>
+
+        {/* Auto-filled logged-in email banner */}
+        <div className="gf-account-strip">
+          <PixelLockIcon size={13} />
+          <span>
+            Auto-verified account: <strong>{profile.email}</strong> — No email input required when reporting or checking status.
+          </span>
         </div>
       </section>
 
@@ -221,32 +281,105 @@ export default function TicketsPage() {
         </p>
       )}
       {successMsg && (
-        <div className="alert alert-ok" role="status" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+        <div className="alert alert-ok" role="status">
           <span>{successMsg}</span>
-          <Link href="/" className="btn btn-secondary btn-sm" style={{ padding: "0.2rem 0.5rem", fontSize: "0.78rem" }}>
-            Return to Main Menu &rarr;
-          </Link>
         </div>
       )}
 
-      {/* New Complaint / Appeal Composer */}
+      {/* Structured Complaint Forms built in Form Studio */}
+      {complaintForms.length > 0 && (
+        <div className="grid-2">
+          {complaintForms.map((f) => {
+            const fTheme = themesMap[f.id];
+            const accent = fTheme?.primaryColor || "#be123c";
+            const isPaused = Boolean(fTheme?.submissionsClosed);
+
+            return (
+              <section
+                key={f.id}
+                className={`card stack catalog-form-card ${isPaused ? "paused" : ""}`}
+                style={{
+                  margin: 0,
+                  borderTop: `6px solid ${isPaused ? "#94a3b8" : accent}`,
+                }}
+              >
+                {fTheme?.bannerImageUrl && (
+                  <div className="catalog-banner-thumb">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={fTheme.bannerImageUrl} alt={f.title} />
+                  </div>
+                )}
+
+                <div className="row-between" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
+                  <strong style={{ fontSize: "1.05rem" }}>{f.title}</strong>
+                  {isPaused ? (
+                    <span className="pixel-stamp-badge paused">
+                      <PixelPauseIcon size={10} />
+                      <span>CLOSED</span>
+                    </span>
+                  ) : (
+                    <span className="pixel-stamp-badge live">
+                      <PixelSparkleIcon size={10} />
+                      <span>COMPLAINT FORM</span>
+                    </span>
+                  )}
+                </div>
+
+                {f.description && (
+                  <p className="notice" style={{ margin: 0 }}>
+                    {f.description}
+                  </p>
+                )}
+
+                {isPaused && (
+                  <div className="gf-paused-reason-strip">
+                    <PixelLockIcon size={13} />
+                    <span>{fTheme?.closedReason || "Form entries are currently paused."}</span>
+                  </div>
+                )}
+
+                <div className="row-actions" style={{ marginTop: "auto", paddingTop: "0.4rem" }}>
+                  {isPaused ? (
+                    <button type="button" className="pixel-paper-btn" disabled>
+                      <PixelLockIcon size={14} />
+                      <span>Submissions Closed</span>
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/forms/fill/?id=${encodeURIComponent(f.id)}`}
+                      className="pixel-paper-btn primary"
+                      style={{ backgroundColor: accent }}
+                    >
+                      <PixelShieldAlertIcon size={14} />
+                      <span>File Report via Form</span>
+                      <PixelArrowRightIcon size={14} />
+                    </Link>
+                  )}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Quick Direct Complaint / Appeal Composer */}
       {showComposer && (
-        <section className="card stack" style={{ borderColor: "var(--accent-border)" }}>
+        <section className="card stack" style={{ borderColor: "var(--ink)" }}>
           <div className="row-between">
             <div>
-              <h2>Lodge New Complaint or Appeal</h2>
+              <h2>Quick Complaint or Appeal</h2>
               <p className="notice">
-                Provide clear details below so our administrative team can investigate and respond promptly.
+                Submitted directly under <strong>{profile.email}</strong>. Track progress anytime below.
               </p>
             </div>
           </div>
 
-          {forms.length === 0 ? (
+          {allForms.length === 0 ? (
             <div className="alert alert-error">
-              At least one company form must exist in the system before a ticket can be categorized.{" "}
+              At least one company form must exist before logging a ticket.{" "}
               {isAdminOrMaint && (
                 <Link href="/admin/forms/" style={{ fontWeight: 700, textDecoration: "underline" }}>
-                  Create a form in Form Builder &rarr;
+                  Create a form in Studio &rarr;
                 </Link>
               )}
             </div>
@@ -254,19 +387,19 @@ export default function TicketsPage() {
             <form onSubmit={handleCreateTicket} className="stack">
               <div className="grid-2">
                 <div className="field">
-                  <label htmlFor="ticket-kind">Ticket Category</label>
+                  <label htmlFor="ticket-kind">Report Type</label>
                   <select
                     id="ticket-kind"
                     value={kind}
                     onChange={(e) => setKind(e.target.value as "complaint" | "appeal")}
                   >
-                    <option value="complaint">Operational Complaint / Misconduct</option>
-                    <option value="appeal">Application / Submission Appeal</option>
+                    <option value="complaint">Operational Complaint / Incident</option>
+                    <option value="appeal">Application / Decision Appeal</option>
                   </select>
                 </div>
 
                 <div className="field">
-                  <label htmlFor="ticket-form">Related Form / Department</label>
+                  <label htmlFor="ticket-form">Related Category / Form</label>
                   <select
                     id="ticket-form"
                     value={selectedFormId}
@@ -275,7 +408,7 @@ export default function TicketsPage() {
                       setSelectedSubmissionId("");
                     }}
                   >
-                    {forms.map((f) => (
+                    {allForms.map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.title}
                       </option>
@@ -286,13 +419,13 @@ export default function TicketsPage() {
 
               {matchingSubmissions.length > 0 && (
                 <div className="field">
-                  <label htmlFor="ticket-sub">Link to Your Previous Submission (Optional)</label>
+                  <label htmlFor="ticket-sub">Link to Your Submission (Optional)</label>
                   <select
                     id="ticket-sub"
                     value={selectedSubmissionId}
                     onChange={(e) => setSelectedSubmissionId(e.target.value)}
                   >
-                    <option value="">— No specific submission / General —</option>
+                    <option value="">— General Complaint —</option>
                     {matchingSubmissions.map((s) => (
                       <option key={s.id} value={s.id}>
                         Submission #{s.id.slice(0, 8)} ({new Date(s.created_at).toLocaleDateString()})
@@ -303,11 +436,11 @@ export default function TicketsPage() {
               )}
 
               <div className="field">
-                <label htmlFor="ticket-reason">Description &amp; Reason</label>
+                <label htmlFor="ticket-reason">Complaint / Appeal Details</label>
                 <textarea
                   id="ticket-reason"
                   rows={4}
-                  placeholder="Describe the issue, operational complaint, or grounds for appeal in detail..."
+                  placeholder="Describe the issue clearly so support staff can resolve it quickly..."
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   required
@@ -315,12 +448,13 @@ export default function TicketsPage() {
               </div>
 
               <div className="row-actions">
-                <button type="submit" className="btn btn-accent" disabled={submitting}>
-                  {submitting ? "Submitting Ticket..." : "Submit Ticket"}
+                <button type="submit" className="pixel-paper-btn primary" disabled={submitting}>
+                  <span>{submitting ? "Submitting..." : "Submit Report"}</span>
+                  <PixelArrowRightIcon size={14} />
                 </button>
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="pixel-paper-btn"
                   onClick={() => setShowComposer(false)}
                 >
                   Cancel
@@ -331,49 +465,42 @@ export default function TicketsPage() {
         </section>
       )}
 
-      {/* Tickets List Table */}
+      {/* Live Complaint Status Tracker */}
       <section className="card stack">
         <div className="row-between">
-          <h2>{isAdminOrMaint ? `All Tickets (${tickets.length})` : `Your Tickets (${tickets.length})`}</h2>
+          <div>
+            <h2>
+              {isAdminOrMaint
+                ? `All Complaints & Appeals (${tickets.length})`
+                : `My Complaint Status Tracker (${tickets.length})`}
+            </h2>
+            <p className="notice" style={{ margin: 0 }}>
+              Open any ticket to view admin notes, real-time resolution status, and reply thread.
+            </p>
+          </div>
         </div>
 
         {tickets.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "2.5rem 1rem",
-              background: "var(--surface-muted)",
-              borderRadius: "var(--radius)",
-              border: "1px dashed var(--border-strong)",
-            }}
-          >
-            <p className="notice" style={{ marginBottom: "0.85rem" }}>
+          <div className="gf-empty-stream-card">
+            <PixelShieldAlertIcon size={28} className="gf-empty-pixel-icon" />
+            <p className="notice" style={{ margin: 0 }}>
               {isAdminOrMaint
                 ? "No complaint or appeal tickets have been submitted yet."
-                : "You have not submitted any complaints or appeals yet."}
+                : "You have no active complaints or appeals."}
             </p>
-            {!showComposer && (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setShowComposer(true)}
-              >
-                + Lodge Your First Complaint or Appeal
-              </button>
-            )}
           </div>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Reference</th>
+                  <th>Ticket ID</th>
                   <th>Type</th>
-                  <th>Related Form</th>
+                  <th>Form / Source</th>
                   <th>Summary</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th>Action</th>
+                  <th>Live Status</th>
+                  <th>Submitted</th>
+                  <th>Track</th>
                 </tr>
               </thead>
               <tbody>
@@ -383,32 +510,26 @@ export default function TicketsPage() {
                       <code>#{t.id.slice(0, 8)}</code>
                     </td>
                     <td>
-                      <span
-                        className={`badge ${
-                          t.kind === "appeal" ? "badge-admin" : "badge-not_configured"
-                        }`}
-                      >
-                        {t.kind}
-                      </span>
+                      <span className="pixel-tag-pill">{t.kind.toUpperCase()}</span>
                     </td>
-                    <td style={{ fontWeight: 600, color: "var(--ink)" }}>
+                    <td style={{ fontWeight: 700, color: "var(--ink)" }}>
                       {formMap[t.form_id] ?? t.form_id.slice(0, 8)}
                     </td>
                     <td style={{ maxWidth: "280px" }}>
-                      {t.reason.slice(0, 70)}
-                      {t.reason.length > 70 ? "..." : ""}
+                      {t.reason.slice(0, 75)}
+                      {t.reason.length > 75 ? "..." : ""}
                     </td>
                     <td>
                       <span
-                        className={`badge ${
+                        className={`pixel-stamp-badge ${
                           t.status === "resolved" || t.status === "closed"
-                            ? "badge-configured"
+                            ? "live"
                             : t.status === "taken"
-                            ? "badge-admin"
-                            : "badge-not_configured"
+                              ? "paused"
+                              : "draft"
                         }`}
                       >
-                        {t.status}
+                        {t.status.toUpperCase()}
                       </span>
                     </td>
                     <td style={{ fontSize: "0.84rem", color: "var(--muted)" }}>
@@ -416,11 +537,11 @@ export default function TicketsPage() {
                     </td>
                     <td>
                       <Link
-                        href={`/tickets/${encodeURIComponent(t.id)}`}
-                        className="btn btn-secondary"
-                        style={{ padding: "0.3rem 0.65rem", fontSize: "0.8rem" }}
+                        href={`/tickets/ticket-id/?id=${encodeURIComponent(t.id)}`}
+                        className="pixel-paper-btn compact"
                       >
-                        Open Thread &rarr;
+                        <span>Check Status</span>
+                        <PixelArrowRightIcon size={12} />
                       </Link>
                     </td>
                   </tr>

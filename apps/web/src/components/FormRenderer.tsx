@@ -1,6 +1,19 @@
 "use client";
 
-import type { FormFieldNode, FormTheme } from "@/lib/form-types";
+import { useState } from "react";
+import {
+  getLocalNowParts,
+  splitDateTimeValue,
+  type FormFieldNode,
+  type FormTheme,
+} from "@/lib/form-types";
+import {
+  PixelClipIcon,
+  PixelImageIcon,
+  PixelRefreshIcon,
+  PixelStarIcon,
+  PixelStarOutlineIcon,
+} from "./PixelIcons";
 
 interface FormRendererProps {
   nodes: FormFieldNode[];
@@ -8,9 +21,13 @@ interface FormRendererProps {
   answers: Record<string, unknown>;
   onChange: (fieldId: string, value: unknown, file?: File) => void;
   disabled?: boolean;
+  compactCards?: boolean;
 }
 
-const ALLOWED_COLORS = new Set(["#1d4ed8", "#0f766e", "#7c3aed", "#b45309", "#be123c", "#111827"]);
+function resolveAccentColor(color?: string): string {
+  if (color && /^#[0-9a-fA-F]{6}$/.test(color)) return color;
+  return "#1d4ed8";
+}
 
 export default function FormRenderer({
   nodes,
@@ -18,55 +35,98 @@ export default function FormRenderer({
   answers,
   onChange,
   disabled = false,
+  compactCards = false,
 }: FormRendererProps) {
-  const accent =
-    theme?.primaryColor && ALLOWED_COLORS.has(theme.primaryColor) ? theme.primaryColor : "#1d4ed8";
+  const accent = resolveAccentColor(theme?.primaryColor);
+  const [hoveredStar, setHoveredStar] = useState<Record<string, number>>({});
 
   return (
     <div
       className="stack"
       style={{
         ["--primary" as string]: accent,
-        gap: theme?.density === "compact" ? "0.65rem" : "1.1rem",
+        gap: compactCards || theme?.density === "compact" ? "0.75rem" : "1rem",
       }}
     >
       {nodes.map((node) => {
         if (node.type === "heading") {
           return (
-            <h3 key={node.id} style={{ margin: "0.5rem 0 0", color: accent }}>
-              {node.label}
-            </h3>
+            <div key={node.id} className="fr-section-heading" style={{ borderLeft: `4px solid ${accent}` }}>
+              <h3 style={{ margin: 0, color: accent }}>{node.label}</h3>
+              {node.helpText && (
+                <p className="notice" style={{ margin: "0.2rem 0 0", fontSize: "0.84rem" }}>
+                  {node.helpText}
+                </p>
+              )}
+            </div>
           );
         }
+
         if (node.type === "instructions") {
           return (
-            <p key={node.id} className="notice" style={{ margin: 0 }}>
-              {node.label}
-            </p>
+            <div key={node.id} className="fr-instructions-card">
+              <p className="notice" style={{ margin: 0, color: "var(--ink-secondary)" }}>
+                {node.helpText || node.label}
+              </p>
+            </div>
           );
         }
+
         if (node.type === "section") {
           return (
             <hr
               key={node.id}
-              style={{ border: 0, borderTop: "2px solid var(--border)", margin: "0.5rem 0" }}
+              style={{ border: 0, borderTop: "2px dashed var(--border-strong)", margin: "0.4rem 0" }}
             />
+          );
+        }
+
+        if (node.type === "image") {
+          return (
+            <div key={node.id} className="fr-question-card">
+              {node.label && (
+                <div style={{ fontWeight: 700, marginBottom: "0.5rem", fontSize: "0.94rem" }}>
+                  {node.label}
+                </div>
+              )}
+              {node.imageUrl ? (
+                <figure style={{ margin: 0 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={node.imageUrl}
+                    alt={node.caption || node.label || "Form graphic"}
+                    className="fr-embedded-image"
+                  />
+                  {(node.caption || node.helpText) && (
+                    <figcaption className="notice" style={{ marginTop: "0.45rem", fontSize: "0.82rem" }}>
+                      {node.caption || node.helpText}
+                    </figcaption>
+                  )}
+                </figure>
+              ) : (
+                <div className="gf-file-upload-mock">
+                  <PixelImageIcon size={20} />
+                  <span className="gf-file-sub">No image selected yet.</span>
+                </div>
+              )}
+            </div>
           );
         }
 
         const val = answers[node.id];
         const strVal = typeof val === "string" ? val : "";
+        const numVal = typeof val === "number" ? val : Number(strVal) || 0;
 
         return (
-          <div key={node.id} className="field">
-            <label htmlFor={`fld-${node.id}`}>
+          <div key={node.id} className="fr-question-card field">
+            <label htmlFor={`fld-${node.id}`} className="fr-question-label">
               <span>
                 {node.label}
                 {node.required && <span style={{ color: "#dc2626" }}> *</span>}
               </span>
             </label>
             {node.helpText && (
-              <span className="notice" style={{ fontSize: "0.84rem" }}>
+              <span className="notice" style={{ fontSize: "0.82rem", marginBottom: "0.25rem", display: "block" }}>
                 {node.helpText}
               </span>
             )}
@@ -77,7 +137,7 @@ export default function FormRenderer({
                 type="text"
                 required={node.required}
                 disabled={disabled}
-                placeholder={node.placeholder ?? ""}
+                placeholder={node.placeholder ?? "Your answer"}
                 value={strVal}
                 onChange={(e) => onChange(node.id, e.target.value)}
               />
@@ -101,22 +161,115 @@ export default function FormRenderer({
                 type="number"
                 required={node.required}
                 disabled={disabled}
-                placeholder={node.placeholder ?? ""}
+                placeholder={node.placeholder ?? "0"}
                 value={strVal}
                 onChange={(e) => onChange(node.id, e.target.value)}
               />
             )}
 
             {node.type === "date" && (
-              <input
-                id={`fld-${node.id}`}
-                type="date"
-                required={node.required}
-                disabled={disabled}
-                value={strVal}
-                onChange={(e) => onChange(node.id, e.target.value)}
-              />
+              <div className="fr-datetime-row">
+                <input
+                  id={`fld-${node.id}`}
+                  type="date"
+                  required={node.required}
+                  disabled={disabled}
+                  value={strVal}
+                  onChange={(e) => onChange(node.id, e.target.value)}
+                  style={{ maxWidth: "220px" }}
+                />
+                {!disabled && (
+                  <button
+                    type="button"
+                    className="pixel-paper-btn compact"
+                    title="Set to today's date"
+                    onClick={() => onChange(node.id, getLocalNowParts().date)}
+                  >
+                    <PixelRefreshIcon size={12} />
+                    <span>Today</span>
+                  </button>
+                )}
+              </div>
             )}
+
+            {node.type === "time" && (
+              <div className="fr-datetime-row">
+                <input
+                  id={`fld-${node.id}`}
+                  type="time"
+                  required={node.required}
+                  disabled={disabled}
+                  value={strVal}
+                  onChange={(e) => onChange(node.id, e.target.value)}
+                  style={{ maxWidth: "180px" }}
+                />
+                {!disabled && (
+                  <button
+                    type="button"
+                    className="pixel-paper-btn compact"
+                    title="Set to current real-world time"
+                    onClick={() => onChange(node.id, getLocalNowParts().time)}
+                  >
+                    <PixelRefreshIcon size={12} />
+                    <span>Now</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {node.type === "date_time" && (() => {
+              const parsed = splitDateTimeValue(strVal);
+              const fallbackNow = getLocalNowParts();
+              const curDate = parsed.date || (node.defaultToNow !== false ? fallbackNow.date : "");
+              const curTime = parsed.time || (node.defaultToNow !== false ? fallbackNow.time : "");
+              return (
+                <div className="fr-datetime-stack">
+                  <div className="fr-datetime-row">
+                    <div className="fr-datetime-sub">
+                      <span className="fr-mini-label">Date</span>
+                      <input
+                        id={`fld-${node.id}`}
+                        type="date"
+                        required={node.required}
+                        disabled={disabled}
+                        value={curDate}
+                        onChange={(e) => {
+                          const nextDate = e.target.value;
+                          const nextTime = curTime || getLocalNowParts().time;
+                          onChange(node.id, nextDate ? `${nextDate} ${nextTime}` : "");
+                        }}
+                      />
+                    </div>
+                    <div className="fr-datetime-sub">
+                      <span className="fr-mini-label">Time</span>
+                      <input
+                        type="time"
+                        required={node.required}
+                        disabled={disabled}
+                        value={curTime}
+                        onChange={(e) => {
+                          const nextTime = e.target.value;
+                          const nextDate = curDate || getLocalNowParts().date;
+                          onChange(node.id, nextTime ? `${nextDate} ${nextTime}` : "");
+                        }}
+                      />
+                    </div>
+                    {!disabled && (
+                      <button
+                        type="button"
+                        className="pixel-paper-btn compact"
+                        style={{ alignSelf: "flex-end", marginBottom: "2px" }}
+                        title="Reset to exact current real-time date & time"
+                        onClick={() => onChange(node.id, getLocalNowParts().dateTime)}
+                      >
+                        <PixelRefreshIcon size={12} />
+                        <span>Live Now</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {node.type === "long_text" && (
               <textarea
@@ -124,7 +277,7 @@ export default function FormRenderer({
                 rows={4}
                 required={node.required}
                 disabled={disabled}
-                placeholder={node.placeholder ?? ""}
+                placeholder={node.placeholder ?? "Enter your response..."}
                 value={strVal}
                 onChange={(e) => onChange(node.id, e.target.value)}
               />
@@ -148,11 +301,12 @@ export default function FormRenderer({
             )}
 
             {node.type === "single_choice" && (
-              <div className="stack" style={{ gap: "0.35rem" }}>
+              <div className="stack" style={{ gap: "0.45rem" }}>
                 {(node.options ?? []).map((opt) => (
                   <label
                     key={opt}
-                    style={{ fontWeight: 400, display: "flex", alignItems: "center", gap: "0.5rem" }}
+                    className={`fr-choice-option ${strVal === opt ? "selected" : ""}`}
+                    style={strVal === opt ? { borderColor: accent, background: `${accent}0f` } : undefined}
                   >
                     <input
                       type="radio"
@@ -162,26 +316,22 @@ export default function FormRenderer({
                       checked={strVal === opt}
                       onChange={() => onChange(node.id, opt)}
                     />
-                    {opt}
+                    <span>{opt}</span>
                   </label>
                 ))}
               </div>
             )}
 
             {node.type === "multiple_choice" && (
-              <div className="stack" style={{ gap: "0.35rem" }}>
+              <div className="stack" style={{ gap: "0.45rem" }}>
                 {(node.options ?? []).map((opt) => {
                   const arr = Array.isArray(val) ? (val as string[]) : [];
                   const checked = arr.includes(opt);
                   return (
                     <label
                       key={opt}
-                      style={{
-                        fontWeight: 400,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                      }}
+                      className={`fr-choice-option ${checked ? "selected" : ""}`}
+                      style={checked ? { borderColor: accent, background: `${accent}0f` } : undefined}
                     >
                       <input
                         type="checkbox"
@@ -194,15 +344,99 @@ export default function FormRenderer({
                           onChange(node.id, next);
                         }}
                       />
-                      {opt}
+                      <span>{opt}</span>
                     </label>
                   );
                 })}
               </div>
             )}
 
+            {node.type === "star_rating" && (() => {
+              const maxStars = node.maxRating && node.maxRating > 1 ? node.maxRating : 5;
+              const hoverVal = hoveredStar[node.id] ?? 0;
+              const activeVal = hoverVal || numVal;
+              return (
+                <div className="fr-rating-wrap">
+                  <div
+                    className="fr-stars-row"
+                    onMouseLeave={() => setHoveredStar((prev) => ({ ...prev, [node.id]: 0 }))}
+                  >
+                    {Array.from({ length: maxStars }, (_, i) => i + 1).map((starNum) => {
+                      const filled = starNum <= activeVal;
+                      return (
+                        <button
+                          key={starNum}
+                          type="button"
+                          disabled={disabled}
+                          className={`fr-star-btn ${filled ? "filled" : ""}`}
+                          style={filled ? { color: "#d97706" } : undefined}
+                          onMouseEnter={() => {
+                            if (!disabled) setHoveredStar((prev) => ({ ...prev, [node.id]: starNum }));
+                          }}
+                          onClick={() => onChange(node.id, starNum)}
+                          aria-label={`Rate ${starNum} of ${maxStars} stars`}
+                        >
+                          {filled ? (
+                            <PixelStarIcon size={26} />
+                          ) : (
+                            <PixelStarOutlineIcon size={26} />
+                          )}
+                        </button>
+                      );
+                    })}
+                    <span className="pixel-stamp-badge draft" style={{ marginLeft: "0.45rem" }}>
+                      {numVal > 0 ? `${numVal} / ${maxStars} STARS` : "NOT RATED"}
+                    </span>
+                  </div>
+                  {(node.ratingLabels?.low || node.ratingLabels?.high) && (
+                    <div className="fr-rating-labels">
+                      <span>1 = {node.ratingLabels?.low || "Low"}</span>
+                      <span>{maxStars} = {node.ratingLabels?.high || "Excellent"}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {node.type === "linear_scale" && (() => {
+              const minVal = node.minRating ?? 1;
+              const maxVal = node.maxRating && node.maxRating > minVal ? node.maxRating : 10;
+              const steps = Array.from({ length: maxVal - minVal + 1 }, (_, i) => minVal + i);
+              return (
+                <div className="fr-rating-wrap">
+                  <div className="fr-scale-row">
+                    {steps.map((stepNum) => {
+                      const active = val === stepNum || strVal === String(stepNum);
+                      return (
+                        <button
+                          key={stepNum}
+                          type="button"
+                          disabled={disabled}
+                          className={`fr-scale-tile ${active ? "active" : ""}`}
+                          style={active ? { backgroundColor: accent, color: "#fff", borderColor: "var(--ink)" } : undefined}
+                          onClick={() => onChange(node.id, stepNum)}
+                        >
+                          {stepNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {(node.ratingLabels?.low || node.ratingLabels?.high) && (
+                    <div className="fr-rating-labels">
+                      <span>{minVal} = {node.ratingLabels?.low || "Low"}</span>
+                      <span>{maxVal} = {node.ratingLabels?.high || "High"}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {node.type === "file_upload" && (
-              <div className="card" style={{ padding: "0.75rem", background: "#f8fafc" }}>
+              <div className="gf-file-upload-mock" style={{ alignItems: "flex-start", textAlign: "left" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.35rem" }}>
+                  <PixelClipIcon size={16} />
+                  <strong>Attach Supporting File</strong>
+                </div>
                 <input
                   id={`fld-${node.id}`}
                   type="file"
@@ -218,16 +452,19 @@ export default function FormRenderer({
                       e.target.value = "";
                       return;
                     }
-                    onChange(node.id, {
-                      name: f.name,
-                      size: f.size,
-                      type: f.type || "application/octet-stream",
-                    }, f);
+                    onChange(
+                      node.id,
+                      {
+                        name: f.name,
+                        size: f.size,
+                        type: f.type || "application/octet-stream",
+                      },
+                      f,
+                    );
                   }}
                 />
-                <p className="notice" style={{ margin: "0.35rem 0 0", fontSize: "0.82rem" }}>
-                  Maximum file size: 1 GiB (stored in Google Workspace Shared Drive{" "}
-                  <code>Forms MESRC/&#123;user_id&#125;/&#123;submission_id&#125;</code>).
+                <p className="notice" style={{ margin: "0.35rem 0 0", fontSize: "0.8rem" }}>
+                  Maximum file size: 1 GiB (stored in Google Workspace Shared Drive).
                 </p>
               </div>
             )}

@@ -4,11 +4,28 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import BrandLogo from "@/components/BrandLogo";
 import ChunkLoader from "@/components/ChunkLoader";
+import {
+  PixelArrowRightIcon,
+  PixelQuestionsIcon,
+  PixelShieldAlertIcon,
+  PixelStarIcon,
+} from "@/components/PixelIcons";
+import {
+  resolveFormCategory,
+  type FormCategory,
+  type FormRow,
+  type FormTheme,
+} from "@/lib/form-types";
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
 export default function HomePage() {
   const [setupState, setSetupState] = useState<SystemSetupState | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [categoryCounts, setCategoryCounts] = useState<Record<FormCategory, number>>({
+    company_forms: 0,
+    staff_complaints: 0,
+    voting_evaluation: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,12 +40,43 @@ export default function HomePage() {
         const uid = sess.session?.user?.id;
 
         if (uid) {
-          const { data: prof } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", uid)
-            .maybeSingle();
+          const [{ data: prof }, { data: fRows }] = await Promise.all([
+            supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
+            supabase.from("forms").select("*").eq("state", "published"),
+          ]);
           setProfile((prof as UserProfile | null) ?? null);
+
+          const publishedForms = (fRows as FormRow[] | null) ?? [];
+          if (publishedForms.length > 0) {
+            const { data: verRows } = await supabase
+              .from("form_versions")
+              .select("form_id,version_number,theme_json,is_published")
+              .in(
+                "form_id",
+                publishedForms.map((f) => f.id),
+              )
+              .eq("is_published", true);
+
+            const counts: Record<FormCategory, number> = {
+              company_forms: 0,
+              staff_complaints: 0,
+              voting_evaluation: 0,
+            };
+            for (const f of publishedForms) {
+              const ver = (
+                verRows as
+                  | { form_id: string; version_number: number; theme_json: FormTheme }[]
+                  | null
+              )?.find(
+                (v) =>
+                  v.form_id === f.id &&
+                  v.version_number === (f.current_published_version ?? f.latest_version),
+              );
+              const cat = resolveFormCategory(f, ver?.theme_json);
+              counts[cat] += 1;
+            }
+            setCategoryCounts(counts);
+          }
         }
       } finally {
         setLoading(false);
@@ -40,7 +88,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="center-stage">
-        <ChunkLoader title="Forms MESRC" subtitle="Assembling workspace..." />
+        <ChunkLoader title="Forms MESRC" subtitle="Assembling papercraft workspace..." />
       </div>
     );
   }
@@ -50,7 +98,6 @@ export default function HomePage() {
     setProfile(null);
   }
 
-  // 1. Initial Setup Required
   if (setupState?.needs_first_maintenance) {
     return (
       <div className="center-stage">
@@ -65,8 +112,9 @@ export default function HomePage() {
             connect your company Google Workspace Shared Drive.
           </p>
           <div className="row-actions">
-            <Link href="/setup/" className="btn btn-primary">
-              Launch Setup Wizard &rarr;
+            <Link href="/setup/" className="pixel-paper-btn primary">
+              <span>Launch Setup Wizard</span>
+              <PixelArrowRightIcon size={14} />
             </Link>
           </div>
         </section>
@@ -74,7 +122,6 @@ export default function HomePage() {
     );
   }
 
-  // 2. Not signed in yet
   if (!profile) {
     return (
       <div className="center-stage">
@@ -84,12 +131,20 @@ export default function HomePage() {
             Sign in to get started
           </h1>
           <p className="notice" style={{ maxWidth: "38ch", margin: "0.25rem 0 0.5rem" }}>
-            Company portal for official forms, complaints, and appeals. Sign in with your invited
-            email to continue.
+            Company portal for official forms, staff complaints, and voting evaluations. Sign in with
+            your invited email to continue.
           </p>
-          <div className="row-actions" style={{ justifyContent: "center", width: "100%", marginTop: "0.5rem" }}>
-            <Link href="/sign-in/" className="btn btn-primary" style={{ minWidth: "220px", justifyContent: "center" }}>
-              Sign in with Email OTP &rarr;
+          <div
+            className="row-actions"
+            style={{ justifyContent: "center", width: "100%", marginTop: "0.5rem" }}
+          >
+            <Link
+              href="/sign-in/"
+              className="pixel-paper-btn primary"
+              style={{ minWidth: "220px", justifyContent: "center" }}
+            >
+              <span>Sign in with Email OTP</span>
+              <PixelArrowRightIcon size={14} />
             </Link>
           </div>
         </section>
@@ -97,74 +152,91 @@ export default function HomePage() {
     );
   }
 
-  // 3. Signed-In Home: 3 Pure Centered Choices (Company Forms, Staff Complaints, Voting & Evaluation)
   return (
     <div className="app-home-stage">
       <div className="app-choice-grid">
-        {/* TILE 1: FORMS */}
-        <Link href="/forms/" className="app-choice-card app-card-forms">
+        {/* TILE 1: COMPANY FORMS */}
+        <Link href="/forms/?category=company_forms" className="app-choice-card app-card-forms">
           <div className="app-choice-icon-box forms-icon-box" aria-hidden="true">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
+            <PixelQuestionsIcon size={22} />
           </div>
           <div className="app-choice-info">
-            <h2 className="app-choice-title">Company Forms</h2>
-            <p className="app-choice-desc">Official company forms, service requests &amp; records</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <h2 className="app-choice-title">Company Forms</h2>
+              {categoryCounts.company_forms > 0 && (
+                <span className="pixel-tag-pill">{categoryCounts.company_forms}</span>
+              )}
+            </div>
+            <p className="app-choice-desc">
+              Check-in / Check-out, service requests &amp; official records
+            </p>
           </div>
           <div className="app-choice-chevron" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <PixelArrowRightIcon size={16} />
           </div>
         </Link>
 
-        {/* TILE 2: COMPLAINTS */}
+        {/* TILE 2: STAFF COMPLAINTS */}
         <Link href="/tickets/" className="app-choice-card app-card-complaints">
           <div className="app-choice-icon-box complaints-icon-box" aria-hidden="true">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
+            <PixelShieldAlertIcon size={22} />
           </div>
           <div className="app-choice-info">
-            <h2 className="app-choice-title">Staff Complaints</h2>
-            <p className="app-choice-desc">Confidential reporting, misconduct &amp; ticket appeals</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <h2 className="app-choice-title">Staff Complaints</h2>
+              {categoryCounts.staff_complaints > 0 && (
+                <span className="pixel-tag-pill">{categoryCounts.staff_complaints}</span>
+              )}
+            </div>
+            <p className="app-choice-desc">
+              Submit reports &amp; track live complaint resolution status
+            </p>
           </div>
           <div className="app-choice-chevron" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <PixelArrowRightIcon size={16} />
           </div>
         </Link>
 
-        {/* TILE 3: VOTING & SCORING */}
+        {/* TILE 3: VOTING & EVALUATION */}
         <Link href="/voting/" className="app-choice-card app-card-voting">
           <div className="app-choice-icon-box voting-icon-box" aria-hidden="true">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
+            <PixelStarIcon size={22} />
           </div>
           <div className="app-choice-info">
-            <h2 className="app-choice-title">Voting &amp; Evaluation</h2>
-            <p className="app-choice-desc">Wednesday presentation grading, polls &amp; reports</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <h2 className="app-choice-title">Voting &amp; Evaluation</h2>
+              {categoryCounts.voting_evaluation > 0 && (
+                <span className="pixel-tag-pill">{categoryCounts.voting_evaluation}</span>
+              )}
+            </div>
+            <p className="app-choice-desc">
+              Finalis MCEP judging, presentation star ratings &amp; polls
+            </p>
           </div>
           <div className="app-choice-chevron" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <PixelArrowRightIcon size={16} />
           </div>
         </Link>
       </div>
 
       <div className="app-home-footer">
-        <button type="button" onClick={handleSignOut} className="app-home-signout-btn" title={`Signed in as ${profile.email}`}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="app-home-signout-btn"
+          title={`Signed in as ${profile.email}`}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />

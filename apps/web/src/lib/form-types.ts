@@ -2,15 +2,23 @@ export type FieldType =
   | "heading"
   | "instructions"
   | "section"
+  | "image"
   | "short_text"
   | "long_text"
   | "email"
   | "number"
   | "date"
+  | "time"
+  | "date_time"
   | "single_choice"
   | "multiple_choice"
   | "dropdown"
+  | "star_rating"
+  | "linear_scale"
   | "file_upload";
+
+export type FormCategory = "company_forms" | "staff_complaints" | "voting_evaluation";
+export type BackgroundPattern = "matboard_dots" | "grid_paper" | "pixel_stars" | "diagonal_craft" | "solid";
 
 export interface FormFieldNode {
   id: string;
@@ -21,12 +29,32 @@ export interface FormFieldNode {
   placeholder?: string;
   options?: string[];
   width?: "full" | "half";
+  /** For date / time / date_time: pre-populate with live device date/time */
+  defaultToNow?: boolean;
+  /** For star_rating / linear_scale */
+  minRating?: number;
+  maxRating?: number;
+  ratingLabels?: { low?: string; high?: string };
+  /** For image block */
+  imageUrl?: string;
+  caption?: string;
 }
 
 export interface FormTheme {
+  category?: FormCategory;
   primaryColor?: string;
+  backgroundColor?: string;
+  backgroundPattern?: BackgroundPattern;
+  bannerImageUrl?: string;
+  bannerHeight?: "compact" | "medium" | "tall";
+  backgroundImageUrl?: string;
+  backgroundBlur?: number;
+  backgroundOverlayOpacity?: number;
   cardRadius?: "sharp" | "rounded" | "pill";
   density?: "comfortable" | "compact";
+  /** When true, card remains visible in user catalog but is locked & unclickable */
+  submissionsClosed?: boolean;
+  closedReason?: string;
 }
 
 export type FormKind = "general" | "appeal_enabled" | "complaint";
@@ -57,23 +85,436 @@ export interface FormRow {
 export interface FormTemplate {
   key: string;
   name: string;
+  category: FormCategory;
   kind: FormKind;
   title: string;
   slug: string;
   description: string;
   allowAppeal: boolean;
+  theme?: FormTheme;
   nodes: FormFieldNode[];
 }
 
+export const FORM_CATEGORIES: {
+  key: FormCategory;
+  label: string;
+  subtitle: string;
+  defaultDbKind: FormKind;
+  accent: string;
+}[] = [
+  {
+    key: "company_forms",
+    label: "Company Forms",
+    subtitle: "Check-in logs, service requests, HR & official records",
+    defaultDbKind: "general",
+    accent: "#1d4ed8",
+  },
+  {
+    key: "staff_complaints",
+    label: "Staff Complaints",
+    subtitle: "Trackable reports, misconduct & formal ticket appeals",
+    defaultDbKind: "complaint",
+    accent: "#b45309",
+  },
+  {
+    key: "voting_evaluation",
+    label: "Voting & Evaluation",
+    subtitle: "Finalis MCEP judging, star ratings, scoring & polls",
+    defaultDbKind: "general",
+    accent: "#0f766e",
+  },
+];
+
+export function resolveFormCategory(
+  form: Pick<FormRow, "kind" | "title" | "slug">,
+  theme?: FormTheme | null,
+): FormCategory {
+  if (
+    theme?.category === "company_forms" ||
+    theme?.category === "staff_complaints" ||
+    theme?.category === "voting_evaluation"
+  ) {
+    return theme.category;
+  }
+  if (form.kind === "complaint" || form.kind === "appeal_enabled") {
+    return "staff_complaints";
+  }
+  const haystack = `${form.title} ${form.slug}`.toLowerCase();
+  if (haystack.includes("mcep") || haystack.includes("vote") || haystack.includes("judg")) {
+    return "voting_evaluation";
+  }
+  return "company_forms";
+}
+
+export function getLocalNowParts(): { date: string; time: string; dateTime: string } {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  return { date, time, dateTime: `${date} ${time}` };
+}
+
+export function splitDateTimeValue(val: unknown): { date: string; time: string } {
+  if (typeof val !== "string" || !val.trim()) {
+    return { date: "", time: "" };
+  }
+  const normalized = val.trim().replace("T", " ");
+  const [d, t] = normalized.split(" ");
+  return {
+    date: d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "",
+    time: t && /^\d{2}:\d{2}/.test(t) ? t.slice(0, 5) : "",
+  };
+}
+
+export function getFormBackgroundPatternCss(pattern?: BackgroundPattern): string {
+  switch (pattern) {
+    case "grid_paper":
+      return "linear-gradient(to right, rgba(24, 24, 27, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(24, 24, 27, 0.05) 1px, transparent 1px)";
+    case "pixel_stars":
+      return "radial-gradient(rgba(24, 24, 27, 0.16) 1.5px, transparent 1.5px), radial-gradient(rgba(124, 58, 237, 0.15) 1.5px, transparent 1.5px)";
+    case "diagonal_craft":
+      return "repeating-linear-gradient(45deg, rgba(24, 24, 27, 0.03) 0, rgba(24, 24, 27, 0.03) 1px, transparent 1px, transparent 12px)";
+    case "solid":
+      return "none";
+    case "matboard_dots":
+    default:
+      return "linear-gradient(to right, rgba(24, 24, 27, 0.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(24, 24, 27, 0.035) 1px, transparent 1px), radial-gradient(rgba(24, 24, 27, 0.12) 1px, transparent 1px)";
+  }
+}
+
+export function getFormBackgroundPatternSize(pattern?: BackgroundPattern): string {
+  switch (pattern) {
+    case "grid_paper":
+      return "32px 32px";
+    case "pixel_stars":
+      return "28px 28px";
+    case "diagonal_craft":
+      return "auto";
+    case "solid":
+      return "auto";
+    case "matboard_dots":
+    default:
+      return "48px 48px, 48px 48px, 16px 16px";
+  }
+}
+
+export const PAGE_BG_TINTS: { name: string; hex: string }[] = [
+  { name: "Studio Matboard", hex: "#efece6" },
+  { name: "Dusk Rose Paper", hex: "#d9c8c5" },
+  { name: "Sage Mint Craft", hex: "#dce6df" },
+  { name: "Blueprint Sky", hex: "#dce5f2" },
+  { name: "Lavender Kraft", hex: "#e6e0ee" },
+  { name: "Warm Sand", hex: "#ede3d2" },
+];
+
+function svgDataUrl(svg: string): string {
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg.trim())}`;
+}
+
+export const PRESET_BANNERS: { id: string; name: string; tag: string; url: string }[] = [
+  {
+    id: "mcep-pixel-stage",
+    name: "MCEP Pixel Trophy Stage",
+    tag: "Voting & Judging",
+    url: svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" shape-rendering="crispEdges">
+      <rect width="1200" height="300" fill="#1e1b4b"/>
+      <rect y="220" width="1200" height="80" fill="#312e81"/>
+      <rect x="80" y="50" width="16" height="16" fill="#fde047"/>
+      <rect x="210" y="90" width="12" height="12" fill="#a78bfa"/>
+      <rect x="960" y="45" width="16" height="16" fill="#fde047"/>
+      <rect x="1080" y="110" width="12" height="12" fill="#f472b6"/>
+      <rect x="440" y="180" width="320" height="120" fill="#4338ca"/>
+      <rect x="520" y="110" width="160" height="24" fill="#fbbf24"/>
+      <rect x="550" y="60" width="100" height="60" fill="#f59e0b"/>
+      <rect x="530" y="70" width="20" height="30" fill="#fbbf24"/>
+      <rect x="650" y="70" width="20" height="30" fill="#fbbf24"/>
+      <rect x="580" y="134" width="40" height="36" fill="#d97706"/>
+      <rect x="550" y="170" width="100" height="16" fill="#fbbf24"/>
+      <rect x="140" y="170" width="220" height="130" fill="#4c1d95" opacity="0.7"/>
+      <rect x="840" y="160" width="240" height="140" fill="#4c1d95" opacity="0.7"/>
+    </svg>`),
+  },
+  {
+    id: "mesrc-papercraft-wave",
+    name: "MESRC Layered Cardstock",
+    tag: "Company & Check-In",
+    url: svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300">
+      <rect width="1200" height="300" fill="#f3ede2"/>
+      <path d="M0 190 L280 120 L580 210 L920 95 L1200 180 L1200 300 L0 300 Z" fill="#dbeafe"/>
+      <path d="M0 230 L340 165 L680 235 L980 140 L1200 220 L1200 300 L0 300 Z" fill="#1d4ed8"/>
+      <path d="M0 265 L420 215 L780 270 L1200 205 L1200 300 L0 300 Z" fill="#18181b"/>
+      <rect x="110" y="55" width="32" height="32" fill="#f59e0b"/>
+      <rect x="110" y="55" width="32" height="32" fill="none" stroke="#18181b" stroke-width="4"/>
+      <rect x="1030" y="60" width="24" height="24" fill="#10b981"/>
+      <rect x="1030" y="60" width="24" height="24" fill="none" stroke="#18181b" stroke-width="4"/>
+    </svg>`),
+  },
+  {
+    id: "emerald-pixel-meadow",
+    name: "Emerald Paper Atelier",
+    tag: "Operations & Events",
+    url: svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" shape-rendering="crispEdges">
+      <rect width="1200" height="300" fill="#d1fae5"/>
+      <rect y="180" width="1200" height="120" fill="#059669"/>
+      <rect y="230" width="1200" height="70" fill="#065f46"/>
+      <rect x="120" y="130" width="80" height="80" fill="#34d399"/>
+      <rect x="240" y="110" width="96" height="110" fill="#10b981"/>
+      <rect x="920" y="120" width="110" height="90" fill="#34d399"/>
+      <rect x="1020" y="50" width="48" height="48" fill="#fde047"/>
+    </svg>`),
+  },
+  {
+    id: "crimson-kraft-desk",
+    name: "Rose & Charcoal Desk",
+    tag: "Complaints & Notice",
+    url: svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" shape-rendering="crispEdges">
+      <rect width="1200" height="300" fill="#881337"/>
+      <rect x="60" y="40" width="340" height="260" fill="#9f1239"/>
+      <rect x="440" y="90" width="420" height="210" fill="#be123c"/>
+      <rect x="900" y="30" width="240" height="270" fill="#4c0519"/>
+      <rect x="180" y="110" width="24" height="24" fill="#fda4af"/>
+      <rect x="760" y="140" width="20" height="20" fill="#fecdd3"/>
+    </svg>`),
+  },
+];
+
 export const FORM_TEMPLATES: FormTemplate[] = [
+  {
+    key: "check_in_out",
+    name: "Check In / Check Out",
+    category: "company_forms",
+    kind: "general",
+    title: "Check In Check Out Form",
+    slug: "check-in-check-out-form",
+    description: "Log daily check-in and check-out times with real-time timestamp and supporting remarks.",
+    allowAppeal: false,
+    theme: {
+      category: "company_forms",
+      primaryColor: "#7c2d12",
+      backgroundColor: "#d9c8c5",
+      backgroundPattern: "matboard_dots",
+      bannerImageUrl: PRESET_BANNERS[1].url,
+      bannerHeight: "medium",
+    },
+    nodes: [
+      {
+        id: "f_work_context",
+        type: "multiple_choice",
+        label: "Activity Scope",
+        required: true,
+        options: ["Personal", "Work related"],
+        width: "full",
+      },
+      {
+        id: "f_clock_type",
+        type: "single_choice",
+        label: "Type",
+        required: true,
+        options: ["Check In", "Check Out"],
+        width: "full",
+      },
+      {
+        id: "f_emp_name",
+        type: "short_text",
+        label: "Employee Name",
+        placeholder: "Your full name",
+        required: true,
+        width: "full",
+      },
+      {
+        id: "f_remarks",
+        type: "short_text",
+        label: "Remarks / Reason",
+        placeholder: "Brief reason or site/activity notes",
+        required: true,
+        width: "full",
+      },
+      {
+        id: "f_datetime",
+        type: "date_time",
+        label: "Date / Time",
+        helpText: "Automatically set to current real-world date & time. Adjust manually if needed.",
+        required: true,
+        defaultToNow: true,
+        width: "full",
+      },
+      {
+        id: "f_proof_hours",
+        type: "short_text",
+        label: "Proof of hours",
+        placeholder: "e.g. 8 hours / Google Drive link / reference",
+        required: false,
+        width: "full",
+      },
+    ],
+  },
+  {
+    key: "mcep_finalist",
+    name: "Finalis MCEP (Voting)",
+    category: "voting_evaluation",
+    kind: "general",
+    title: "Finalis MCEP — Official Judging & Voting",
+    slug: "finalis-mcep-voting",
+    description: "Official evaluation scorecard for Finalis MCEP. Rate each presentation criterion carefully using the pixel star rubric.",
+    allowAppeal: false,
+    theme: {
+      category: "voting_evaluation",
+      primaryColor: "#7c3aed",
+      backgroundColor: "#e6e0ee",
+      backgroundPattern: "pixel_stars",
+      bannerImageUrl: PRESET_BANNERS[0].url,
+      bannerHeight: "medium",
+    },
+    nodes: [
+      {
+        id: "hdr_mcep",
+        type: "heading",
+        label: "Finalis MCEP Judge Scorecard",
+        width: "full",
+      },
+      {
+        id: "f_finalist",
+        type: "dropdown",
+        label: "Select Finalist / Presenter",
+        required: true,
+        options: [
+          "Finalist 01 — Team Alpha",
+          "Finalist 02 — Team Nova",
+          "Finalist 03 — Team Horizon",
+          "Finalist 04 — Team Catalyst",
+        ],
+        width: "full",
+      },
+      {
+        id: "f_star_clarity",
+        type: "star_rating",
+        label: "1. Presentation & Delivery Clarity",
+        helpText: "Rate slide quality, storytelling, and confidence.",
+        required: true,
+        maxRating: 5,
+        ratingLabels: { low: "Needs Improvement", high: "Outstanding" },
+        width: "full",
+      },
+      {
+        id: "f_star_innovation",
+        type: "star_rating",
+        label: "2. Innovation & Problem Solving",
+        helpText: "Rate originality, creativity, and practical solution design.",
+        required: true,
+        maxRating: 5,
+        ratingLabels: { low: "Conventional", high: "Breakthrough" },
+        width: "full",
+      },
+      {
+        id: "f_star_execution",
+        type: "star_rating",
+        label: "3. Execution & Technical Feasibility",
+        helpText: "Rate readiness, execution detail, and sustainability.",
+        required: true,
+        maxRating: 5,
+        ratingLabels: { low: "Early Concept", high: "Production Ready" },
+        width: "full",
+      },
+      {
+        id: "f_scale_impact",
+        type: "linear_scale",
+        label: "4. Overall MCEP Finalist Impact Score (1–10)",
+        required: true,
+        minRating: 1,
+        maxRating: 10,
+        ratingLabels: { low: "Low Impact", high: "High Impact" },
+        width: "full",
+      },
+      {
+        id: "f_judge_notes",
+        type: "long_text",
+        label: "Judge Remarks & Recommendations",
+        placeholder: "Optional constructive feedback for this finalist...",
+        required: false,
+        width: "full",
+      },
+    ],
+  },
+  {
+    key: "complaint_ticket",
+    name: "Staff Complaint",
+    category: "staff_complaints",
+    kind: "complaint",
+    title: "Staff Complaint & Status Report",
+    slug: "service-operations-complaint",
+    description: "Submit a confidential report or operational complaint. Your logged-in email is linked automatically so you can track live ticket status.",
+    allowAppeal: true,
+    theme: {
+      category: "staff_complaints",
+      primaryColor: "#be123c",
+      backgroundColor: "#efece6",
+      backgroundPattern: "grid_paper",
+      bannerImageUrl: PRESET_BANNERS[3].url,
+      bannerHeight: "compact",
+    },
+    nodes: [
+      {
+        id: "ins_complaint",
+        type: "instructions",
+        label: "Your signed-in company email is attached automatically for status updates. No separate email field is needed.",
+        width: "full",
+      },
+      {
+        id: "f_category",
+        type: "dropdown",
+        label: "Complaint Category",
+        required: true,
+        options: ["Service Delay", "Facility / Equipment", "Conduct & Welfare", "Safety", "Other"],
+        width: "half",
+      },
+      {
+        id: "f_incident_dt",
+        type: "date_time",
+        label: "Incident Date & Time",
+        defaultToNow: true,
+        required: true,
+        width: "half",
+      },
+      {
+        id: "f_subject",
+        type: "short_text",
+        label: "Complaint Subject",
+        placeholder: "Short headline of your report",
+        required: true,
+        width: "full",
+      },
+      {
+        id: "f_description",
+        type: "long_text",
+        label: "Detailed Description",
+        placeholder: "Explain what happened, location, and any immediate action needed...",
+        required: true,
+        width: "full",
+      },
+      {
+        id: "f_evidence",
+        type: "file_upload",
+        label: "Supporting Evidence (Optional, up to 1 GiB)",
+        required: false,
+        width: "full",
+      },
+    ],
+  },
   {
     key: "employee_request",
     name: "General Service Request",
+    category: "company_forms",
     kind: "general",
     title: "General Operations Request",
     slug: "general-operations-request",
     description: "Submit an internal service or operational request.",
     allowAppeal: false,
+    theme: {
+      category: "company_forms",
+      primaryColor: "#1d4ed8",
+      backgroundColor: "#efece6",
+      backgroundPattern: "matboard_dots",
+    },
     nodes: [
       { id: "hdr_1", type: "heading", label: "Requester Details", width: "full" },
       {
@@ -88,6 +529,7 @@ export const FORM_TEMPLATES: FormTemplate[] = [
         id: "f_needed_by",
         type: "date",
         label: "Date Needed",
+        defaultToNow: true,
         required: false,
         width: "half",
       },
@@ -120,11 +562,18 @@ export const FORM_TEMPLATES: FormTemplate[] = [
   {
     key: "appeal_application",
     name: "Formal Appeal Application",
+    category: "staff_complaints",
     kind: "appeal_enabled",
     title: "Formal Review & Appeal Form",
     slug: "formal-review-appeal",
     description: "Submit a formal appeal or review request with supporting grounds.",
     allowAppeal: true,
+    theme: {
+      category: "staff_complaints",
+      primaryColor: "#b45309",
+      backgroundColor: "#ede3d2",
+      backgroundPattern: "grid_paper",
+    },
     nodes: [
       {
         id: "ins_1",
@@ -163,46 +612,6 @@ export const FORM_TEMPLATES: FormTemplate[] = [
         id: "f_statement",
         type: "long_text",
         label: "Appeal Statement",
-        required: true,
-        width: "full",
-      },
-    ],
-  },
-  {
-    key: "complaint_ticket",
-    name: "Operational Complaint",
-    kind: "complaint",
-    title: "Service & Operations Complaint",
-    slug: "service-operations-complaint",
-    description: "Report an operational issue or service complaint to open a tracked ticket.",
-    allowAppeal: false,
-    nodes: [
-      {
-        id: "f_category",
-        type: "dropdown",
-        label: "Complaint Category",
-        required: true,
-        options: ["Service Delay", "Facility / Equipment", "Conduct", "Safety", "Other"],
-        width: "half",
-      },
-      {
-        id: "f_incident_date",
-        type: "date",
-        label: "Incident Date",
-        required: true,
-        width: "half",
-      },
-      {
-        id: "f_subject",
-        type: "short_text",
-        label: "Subject",
-        required: true,
-        width: "full",
-      },
-      {
-        id: "f_description",
-        type: "long_text",
-        label: "What happened?",
         required: true,
         width: "full",
       },

@@ -25,7 +25,8 @@ export default function TicketDetailClient() {
 
   const ticketId = typeof window === "undefined"
     ? ""
-    : decodeURIComponent(window.location.pathname.replace(/\/+$/, "").split("/").at(-1) ?? "");
+    : new URLSearchParams(window.location.search).get("id") ||
+      decodeURIComponent(window.location.pathname.replace(/\/+$/, "").split("/").at(-1) ?? "");
 
   useEffect(() => {
     let active = true;

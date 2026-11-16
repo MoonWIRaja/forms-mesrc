@@ -456,6 +456,242 @@ export function PixelDragHandleIcon({ size = 16, className }: PixelIconProps) {
   );
 }
 
+export function PixelStarIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      {/* Filled 16-bit Pixel Star */}
+      <rect x="7" y="1" width="2" height="14" />
+      <rect x="6" y="3" width="4" height="10" />
+      <rect x="5" y="5" width="6" height="7" />
+      <rect x="1" y="5" width="14" height="2" />
+      <rect x="2" y="7" width="12" height="2" />
+      <rect x="4" y="9" width="8" height="2" />
+      <rect x="3" y="11" width="3" height="3" />
+      <rect x="10" y="11" width="3" height="3" />
+      <rect x="2" y="13" width="2" height="2" />
+      <rect x="12" y="13" width="2" height="2" />
+    </PixelSvg>
+  );
+}
+
+export function PixelStarOutlineIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="7" y="1" width="2" height="2" />
+      <rect x="6" y="3" width="1" height="2" />
+      <rect x="9" y="3" width="1" height="2" />
+      <rect x="1" y="5" width="5" height="2" />
+      <rect x="10" y="5" width="5" height="2" />
+      <rect x="2" y="7" width="2" height="2" />
+      <rect x="12" y="7" width="2" height="2" />
+      <rect x="4" y="9" width="2" height="2" />
+      <rect x="10" y="9" width="2" height="2" />
+      <rect x="3" y="11" width="2" height="2" />
+      <rect x="11" y="11" width="2" height="2" />
+      <rect x="2" y="13" width="3" height="2" />
+      <rect x="11" y="13" width="3" height="2" />
+      <rect x="5" y="11" width="2" height="2" />
+      <rect x="9" y="11" width="2" height="2" />
+      <rect x="7" y="10" width="2" height="2" />
+    </PixelSvg>
+  );
+}
+
+export function PixelClockIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="5" y="1" width="6" height="2" />
+      <rect x="5" y="13" width="6" height="2" />
+      <rect x="3" y="2" width="2" height="2" />
+      <rect x="11" y="2" width="2" height="2" />
+      <rect x="3" y="12" width="2" height="2" />
+      <rect x="11" y="12" width="2" height="2" />
+      <rect x="1" y="5" width="2" height="6" />
+      <rect x="13" y="5" width="2" height="6" />
+      {/* Clock hands */}
+      <rect x="7" y="4" width="2" height="5" />
+      <rect x="9" y="7" width="3" height="2" />
+    </PixelSvg>
+  );
+}
+
+export function PixelDateTimeIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      {/* Calendar frame + clock hands */}
+      <rect x="3" y="1" width="2" height="2" />
+      <rect x="9" y="1" width="2" height="2" />
+      <rect x="1" y="3" width="12" height="3" />
+      <rect x="1" y="6" width="2" height="7" />
+      <rect x="1" y="13" width="8" height="2" />
+      <rect x="11" y="6" width="2" height="2" />
+      {/* Pixel mini-clock at bottom right */}
+      <rect x="9" y="8" width="6" height="2" />
+      <rect x="9" y="13" width="6" height="2" />
+      <rect x="8" y="9" width="2" height="5" />
+      <rect x="14" y="9" width="2" height="5" />
+      <rect x="11" y="10" width="1" height="2" />
+      <rect x="12" y="11" width="2" height="1" />
+    </PixelSvg>
+  );
+}
+
+export function PixelImageIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="1" y="2" width="14" height="2" />
+      <rect x="1" y="12" width="14" height="2" />
+      <rect x="1" y="4" width="2" height="8" />
+      <rect x="13" y="4" width="2" height="8" />
+      {/* Sun */}
+      <rect x="10" y="5" width="2" height="2" />
+      {/* Mountain peaks */}
+      <rect x="4" y="9" width="2" height="3" />
+      <rect x="5" y="7" width="2" height="5" />
+      <rect x="6" y="8" width="2" height="4" />
+      <rect x="8" y="9" width="4" height="3" />
+    </PixelSvg>
+  );
+}
+
+export function PixelPaletteIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="4" y="2" width="8" height="2" />
+      <rect x="2" y="4" width="2" height="7" />
+      <rect x="12" y="4" width="2" height="4" />
+      <rect x="10" y="8" width="4" height="2" />
+      <rect x="4" y="11" width="3" height="2" />
+      <rect x="7" y="12" width="4" height="2" />
+      {/* Color dots */}
+      <rect x="5" y="5" width="2" height="2" />
+      <rect x="8" y="5" width="2" height="2" />
+      <rect x="5" y="8" width="2" height="2" />
+    </PixelSvg>
+  );
+}
+
+export function PixelScaleIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      {/* 1-10 Bar Scale */}
+      <rect x="2" y="10" width="2" height="4" />
+      <rect x="6" y="7" width="2" height="7" />
+      <rect x="10" y="4" width="2" height="10" />
+      <rect x="13" y="2" width="2" height="12" />
+    </PixelSvg>
+  );
+}
+
+export function PixelShieldAlertIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="3" y="1" width="10" height="2" />
+      <rect x="2" y="3" width="2" height="6" />
+      <rect x="12" y="3" width="2" height="6" />
+      <rect x="3" y="9" width="2" height="2" />
+      <rect x="11" y="9" width="2" height="2" />
+      <rect x="5" y="11" width="2" height="2" />
+      <rect x="9" y="11" width="2" height="2" />
+      <rect x="7" y="13" width="2" height="2" />
+      {/* Exclamation ! */}
+      <rect x="7" y="4" width="2" height="5" />
+      <rect x="7" y="10" width="2" height="2" />
+    </PixelSvg>
+  );
+}
+
+export function PixelPauseIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="3" y="2" width="4" height="12" />
+      <rect x="9" y="2" width="4" height="12" />
+    </PixelSvg>
+  );
+}
+
+export function PixelPlayIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="3" y="2" width="2" height="12" />
+      <rect x="5" y="3" width="2" height="10" />
+      <rect x="7" y="4" width="2" height="8" />
+      <rect x="9" y="5" width="2" height="6" />
+      <rect x="11" y="7" width="2" height="2" />
+    </PixelSvg>
+  );
+}
+
+export function PixelSearchIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="4" y="2" width="5" height="2" />
+      <rect x="2" y="4" width="2" height="5" />
+      <rect x="9" y="4" width="2" height="5" />
+      <rect x="4" y="9" width="5" height="2" />
+      <rect x="9" y="9" width="2" height="2" />
+      <rect x="11" y="11" width="2" height="2" />
+      <rect x="13" y="13" width="2" height="2" />
+    </PixelSvg>
+  );
+}
+
+export function PixelUploadIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="7" y="2" width="2" height="8" />
+      <rect x="5" y="4" width="2" height="2" />
+      <rect x="9" y="4" width="2" height="2" />
+      <rect x="2" y="11" width="2" height="3" />
+      <rect x="12" y="11" width="2" height="3" />
+      <rect x="2" y="13" width="12" height="2" />
+    </PixelSvg>
+  );
+}
+
+export function PixelCheckIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="2" y="8" width="2" height="2" />
+      <rect x="4" y="10" width="2" height="2" />
+      <rect x="6" y="11" width="2" height="2" />
+      <rect x="8" y="9" width="2" height="2" />
+      <rect x="10" y="7" width="2" height="2" />
+      <rect x="12" y="4" width="2" height="3" />
+    </PixelSvg>
+  );
+}
+
+export function PixelWarningIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="7" y="2" width="2" height="2" />
+      <rect x="5" y="4" width="2" height="3" />
+      <rect x="9" y="4" width="2" height="3" />
+      <rect x="3" y="7" width="2" height="4" />
+      <rect x="11" y="7" width="2" height="4" />
+      <rect x="1" y="11" width="14" height="3" />
+      <rect x="7" y="5" width="2" height="4" />
+      <rect x="7" y="10" width="2" height="1" />
+    </PixelSvg>
+  );
+}
+
+export function PixelRefreshIcon({ size = 16, className }: PixelIconProps) {
+  return (
+    <PixelSvg size={size} className={className}>
+      <rect x="5" y="2" width="7" height="2" />
+      <rect x="11" y="4" width="2" height="3" />
+      <rect x="9" y="5" width="5" height="2" />
+      <rect x="3" y="4" width="2" height="4" />
+      <rect x="4" y="12" width="7" height="2" />
+      <rect x="3" y="9" width="2" height="3" />
+      <rect x="2" y="9" width="5" height="2" />
+      <rect x="11" y="8" width="2" height="4" />
+    </PixelSvg>
+  );
+}
+
 export function PixelFieldTypeIcon({
   type,
   size = 16,
@@ -474,6 +710,16 @@ export function PixelFieldTypeIcon({
       return <PixelCheckboxIcon size={size} className={className} />;
     case "date":
       return <PixelDateIcon size={size} className={className} />;
+    case "time":
+      return <PixelClockIcon size={size} className={className} />;
+    case "date_time":
+      return <PixelDateTimeIcon size={size} className={className} />;
+    case "star_rating":
+      return <PixelStarIcon size={size} className={className} />;
+    case "linear_scale":
+      return <PixelScaleIcon size={size} className={className} />;
+    case "image":
+      return <PixelImageIcon size={size} className={className} />;
     case "email":
       return <PixelEmailIcon size={size} className={className} />;
     case "number":

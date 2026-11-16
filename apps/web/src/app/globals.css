@@ -1,4 +1,4 @@
-﻿/* ============================================================================
+/* ============================================================================
    FORMS MESRC â€” PAPER WORLD ASSEMBLY DESIGN SYSTEM
    Every scene, card, button, and illustration is constructed layer-by-layer
    from back to front:
@@ -3897,4 +3897,684 @@ textarea:focus {
 .gf-settings-stage {
   padding: 1rem 1rem 4rem;
   width: 100%;
+  position: relative;
+  z-index: 2;
 }
+
+/* Extended Pixel-Papercraft Controls, Drawers, Dropdowns & Live Fields */
+.gf-studio-shell {
+  position: relative;
+}
+
+.gf-editor-stage,
+.gf-preview-stage {
+  position: relative;
+  z-index: 2;
+}
+
+.pixel-paper-btn.warning {
+  background: var(--amber-soft);
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+.pixel-paper-btn.warning:hover:not(:disabled) {
+  background: #fde68a;
+  color: #78350f;
+}
+
+.pixel-stamp-badge.paused {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #991b1b;
+}
+
+.pixel-stamp-badge.unsaved {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #b45309;
+}
+
+.pixel-stamp-badge.synced {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #065f46;
+}
+
+/* Full-Page Optional Photo Background Layer */
+.gf-bg-photo-layer {
+  position: fixed;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.gf-bg-photo-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+/* Auto-save recovery strip */
+.gf-recovery-banner {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--amber-soft);
+  border-bottom: 2px solid var(--amber);
+  padding: 0.65rem 1.5rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #78350f;
+}
+
+/* Visual & Theme Customizer Drawer */
+.gf-theme-drawer {
+  position: fixed;
+  top: 64px;
+  right: 1rem;
+  width: 340px;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100dvh - 82px);
+  background: var(--surface-elevated);
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  box-shadow: 6px 6px 0 var(--paper-back), 6px 6px 0 2px var(--ink);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: paperFrontLayerIn 0.18s ease both;
+}
+
+.gf-theme-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  background: var(--surface-muted);
+  border-bottom: 2px solid var(--ink);
+}
+
+.gf-theme-drawer-body {
+  padding: 1rem;
+  overflow-y: auto;
+  gap: 1rem;
+}
+
+.gf-cat-pick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 0.15rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--surface-muted);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.gf-cat-pick-btn strong {
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+
+.gf-cat-pick-btn span {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.gf-cat-pick-btn.active {
+  background: var(--accent-soft);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.gf-drawer-thumb-card {
+  background: var(--surface-muted);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 0.65rem;
+}
+
+.gf-drawer-thumb-img {
+  width: 100%;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 1px solid var(--ink);
+}
+
+.gf-color-input-native {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+}
+
+/* Banner Cards in Studio & Fill */
+.gf-banner-card {
+  position: relative;
+  width: 100%;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 5px 5px 0 var(--paper-back), 5px 5px 0 2px var(--ink);
+  background: var(--surface-elevated);
+}
+
+.gf-banner-card.height-compact {
+  height: 120px;
+}
+
+.gf-banner-card.height-medium {
+  height: 185px;
+}
+
+.gf-banner-card.height-tall {
+  height: 250px;
+}
+
+.gf-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gf-banner-overlay-actions {
+  position: absolute;
+  bottom: 0.65rem;
+  right: 0.65rem;
+}
+
+.gf-preview-banner-wrap {
+  width: 100%;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 3px 3px 0 var(--paper-back-edge);
+}
+
+.gf-preview-banner-wrap.compact {
+  height: 110px;
+}
+
+.gf-preview-banner-wrap.medium {
+  height: 155px;
+}
+
+.gf-preview-banner-wrap.tall {
+  height: 210px;
+}
+
+.gf-account-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.75rem;
+  background: var(--surface-muted);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  color: var(--ink-secondary);
+}
+
+.gf-category-pills {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+/* FIXED Custom Pixel Field-Type Dropdown */
+.gf-custom-select-anchor {
+  position: relative;
+  width: 245px;
+  flex-shrink: 0;
+}
+
+.gf-custom-select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.58rem 0.75rem;
+  background: var(--surface-muted);
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--paper-back-edge);
+  transition: all 0.12s ease;
+}
+
+.gf-custom-select-trigger:hover,
+.gf-custom-select-trigger.open {
+  background: var(--surface-elevated);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.gf-custom-type-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 265px;
+  max-height: 360px;
+  overflow-y: auto;
+  background: var(--surface-elevated);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 var(--paper-back), 5px 5px 0 2px var(--ink);
+  padding: 0.4rem;
+  z-index: 80;
+}
+
+.gf-type-group + .gf-type-group {
+  border-top: 1px dashed var(--border);
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+}
+
+.gf-type-group-label {
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.2rem 0.5rem;
+}
+
+.gf-type-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.6rem;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.gf-type-menu-item:hover {
+  background: var(--surface-muted);
+  color: var(--accent);
+}
+
+.gf-type-menu-item.selected {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+/* Real-Time Date/Time, Rating & Image Blocks in Editor */
+.gf-realtime-editor-box,
+.gf-rating-editor-box,
+.gf-image-block-editor {
+  background: var(--surface-muted);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+}
+
+.gf-inline-check-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+/* Closed / Paused Lock Card */
+.gf-closed-lock-card {
+  background: var(--surface-elevated);
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: 2.25rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  box-shadow: 5px 5px 0 var(--paper-back), 5px 5px 0 2px var(--ink);
+}
+
+.gf-templates-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  background: var(--surface-muted);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 8px;
+}
+
+/* Media Picker & Confirmation Modals */
+.pixel-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 24, 27, 0.52);
+  backdrop-filter: blur(4px);
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.pixel-modal-card {
+  width: 100%;
+  max-width: 720px;
+  max-height: 86dvh;
+  overflow-y: auto;
+  background: var(--surface-elevated);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  padding: 1.25rem 1.4rem;
+  box-shadow: 8px 8px 0 var(--paper-back), 8px 8px 0 2px var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pixel-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1.5px dashed var(--border);
+  padding-bottom: 0.65rem;
+}
+
+.pixel-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+  gap: 0.75rem;
+}
+
+.pixel-media-tile {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  background: var(--surface-muted);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.12s ease;
+}
+
+.pixel-media-tile:hover,
+.pixel-media-tile.active {
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  transform: translate(-1px, -1px);
+}
+
+.pixel-media-thumb-wrap {
+  width: 100%;
+  height: 98px;
+  background: #e5e0d6;
+  overflow: hidden;
+}
+
+.pixel-media-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pixel-media-meta {
+  padding: 0.5rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pixel-media-meta strong {
+  font-size: 0.78rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pixel-media-meta span {
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+/* Interactive FormRenderer Papercraft × Pixel Components */
+.fr-section-heading {
+  background: var(--surface-elevated);
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  padding: 0.85rem 1.15rem;
+  box-shadow: 3px 3px 0 var(--paper-back-edge);
+}
+
+.fr-instructions-card {
+  background: var(--surface-muted);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 8px;
+  padding: 0.85rem 1.1rem;
+}
+
+.fr-question-card {
+  background: var(--surface-elevated);
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  padding: 1.15rem 1.3rem;
+  box-shadow: 3px 3px 0 var(--paper-back), 3px 3px 0 1px var(--border-strong);
+}
+
+.fr-question-label {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.fr-embedded-image {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface-muted);
+}
+
+.fr-datetime-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.fr-datetime-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.fr-datetime-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.fr-mini-label {
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.fr-choice-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-muted);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.fr-choice-option:hover {
+  border-color: var(--ink);
+  background: var(--surface-elevated);
+}
+
+.fr-rating-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.fr-stars-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.fr-star-btn {
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  color: var(--border-strong);
+  cursor: pointer;
+  transition: transform 0.1s ease, color 0.1s ease;
+}
+
+.fr-star-btn:hover:not(:disabled) {
+  transform: scale(1.15);
+}
+
+.fr-scale-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.fr-scale-tile {
+  min-width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-muted);
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--paper-back-edge);
+  transition: all 0.1s ease;
+}
+
+.fr-scale-tile:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.fr-rating-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  color: var(--muted);
+  max-width: 420px;
+}
+
+/* Fill Form Themed Stage */
+.fill-themed-stage {
+  position: relative;
+  min-height: calc(100dvh - 3rem);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1rem 4rem;
+}
+
+.fill-form-column {
+  position: relative;
+  z-index: 2;
+  max-width: 740px;
+  margin: 0 auto;
+}
+
+.fr-submit-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: var(--surface-elevated);
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: 0.95rem 1.25rem;
+  box-shadow: 4px 4px 0 var(--paper-back-edge);
+}
+
+/* Category Catalog Cards & Paused Lock State */
+.catalog-form-card.paused {
+  opacity: 0.88;
+  background: var(--surface-muted);
+}
+
+.catalog-banner-thumb {
+  width: 100%;
+  height: 112px;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+}
+
+.catalog-banner-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gf-paused-reason-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  color: #991b1b;
+  font-weight: 600;
+}
+
