@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import BrandLogo from "@/components/BrandLogo";
 import ChunkLoader from "@/components/ChunkLoader";
-import UserProfileMenu from "@/components/UserProfileMenu";
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
 export default function HomePage() {
@@ -98,18 +97,9 @@ export default function HomePage() {
     );
   }
 
-  // 3. Signed-In Home: 3-Pillar Native App Hub (Forms, Complaints, Voting & Scoring)
+  // 3. Signed-In Home: 3 Pure Centered Choices (Borang Syarikat, Aduan Staf, Penilaian & Undian)
   return (
     <div className="app-home-stage">
-      <header className="app-home-header">
-        <div>
-          <span className="app-role-pill">{profile.role.toUpperCase()} WORKSPACE</span>
-          <h1 className="app-home-title">Forms MESRC</h1>
-          <p className="app-home-subtitle">Pilih modul di bawah untuk mula</p>
-        </div>
-        <UserProfileMenu profile={profile} onSignOut={handleSignOut} compact />
-      </header>
-
       <div className="app-choice-grid">
         {/* TILE 1: FORMS */}
         <Link href="/forms/" className="app-choice-card app-card-forms">
@@ -170,6 +160,12 @@ export default function HomePage() {
             </svg>
           </div>
         </Link>
+      </div>
+
+      <div className="app-home-footer">
+        <button type="button" onClick={handleSignOut} className="app-home-signout-btn">
+          Log Keluar ({profile.email})
+        </button>
       </div>
     </div>
   );

@@ -649,61 +649,31 @@ a:hover {
    ============================================================================ */
 
 .app-home-stage {
+  flex: 1;
   width: 100%;
-  max-width: 960px;
-  margin: 0 auto;
+  max-width: 440px;
+  min-height: calc(100dvh - 3rem);
+  margin: auto;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  padding: 1rem 0 2.5rem;
-}
-
-.app-home-header {
-  display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0.25rem 0.25rem 0.5rem;
-}
-
-.app-role-pill {
-  display: inline-block;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 0.15rem 0.5rem;
-  border-radius: 9999px;
-  background: var(--surface-muted);
-  border: 1px solid var(--border-subtle);
-  color: var(--muted);
-  margin-bottom: 0.25rem;
-}
-
-.app-home-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  color: var(--ink);
-  margin: 0 0 0.15rem;
-}
-
-.app-home-subtitle {
-  font-size: 0.85rem;
-  color: var(--muted);
-  margin: 0;
+  padding: 1.5rem 0.75rem;
 }
 
 .app-choice-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
   width: 100%;
 }
 
 .app-choice-card {
   display: flex;
-  flex-direction: column;
-  padding: 1.5rem;
+  flex-direction: row;
+  align-items: center;
+  padding: 1rem 1.15rem;
+  gap: 1rem;
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: 18px;
@@ -711,14 +681,15 @@ a:hover {
   color: var(--ink);
   box-shadow:
     0 1px 0 #ffffff inset,
-    0 2px 6px rgba(24, 24, 27, 0.04),
-    0 8px 16px -4px rgba(24, 24, 27, 0.05);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    0 2px 4px rgba(24, 24, 27, 0.04),
+    0 6px 14px -3px rgba(24, 24, 27, 0.05);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
   cursor: pointer;
+  width: 100%;
 }
 
 .app-choice-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: #cbd5e1;
   box-shadow:
     0 1px 0 #ffffff inset,
@@ -726,14 +697,19 @@ a:hover {
     0 12px 24px -4px rgba(24, 24, 27, 0.08);
 }
 
+.app-choice-card:active {
+  transform: scale(0.985);
+  background: #f8fafc;
+}
+
 .app-choice-icon-box {
   width: 48px;
   height: 48px;
+  min-width: 48px;
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
   flex-shrink: 0;
   border: 1px solid transparent;
 }
@@ -762,87 +738,66 @@ a:hover {
 }
 
 .app-choice-title {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--ink);
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.15rem;
   line-height: 1.25;
 }
 
 .app-choice-desc {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--muted);
   line-height: 1.35;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .app-choice-chevron {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.app-home-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.app-home-signout-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  transition: color 0.12s ease;
+}
+
+.app-home-signout-btn:hover {
+  color: var(--ink);
 }
 
 /* Mobile View: Sleek Native App Rows */
 @media (max-width: 920px) {
   .app-home-stage {
-    max-width: 480px;
-    padding: 0.5rem 0.25rem 1.5rem !important;
-    gap: 0.85rem !important;
-  }
-
-  .app-home-title {
-    font-size: 1.3rem !important;
-  }
-
-  .app-home-subtitle {
-    font-size: 0.78rem !important;
+    max-width: 440px;
+    min-height: calc(100dvh - 2rem);
+    padding: 1rem 0.5rem !important;
   }
 
   .app-choice-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.65rem !important;
-    width: 100% !important;
+    gap: 0.75rem !important;
   }
 
   .app-choice-card {
-    flex-direction: row !important;
-    align-items: center !important;
-    padding: 0.85rem 1rem !important;
-    gap: 0.85rem !important;
-    border-radius: 16px !important;
-    box-shadow: 0 1px 3px rgba(24, 24, 27, 0.04) !important;
-    transform: none !important;
-  }
-
-  .app-choice-card:active {
-    transform: scale(0.985) !important;
-    background: #f8fafc !important;
-  }
-
-  .app-choice-icon-box {
-    width: 44px !important;
-    height: 44px !important;
-    margin-bottom: 0 !important;
-    border-radius: 12px !important;
-  }
-
-  .app-choice-title {
-    font-size: 0.98rem !important;
-    margin: 0 0 0.12rem !important;
-  }
-
-  .app-choice-desc {
-    font-size: 0.75rem !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-  }
-
-  .app-choice-chevron {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    color: #94a3b8;
-    flex-shrink: 0;
+    padding: 0.95rem 1.05rem !important;
   }
 }
 
