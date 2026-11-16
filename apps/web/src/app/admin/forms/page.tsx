@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import ChunkLoader from "@/components/ChunkLoader";
 import {
   FORM_TEMPLATES,
@@ -71,6 +72,7 @@ export default function AdminFormBuilderPage() {
 
   // UI Studio State
   const [activeTab, setActiveTab] = useState<"studio" | "catalog" | "settings">("studio");
+  const [sidebarTab, setSidebarTab] = useState<"elements" | "properties">("elements");
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -223,6 +225,7 @@ export default function AdminFormBuilderPage() {
       setMobileNodes((prev) => [...prev, newNode]);
     }
     setSelectedNodeId(id);
+    setSidebarTab("properties");
   }
 
   function handleDuplicateNode(nodeToCopy: FormFieldNode, isMobile = false) {
@@ -248,6 +251,7 @@ export default function AdminFormBuilderPage() {
       }
     }
     setSelectedNodeId(newId);
+    setSidebarTab("properties");
   }
 
   function handleMoveNode(fromIdx: number, toIdx: number, isMobile = false) {
@@ -420,7 +424,10 @@ export default function AdminFormBuilderPage() {
           if (dragIndex !== null) handleMoveNode(dragIndex, idx, isMobile);
           setDragIndex(null);
         }}
-        onClick={() => setSelectedNodeId(node.id)}
+        onClick={() => {
+          setSelectedNodeId(node.id);
+          setSidebarTab("properties");
+        }}
         className={`canvas-node-card ${isSelected ? "selected" : ""}`}
       >
         {isSelected && (
@@ -569,6 +576,13 @@ export default function AdminFormBuilderPage() {
             ================================================================== */}
         <header className="studio-toolbar" aria-label="Studio Command Bar">
           <div className="studio-toolbar-left">
+            <Link href="/admin/" className="btn btn-secondary studio-exit-btn" title="Exit to Submissions dashboard">
+              &larr; Exit
+            </Link>
+            <div className="studio-brand-badge" title="Forms MESRC Canvas Studio">
+              <BrandLogo size="sm" />
+              <span>Studio</span>
+            </div>
             <input
               type="text"
               value={title}
@@ -654,86 +668,307 @@ export default function AdminFormBuilderPage() {
             ================================================================== */}
         {activeTab === "studio" && (
           <div className="studio-grid">
-            {/* COLUMN 1: ELEMENTS PALETTE (Canva / Figma Components) */}
-            <aside className="studio-palette" aria-label="Component Elements Palette">
-              <div>
-                <span className="palette-section-title">Form Elements</span>
-                <p className="notice" style={{ fontSize: "0.78rem", marginBottom: "0.75rem" }}>
-                  Click to add directly onto the canvas.
-                </p>
+            {/* COLUMN 1: LEFT UNIFIED FIGMA STUDIO SIDEBAR (ELEMENTS & PROPERTIES TABS) */}
+            <aside className="studio-sidebar" aria-label="Studio Elements and Properties">
+              <div className="studio-sidebar-nav">
+                <button
+                  type="button"
+                  className={`studio-sidebar-tab-btn ${sidebarTab === "elements" ? "active" : ""}`}
+                  onClick={() => setSidebarTab("elements")}
+                >
+                  <span>🧩 Elements</span>
+                </button>
+                <button
+                  type="button"
+                  className={`studio-sidebar-tab-btn ${sidebarTab === "properties" ? "active" : ""}`}
+                  onClick={() => setSidebarTab("properties")}
+                >
+                  <span>⚙️ Properties</span>
+                </button>
               </div>
 
-              <div>
-                <div className="palette-section-title">Structure</div>
-                <div className="palette-items-list">
-                  {PALETTE_ITEMS.filter((i) => i.category === "structure").map((item) => (
-                    <button
-                      key={item.type}
-                      type="button"
-                      className="palette-item-card"
-                      onClick={() => handleAddNode(item.type)}
-                      title={`Add ${item.label} (${item.desc})`}
-                    >
-                      <span>{item.label}</span>
-                      <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>+ Add</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {sidebarTab === "elements" && (
+                <div className="studio-palette">
+                  <div>
+                    <span className="palette-section-title">Form Elements</span>
+                    <p className="notice" style={{ fontSize: "0.78rem", marginBottom: "0.75rem" }}>
+                      Click to add directly onto the canvas.
+                    </p>
+                  </div>
 
-              <div>
-                <div className="palette-section-title">Text &amp; Inputs</div>
-                <div className="palette-items-list">
-                  {PALETTE_ITEMS.filter((i) => i.category === "inputs").map((item) => (
-                    <button
-                      key={item.type}
-                      type="button"
-                      className="palette-item-card"
-                      onClick={() => handleAddNode(item.type)}
-                      title={`Add ${item.label} (${item.desc})`}
-                    >
-                      <span>{item.label}</span>
-                      <span style={{ fontSize: "0.75rem", color: "var(--accent)" }}>+ Add</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+                  <div>
+                    <div className="palette-section-title">Structure</div>
+                    <div className="palette-items-list">
+                      {PALETTE_ITEMS.filter((i) => i.category === "structure").map((item) => (
+                        <button
+                          key={item.type}
+                          type="button"
+                          className="palette-item-card"
+                          onClick={() => handleAddNode(item.type)}
+                          title={`Add ${item.label} (${item.desc})`}
+                        >
+                          <span>{item.label}</span>
+                          <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>+ Add</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              <div>
-                <div className="palette-section-title">Choices &amp; Dropdowns</div>
-                <div className="palette-items-list">
-                  {PALETTE_ITEMS.filter((i) => i.category === "choice").map((item) => (
-                    <button
-                      key={item.type}
-                      type="button"
-                      className="palette-item-card"
-                      onClick={() => handleAddNode(item.type)}
-                      title={`Add ${item.label} (${item.desc})`}
-                    >
-                      <span>{item.label}</span>
-                      <span style={{ fontSize: "0.75rem", color: "var(--amber)" }}>+ Add</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+                  <div>
+                    <div className="palette-section-title">Text &amp; Inputs</div>
+                    <div className="palette-items-list">
+                      {PALETTE_ITEMS.filter((i) => i.category === "inputs").map((item) => (
+                        <button
+                          key={item.type}
+                          type="button"
+                          className="palette-item-card"
+                          onClick={() => handleAddNode(item.type)}
+                          title={`Add ${item.label} (${item.desc})`}
+                        >
+                          <span>{item.label}</span>
+                          <span style={{ fontSize: "0.75rem", color: "var(--accent)" }}>+ Add</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              <div>
-                <div className="palette-section-title">Attachments</div>
-                <div className="palette-items-list">
-                  {PALETTE_ITEMS.filter((i) => i.category === "media").map((item) => (
-                    <button
-                      key={item.type}
-                      type="button"
-                      className="palette-item-card"
-                      onClick={() => handleAddNode(item.type)}
-                      title={`Add ${item.label} (${item.desc})`}
-                    >
-                      <span>{item.label}</span>
-                      <span style={{ fontSize: "0.75rem", color: "var(--ok-text)" }}>+ Add</span>
-                    </button>
-                  ))}
+                  <div>
+                    <div className="palette-section-title">Choices &amp; Dropdowns</div>
+                    <div className="palette-items-list">
+                      {PALETTE_ITEMS.filter((i) => i.category === "choice").map((item) => (
+                        <button
+                          key={item.type}
+                          type="button"
+                          className="palette-item-card"
+                          onClick={() => handleAddNode(item.type)}
+                          title={`Add ${item.label} (${item.desc})`}
+                        >
+                          <span>{item.label}</span>
+                          <span style={{ fontSize: "0.75rem", color: "var(--amber)" }}>+ Add</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="palette-section-title">Attachments</div>
+                    <div className="palette-items-list">
+                      {PALETTE_ITEMS.filter((i) => i.category === "media").map((item) => (
+                        <button
+                          key={item.type}
+                          type="button"
+                          className="palette-item-card"
+                          onClick={() => handleAddNode(item.type)}
+                          title={`Add ${item.label} (${item.desc})`}
+                        >
+                          <span>{item.label}</span>
+                          <span style={{ fontSize: "0.75rem", color: "var(--ok-text)" }}>+ Add</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {sidebarTab === "properties" && (
+                <div className="studio-inspector">
+                  <div className="inspector-header">
+                    <span className="inspector-title">
+                      {selectedNode ? "Field Properties" : "Form Overview"}
+                    </span>
+                    {selectedNode ? (
+                      <button
+                        type="button"
+                        className="btn-link"
+                        style={{ fontSize: "0.78rem" }}
+                        onClick={() => setSelectedNodeId(null)}
+                      >
+                        Deselect
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem" }}
+                        onClick={() => setSidebarTab("elements")}
+                      >
+                        + Add Elements
+                      </button>
+                    )}
+                  </div>
+
+                  {selectedNode ? (
+                    // Field Inspector
+                    <div className="stack" style={{ gap: "0.85rem" }}>
+                      <div className="field">
+                        <label htmlFor="prop-type">Field Type</label>
+                        <input
+                          id="prop-type"
+                          type="text"
+                          value={selectedNode.type}
+                          disabled
+                          style={{ background: "var(--surface-muted)", cursor: "not-allowed" }}
+                        />
+                      </div>
+
+                      <div className="field">
+                        <label htmlFor="prop-label">Label / Prompt Text</label>
+                        <input
+                          id="prop-label"
+                          type="text"
+                          value={selectedNode.label}
+                          onChange={(e) => updateNode(selectedNode.id, { label: e.target.value })}
+                        />
+                      </div>
+
+                      {selectedNode.type !== "heading" &&
+                        selectedNode.type !== "instructions" &&
+                        selectedNode.type !== "section" && (
+                          <>
+                            <div className="field">
+                              <label htmlFor="prop-ph">Placeholder Text</label>
+                              <input
+                                id="prop-ph"
+                                type="text"
+                                placeholder="e.g. Enter your department name..."
+                                value={selectedNode.placeholder ?? ""}
+                                onChange={(e) => updateNode(selectedNode.id, { placeholder: e.target.value })}
+                              />
+                            </div>
+
+                            <div className="field">
+                              <label htmlFor="prop-help">Help / Subtitle Text</label>
+                              <input
+                                id="prop-help"
+                                type="text"
+                                placeholder="Optional instructions below input..."
+                                value={selectedNode.helpText ?? ""}
+                                onChange={(e) => updateNode(selectedNode.id, { helpText: e.target.value })}
+                              />
+                            </div>
+
+                            <label style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontWeight: 600, fontSize: "0.86rem" }}>
+                              <input
+                                type="checkbox"
+                                checked={Boolean(selectedNode.required)}
+                                onChange={(e) => updateNode(selectedNode.id, { required: e.target.checked })}
+                              />
+                              Mandatory / Required Field
+                            </label>
+                          </>
+                        )}
+
+                      {(selectedNode.type === "dropdown" ||
+                        selectedNode.type === "single_choice" ||
+                        selectedNode.type === "multiple_choice") && (
+                        <div className="field">
+                          <label htmlFor="prop-opts">Options (One choice per line)</label>
+                          <textarea
+                            id="prop-opts"
+                            rows={4}
+                            value={(selectedNode.options ?? []).join("\n")}
+                            onChange={(e) =>
+                              updateNode(selectedNode.id, {
+                                options: e.target.value
+                                  .split("\n")
+                                  .map((s) => s.trim())
+                                  .filter(Boolean),
+                              })
+                            }
+                          />
+                        </div>
+                      )}
+
+                      <div className="profile-dropdown-divider" />
+
+                      <div className="row-actions" style={{ justifyContent: "space-between" }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: "0.8rem", padding: "0.35rem 0.75rem" }}
+                          onClick={() => handleDuplicateNode(selectedNode)}
+                        >
+                          Duplicate Field
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: "0.8rem", padding: "0.35rem 0.75rem", color: "var(--err-text)" }}
+                          onClick={() => handleDeleteNode(selectedNode.id)}
+                        >
+                          Delete Field
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // Form Overview Inspector (when no single node is selected)
+                    <div className="stack" style={{ gap: "0.85rem" }}>
+                      <p className="notice" style={{ fontSize: "0.82rem" }}>
+                        Click any field on the canvas to inspect its validation and choices.
+                      </p>
+
+                      <div className="field">
+                        <label htmlFor="ins-slug">URL Slug</label>
+                        <input
+                          id="ins-slug"
+                          type="text"
+                          value={slug}
+                          onChange={(e) => setSlug(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="field">
+                        <label htmlFor="ins-kind">Workflow Category</label>
+                        <select
+                          id="ins-kind"
+                          value={kind}
+                          onChange={(e) => setKind(e.target.value as FormKind)}
+                        >
+                          <option value="general">General Form</option>
+                          <option value="appeal_enabled">Appeal-Enabled Form</option>
+                          <option value="complaint">Complaint Form</option>
+                        </select>
+                      </div>
+
+                      <div className="field">
+                        <label htmlFor="ins-color">Theme Accent</label>
+                        <select
+                          id="ins-color"
+                          value={theme.primaryColor ?? "#1d4ed8"}
+                          onChange={(e) => setTheme({ ...theme, primaryColor: e.target.value })}
+                        >
+                          <option value="#1d4ed8">Royal Blue (#1d4ed8)</option>
+                          <option value="#0f766e">Teal (#0f766e)</option>
+                          <option value="#7c3aed">Violet (#7c3aed)</option>
+                          <option value="#b45309">Amber (#b45309)</option>
+                          <option value="#be123c">Crimson (#be123c)</option>
+                          <option value="#18181b">Obsidian (#18181b)</option>
+                        </select>
+                      </div>
+
+                      <div className="profile-dropdown-divider" />
+
+                      <label style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontSize: "0.84rem" }}>
+                        <input
+                          type="checkbox"
+                          checked={allowSaveDraft}
+                          onChange={(e) => setAllowSaveDraft(e.target.checked)}
+                        />
+                        Allow Users to save draft
+                      </label>
+
+                      <label style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontSize: "0.84rem" }}>
+                        <input
+                          type="checkbox"
+                          checked={allowAppeal}
+                          onChange={(e) => setAllowAppeal(e.target.checked)}
+                        />
+                        Enable formal appeal review
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
             </aside>
 
             {/* COLUMN 2: CENTER FIGMA CANVAS STAGE (DUAL DESKTOP + MOBILE ARTBOARDS) */}
@@ -897,196 +1132,6 @@ export default function AdminFormBuilderPage() {
                 )}
               </div>
             </main>
-
-            {/* COLUMN 3: PROPERTIES INSPECTOR (Figma / n8n Inspector) */}
-            <aside className="studio-inspector" aria-label="Properties Inspector">
-              <div className="inspector-header">
-                <span className="inspector-title">
-                  {selectedNode ? "Field Properties" : "Form Overview"}
-                </span>
-                {selectedNode && (
-                  <button
-                    type="button"
-                    className="btn-link"
-                    style={{ fontSize: "0.78rem" }}
-                    onClick={() => setSelectedNodeId(null)}
-                  >
-                    Deselect
-                  </button>
-                )}
-              </div>
-
-              {selectedNode ? (
-                // Field Inspector
-                <div className="stack" style={{ gap: "0.85rem" }}>
-                  <div className="field">
-                    <label htmlFor="prop-type">Field Type</label>
-                    <input
-                      id="prop-type"
-                      type="text"
-                      value={selectedNode.type}
-                      disabled
-                      style={{ background: "var(--surface-muted)", cursor: "not-allowed" }}
-                    />
-                  </div>
-
-                  <div className="field">
-                    <label htmlFor="prop-label">Label / Prompt Text</label>
-                    <input
-                      id="prop-label"
-                      type="text"
-                      value={selectedNode.label}
-                      onChange={(e) => updateNode(selectedNode.id, { label: e.target.value })}
-                    />
-                  </div>
-
-                  {selectedNode.type !== "heading" &&
-                    selectedNode.type !== "instructions" &&
-                    selectedNode.type !== "section" && (
-                      <>
-                        <div className="field">
-                          <label htmlFor="prop-ph">Placeholder Text</label>
-                          <input
-                            id="prop-ph"
-                            type="text"
-                            placeholder="e.g. Enter your department name..."
-                            value={selectedNode.placeholder ?? ""}
-                            onChange={(e) => updateNode(selectedNode.id, { placeholder: e.target.value })}
-                          />
-                        </div>
-
-                        <div className="field">
-                          <label htmlFor="prop-help">Help / Subtitle Text</label>
-                          <input
-                            id="prop-help"
-                            type="text"
-                            placeholder="Optional instructions below input..."
-                            value={selectedNode.helpText ?? ""}
-                            onChange={(e) => updateNode(selectedNode.id, { helpText: e.target.value })}
-                          />
-                        </div>
-
-                        <label style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontWeight: 600, fontSize: "0.86rem" }}>
-                          <input
-                            type="checkbox"
-                            checked={Boolean(selectedNode.required)}
-                            onChange={(e) => updateNode(selectedNode.id, { required: e.target.checked })}
-                          />
-                          Mandatory / Required Field
-                        </label>
-                      </>
-                    )}
-
-                  {(selectedNode.type === "dropdown" ||
-                    selectedNode.type === "single_choice" ||
-                    selectedNode.type === "multiple_choice") && (
-                    <div className="field">
-                      <label htmlFor="prop-opts">Options (One choice per line)</label>
-                      <textarea
-                        id="prop-opts"
-                        rows={4}
-                        value={(selectedNode.options ?? []).join("\n")}
-                        onChange={(e) =>
-                          updateNode(selectedNode.id, {
-                            options: e.target.value
-                              .split("\n")
-                              .map((s) => s.trim())
-                              .filter(Boolean),
-                          })
-                        }
-                      />
-                    </div>
-                  )}
-
-                  <div className="profile-dropdown-divider" />
-
-                  <div className="row-actions" style={{ justifyContent: "space-between" }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      style={{ fontSize: "0.8rem", padding: "0.35rem 0.75rem" }}
-                      onClick={() => handleDuplicateNode(selectedNode)}
-                    >
-                      Duplicate Field
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      style={{ fontSize: "0.8rem", padding: "0.35rem 0.75rem", color: "var(--err-text)" }}
-                      onClick={() => handleDeleteNode(selectedNode.id)}
-                    >
-                      Delete Field
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                // Form Overview Inspector (when no single node is selected)
-                <div className="stack" style={{ gap: "0.85rem" }}>
-                  <p className="notice" style={{ fontSize: "0.82rem" }}>
-                    Click any field on the canvas to inspect its validation and choices.
-                  </p>
-
-                  <div className="field">
-                    <label htmlFor="ins-slug">URL Slug</label>
-                    <input
-                      id="ins-slug"
-                      type="text"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="field">
-                    <label htmlFor="ins-kind">Workflow Category</label>
-                    <select
-                      id="ins-kind"
-                      value={kind}
-                      onChange={(e) => setKind(e.target.value as FormKind)}
-                    >
-                      <option value="general">General Form</option>
-                      <option value="appeal_enabled">Appeal-Enabled Form</option>
-                      <option value="complaint">Complaint Form</option>
-                    </select>
-                  </div>
-
-                  <div className="field">
-                    <label htmlFor="ins-color">Theme Accent</label>
-                    <select
-                      id="ins-color"
-                      value={theme.primaryColor ?? "#1d4ed8"}
-                      onChange={(e) => setTheme({ ...theme, primaryColor: e.target.value })}
-                    >
-                      <option value="#1d4ed8">Royal Blue (#1d4ed8)</option>
-                      <option value="#0f766e">Teal (#0f766e)</option>
-                      <option value="#7c3aed">Violet (#7c3aed)</option>
-                      <option value="#b45309">Amber (#b45309)</option>
-                      <option value="#be123c">Crimson (#be123c)</option>
-                      <option value="#18181b">Obsidian (#18181b)</option>
-                    </select>
-                  </div>
-
-                  <div className="profile-dropdown-divider" />
-
-                  <label style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontSize: "0.84rem" }}>
-                    <input
-                      type="checkbox"
-                      checked={allowSaveDraft}
-                      onChange={(e) => setAllowSaveDraft(e.target.checked)}
-                    />
-                    Allow Users to save draft
-                  </label>
-
-                  <label style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontSize: "0.84rem" }}>
-                    <input
-                      type="checkbox"
-                      checked={allowAppeal}
-                      onChange={(e) => setAllowAppeal(e.target.checked)}
-                    />
-                    Enable formal appeal review
-                  </label>
-                </div>
-              )}
-            </aside>
           </div>
         )}
 

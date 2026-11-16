@@ -42,11 +42,12 @@ export default function SiteNav() {
     setProfile(null);
   }
 
-  // Hide navigation completely on /setup, /sign-in, /invite/accept, or while initial setup is needed
+  // Hide navigation completely on /setup, /sign-in, /invite/accept, /admin/forms (Studio mode), or while initial setup is needed
   if (
     pathname?.startsWith("/setup") ||
     pathname?.startsWith("/sign-in") ||
     pathname?.startsWith("/invite/accept") ||
+    pathname?.startsWith("/admin/forms") ||
     needsSetup
   ) {
     return null;
