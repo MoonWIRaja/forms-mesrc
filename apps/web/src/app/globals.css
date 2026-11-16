@@ -236,7 +236,9 @@ a:hover {
   margin: 0 !important;
   width: 100vw !important;
   max-width: 100vw !important;
-  overflow-x: hidden;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
 }
 
 .shell.studio-mode,
@@ -246,12 +248,17 @@ a:hover {
   margin: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
   border: none;
 }
 
 .studio-shell {
   width: 100%;
-  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
 }
 
 .center-stage {
@@ -1573,23 +1580,22 @@ textarea:focus {
 .studio-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0;
   width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  position: relative;
 }
 
-/* Studio Command Bar (Top Toolbar) */
-.studio-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem 1.15rem;
-  background: var(--surface-elevated);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-cut-sm);
-  z-index: 10;
+.studio-shell .alert {
+  position: fixed;
+  top: 64px;
+  right: 1.5rem;
+  z-index: 100;
+  max-width: 420px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+  animation: paperFrontLayerIn 0.2s ease both;
 }
 
 .studio-toolbar-left,
@@ -1654,7 +1660,9 @@ textarea:focus {
 .studio-grid {
   display: grid;
   grid-template-columns: 310px 1fr;
-  min-height: calc(100dvh - 56px);
+  height: calc(100dvh - 56px);
+  max-height: calc(100dvh - 56px);
+  overflow: hidden;
   align-items: stretch;
   width: 100%;
   gap: 0;
@@ -1716,9 +1724,11 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   height: calc(100dvh - 56px);
+  max-height: calc(100dvh - 56px);
   position: sticky;
   top: 56px;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1rem 0.95rem;
   gap: 1rem;
   z-index: 25;
@@ -1839,19 +1849,20 @@ textarea:focus {
 
 /* Right Column: Full Canvas Stage (Figma Endless Workspace) */
 .studio-canvas-stage {
-  min-height: calc(100dvh - 56px);
   height: calc(100dvh - 56px);
+  max-height: calc(100dvh - 56px);
   background-color: #f3f1eb;
   background-image: radial-gradient(rgba(24, 24, 27, 0.14) 1px, transparent 1px);
   background-size: 24px 24px;
   border: none;
   border-radius: 0;
-  padding: 1.75rem 2.5rem 4rem;
+  padding: 1.5rem 1rem 3.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
   min-width: 0;
 }
@@ -2161,70 +2172,78 @@ textarea:focus {
 /* ============================================================================
    FIGMA DUAL-VIEW CANVAS STUDIO (DESKTOP + MOBILE ARTBOARDS & LIVE SYNC)
    ============================================================================ */
+.studio-toolbar-center .canvas-viewport-bar,
 .canvas-viewport-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  width: 100%;
-  max-width: 1100px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--border-strong);
-  border-radius: 9999px;
-  padding: 0.35rem 0.85rem;
-  box-shadow: 0 4px 14px rgba(24, 24, 27, 0.06);
-  margin-bottom: 1.5rem;
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  justify-content: center;
+  gap: 0.85rem;
+  background: transparent;
+  backdrop-filter: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  margin: 0;
+  position: static;
 }
 
+.studio-toolbar-center .canvas-view-switcher,
 .canvas-view-switcher {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
+  display: inline-flex;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
 }
 
+.studio-toolbar-center .viewport-pill,
 .viewport-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   padding: 0.35rem 0.75rem;
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: 9999px;
-  font-size: 0.8rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
+.studio-toolbar-center .viewport-pill:hover,
 .viewport-pill:hover {
   color: var(--ink);
-  background: var(--surface-muted);
 }
 
+.studio-toolbar-center .viewport-pill.active,
 .viewport-pill.active {
-  background: var(--ink);
-  color: #ffffff;
-  border-color: var(--ink);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  background: var(--surface-elevated);
+  color: var(--ink);
+  font-weight: 700;
+  border-color: transparent;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
+.studio-toolbar-center .canvas-sync-toggle,
 .canvas-sync-toggle {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
+  padding: 0.28rem 0.65rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 .sync-checkbox-label {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.82rem;
+  gap: 0.45rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--ink);
   cursor: pointer;
@@ -2232,9 +2251,9 @@ textarea:focus {
 }
 
 .sync-status-badge {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  padding: 0.15rem 0.5rem;
+  padding: 0.1rem 0.45rem;
   border-radius: 9999px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2256,21 +2275,24 @@ textarea:focus {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: 2.25rem;
+  gap: 1.5rem;
   width: 100%;
+  max-width: 100%;
   transition: all 0.2s ease;
 }
 
 .canvas-artboards-container.dual {
-  width: max-content;
-  min-width: 100%;
-  padding: 0 1rem 2rem;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 0.5rem 2rem;
+  justify-content: center;
+  flex-wrap: nowrap;
 }
 
 .figma-artboard-frame {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
   transition: transform 0.15s ease;
 }
 
@@ -2280,20 +2302,20 @@ textarea:focus {
   justify-content: space-between;
   padding: 0.2rem 0.5rem;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 600;
 }
 
 .figma-frame-title {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   color: var(--ink);
 }
 
 .figma-frame-meta {
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 500;
   padding-left: 0.25rem;
 }
@@ -2302,17 +2324,17 @@ textarea:focus {
   background: var(--surface-muted);
   border: 1px solid var(--border);
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 700;
-  padding: 0.1rem 0.45rem;
+  padding: 0.1rem 0.4rem;
   border-radius: 4px;
   text-transform: uppercase;
 }
 
 /* Desktop Artboard Container */
 .desktop-device-chassis {
-  width: 680px;
-  min-height: 720px;
+  width: clamp(460px, 44vw, 620px);
+  min-height: 680px;
   background: var(--surface-elevated);
   border: 1px solid var(--border-strong);
   border-radius: 16px;
@@ -2322,6 +2344,10 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.canvas-artboards-container.desktop .desktop-device-chassis {
+  width: min(760px, 92vw);
 }
 
 .desktop-browser-bar {
@@ -2367,7 +2393,7 @@ textarea:focus {
 }
 
 .desktop-canvas-content {
-  padding: 1.75rem 2rem 3rem;
+  padding: 1.5rem 1.75rem 3rem;
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
@@ -2376,7 +2402,21 @@ textarea:focus {
 
 /* Specific Phone Width in Dual View */
 .figma-artboard-frame.mobile-artboard .phone-device-chassis {
-  width: 375px;
-  min-width: 375px;
-  max-width: 375px;
+  width: 340px;
+  min-width: 340px;
+  max-width: 340px;
+}
+
+@media (max-width: 1200px) {
+  .desktop-device-chassis {
+    width: clamp(420px, 40vw, 520px);
+  }
+  .figma-artboard-frame.mobile-artboard .phone-device-chassis {
+    width: 320px;
+    min-width: 320px;
+    max-width: 320px;
+  }
+  .canvas-artboards-container {
+    gap: 1rem;
+  }
 }

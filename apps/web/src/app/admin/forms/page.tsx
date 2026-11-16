@@ -605,32 +605,72 @@ export default function AdminFormBuilderPage() {
           </div>
 
           <div className="studio-toolbar-center">
-            <div className="studio-tab-group" role="tablist">
-              <button
-                type="button"
-                className={`studio-tab-btn ${activeTab === "studio" ? "active" : ""}`}
-                onClick={() => setActiveTab("studio")}
-              >
-                Canvas Studio
-              </button>
-              <button
-                type="button"
-                className={`studio-tab-btn ${activeTab === "catalog" ? "active" : ""}`}
-                onClick={() => setActiveTab("catalog")}
-              >
-                Forms Catalog ({forms.length})
-              </button>
-              <button
-                type="button"
-                className={`studio-tab-btn ${activeTab === "settings" ? "active" : ""}`}
-                onClick={() => setActiveTab("settings")}
-              >
-                Settings &amp; Access
-              </button>
+            <div className="canvas-viewport-bar">
+              <div className="canvas-view-switcher">
+                <button
+                  type="button"
+                  className={`viewport-pill ${canvasView === "dual" ? "active" : ""}`}
+                  onClick={() => setCanvasView("dual")}
+                  title="View Desktop and Mobile artboards side-by-side (Figma style)"
+                >
+                  <span>⚡ Dual View (Figma)</span>
+                </button>
+                <button
+                  type="button"
+                  className={`viewport-pill ${canvasView === "desktop" ? "active" : ""}`}
+                  onClick={() => setCanvasView("desktop")}
+                  title="Desktop Frame Only"
+                >
+                  <span>🖥️ Desktop</span>
+                </button>
+                <button
+                  type="button"
+                  className={`viewport-pill ${canvasView === "mobile" ? "active" : ""}`}
+                  onClick={() => setCanvasView("mobile")}
+                  title="Mobile Phone Chassis Only"
+                >
+                  <span>📱 Mobile</span>
+                </button>
+              </div>
+
+              <div className="canvas-sync-toggle">
+                <label
+                  className="sync-checkbox-label"
+                  title="When checked, content added or modified in Desktop automatically syncs to Mobile in real-time"
+                >
+                  <input
+                    type="checkbox"
+                    checked={syncViews}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setSyncViews(checked);
+                      if (checked) {
+                        setMobileNodes([...nodes]);
+                        setInfo("Views synchronized: Content in Desktop is mirrored to Mobile.");
+                      } else {
+                        setInfo("Views unlinked: You can now adjust Desktop and Mobile layouts independently.");
+                      }
+                    }}
+                  />
+                  <span className="sync-text">Sync Desktop &amp; Mobile</span>
+                  <span className={`sync-status-badge ${syncViews ? "synced" : "unlinked"}`}>
+                    {syncViews ? "✓ Live Synced" : "Unlinked"}
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
 
           <div className="studio-toolbar-right">
+            <button
+              type="button"
+              className={`btn btn-secondary ${activeTab === "catalog" ? "active" : ""}`}
+              style={{ padding: "0.45rem 0.85rem", fontSize: "0.82rem" }}
+              onClick={() => setActiveTab(activeTab === "catalog" ? "studio" : "catalog")}
+              title="Browse created forms and start from templates"
+            >
+              Forms Catalog ({forms.length})
+            </button>
             <button
               type="button"
               className="btn btn-secondary"
@@ -973,60 +1013,7 @@ export default function AdminFormBuilderPage() {
 
             {/* COLUMN 2: CENTER FIGMA CANVAS STAGE (DUAL DESKTOP + MOBILE ARTBOARDS) */}
             <main className="studio-canvas-stage" aria-label="Visual Form Studio Canvas">
-              {/* TOP VIEWPORT COMMAND BAR */}
-              <div className="canvas-viewport-bar">
-                <div className="canvas-view-switcher">
-                  <button
-                    type="button"
-                    className={`viewport-pill ${canvasView === "dual" ? "active" : ""}`}
-                    onClick={() => setCanvasView("dual")}
-                    title="View Desktop and Mobile artboards side-by-side (Figma style)"
-                  >
-                    <span>⚡ Dual View (Figma)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`viewport-pill ${canvasView === "desktop" ? "active" : ""}`}
-                    onClick={() => setCanvasView("desktop")}
-                    title="Desktop Frame Only"
-                  >
-                    <span>🖥️ Desktop</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`viewport-pill ${canvasView === "mobile" ? "active" : ""}`}
-                    onClick={() => setCanvasView("mobile")}
-                    title="Mobile Phone Chassis Only"
-                  >
-                    <span>📱 Mobile</span>
-                  </button>
-                </div>
-
-                <div className="canvas-sync-toggle">
-                  <label className="sync-checkbox-label" title="When checked, content added or modified in Desktop automatically syncs to Mobile in real-time">
-                    <input
-                      type="checkbox"
-                      checked={syncViews}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setSyncViews(checked);
-                        if (checked) {
-                          setMobileNodes([...nodes]);
-                          setInfo("Views synchronized: Content in Desktop is mirrored to Mobile.");
-                        } else {
-                          setInfo("Views unlinked: You can now adjust Desktop and Mobile layouts independently.");
-                        }
-                      }}
-                    />
-                    <span className="sync-text">Sync Desktop &amp; Mobile</span>
-                    <span className={`sync-status-badge ${syncViews ? "synced" : "unlinked"}`}>
-                      {syncViews ? "✓ Live Synced" : "Unlinked"}
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              {/* ARTBOARDS CONTAINER */}
+              {/* ARTBOARDS CONTAINER (ONLY DESKTOP & MOBILE FRAMES) */}
               <div className={`canvas-artboards-container ${canvasView}`}>
                 {/* 1. DESKTOP ARTBOARD */}
                 {(canvasView === "dual" || canvasView === "desktop") && (
