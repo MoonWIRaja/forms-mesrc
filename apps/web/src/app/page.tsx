@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import BrandLogo from "@/components/BrandLogo";
 import ChunkLoader from "@/components/ChunkLoader";
+import UserProfileMenu from "@/components/UserProfileMenu";
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
 export default function HomePage() {
@@ -43,6 +44,11 @@ export default function HomePage() {
         <ChunkLoader title="Forms MESRC" subtitle="Assembling workspace..." />
       </div>
     );
+  }
+
+  async function handleSignOut() {
+    await getSupabase().auth.signOut();
+    setProfile(null);
   }
 
   // 1. Initial Setup Required
@@ -95,13 +101,18 @@ export default function HomePage() {
   // 3. Signed-In Home: 3-Pillar Paper Portal (Forms, Complaints, Voting & Scoring)
   return (
     <div className="paper-home-stage">
+      <div className="paper-home-header-row">
+        <BrandLogo size="sm" subtitle="Workspace" />
+        <UserProfileMenu profile={profile} onSignOut={handleSignOut} compact />
+      </div>
+
       <div className="paper-home-intro">
-        <span className="badge badge-role" style={{ alignSelf: "center", marginBottom: "0.4rem" }}>
+        <span className="badge badge-role" style={{ alignSelf: "center", marginBottom: "0.2rem" }}>
           {profile.role.toUpperCase()} WORKSPACE
         </span>
         <h1>Company Hub</h1>
         <p className="notice">
-          Select a category below to submit company forms, file a confidential workplace complaint, or score active evaluation sessions.
+          Select a category below to submit forms, file complaints, or score sessions.
         </p>
       </div>
 

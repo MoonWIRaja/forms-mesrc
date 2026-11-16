@@ -111,6 +111,11 @@ export default function FormsCatalogPage() {
     <div className="stack">
       <section className="card row-between">
         <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.4rem" }}>
+            <Link href="/" className="btn btn-secondary btn-sm" style={{ padding: "0.2rem 0.55rem", fontSize: "0.78rem" }}>
+              &larr; Back to Home
+            </Link>
+          </div>
           <h1>Available Company Forms</h1>
           <p className="notice">
             All published forms open to your account ({profile.email}). Optimized for mobile and

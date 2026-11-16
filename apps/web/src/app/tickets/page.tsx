@@ -180,6 +180,11 @@ export default function TicketsPage() {
       {/* Header Banner */}
       <section className="card row-between">
         <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.4rem" }}>
+            <Link href="/" className="btn btn-secondary btn-sm" style={{ padding: "0.2rem 0.55rem", fontSize: "0.78rem" }}>
+              &larr; Back to Home
+            </Link>
+          </div>
           <span className="badge badge-admin" style={{ marginBottom: "0.45rem" }}>
             Support &amp; Resolution Desk
           </span>
