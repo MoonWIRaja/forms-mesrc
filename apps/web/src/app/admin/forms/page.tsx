@@ -79,7 +79,96 @@ export default function AdminFormBuilderPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
+  // Figma Canvas Infinite Pan & Zoom Engine
+  const [zoom, setZoom] = useState<number>(1);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [canvasTool, setCanvasTool] = useState<"select" | "hand">("select");
+  const [isPanning, setIsPanning] = useState<boolean>(false);
+  const panStartRef = useRef<{ startX: number; startY: number; initialPanX: number; initialPanY: number } | null>(null);
+
+  function handleZoomIn() {
+    setZoom((z) => Math.min(1.4, Number((z + 0.1).toFixed(2))));
+  }
+
+  function handleZoomOut() {
+    setZoom((z) => Math.max(0.6, Number((z - 0.1).toFixed(2))));
+  }
+
+  function handleResetView() {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }
+
+  function handleStageMouseDown(e: React.MouseEvent) {
+    if (canvasTool === "hand" || e.button === 1) {
+      setIsPanning(true);
+      panStartRef.current = {
+        startX: e.clientX,
+        startY: e.clientY,
+        initialPanX: pan.x,
+        initialPanY: pan.y,
+      };
+    }
+  }
+
+  function handleStageMouseMove(e: React.MouseEvent) {
+    if (!isPanning || !panStartRef.current) return;
+    const dx = e.clientX - panStartRef.current.startX;
+    const dy = e.clientY - panStartRef.current.startY;
+    setPan({
+      x: Math.round(panStartRef.current.initialPanX + dx),
+      y: Math.round(panStartRef.current.initialPanY + dy),
+    });
+  }
+
+  function handleStageMouseUp() {
+    setIsPanning(false);
+    panStartRef.current = null;
+  }
+
+  function handleStageWheel(e: React.WheelEvent) {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.05 : 0.05;
+      setZoom((z) => Math.min(1.4, Math.max(0.6, Number((z + delta).toFixed(2)))));
+    } else {
+      setPan((p) => ({
+        x: Math.round(p.x - e.deltaX * 0.75),
+        y: Math.round(p.y - e.deltaY * 0.75),
+      }));
+    }
+  }
+
   const seqRef = useRef(1);
+
+  // Keyboard navigation for Figma tools (V = select, H = hand, Ctrl+0 = reset view)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const activeEl = document.activeElement;
+      const isInput =
+        activeEl?.tagName === "INPUT" ||
+        activeEl?.tagName === "TEXTAREA" ||
+        activeEl?.tagName === "SELECT";
+      if (isInput) return;
+
+      if (e.key === "v" || e.key === "V") {
+        setCanvasTool("select");
+      } else if (e.key === "h" || e.key === "H") {
+        setCanvasTool("hand");
+      } else if (e.key === "0" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        handleResetView();
+      } else if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedNodeId) {
+          setNodes((prev) => prev.filter((n) => n.id !== selectedNodeId));
+          setMobileNodes((prev) => prev.filter((n) => n.id !== selectedNodeId));
+          setSelectedNodeId(null);
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedNodeId]);
 
   // Full-bleed studio breakout: remove standard shell constraints
   useEffect(() => {
@@ -405,26 +494,28 @@ export default function AdminFormBuilderPage() {
     nodes.find((n) => n.id === selectedNodeId) ??
     mobileNodes.find((n) => n.id === selectedNodeId) ??
     null;
+  const selectedNodeIndex = nodes.findIndex((n) => n.id === selectedNodeId);
   const currentFormRecord = forms.find((f) => f.id === selectedFormId);
 
   function renderNodeCard(
     node: FormFieldNode,
     idx: number,
-    nodeList: FormFieldNode[],
+    _nodeList: FormFieldNode[],
     isMobile: boolean,
   ) {
     const isSelected = selectedNodeId === node.id;
     return (
       <div
         key={node.id}
-        draggable
+        draggable={canvasTool === "select"}
         onDragStart={() => setDragIndex(idx)}
         onDragOver={(e) => e.preventDefault()}
         onDrop={() => {
           if (dragIndex !== null) handleMoveNode(dragIndex, idx, isMobile);
           setDragIndex(null);
         }}
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
           setSelectedNodeId(node.id);
           setSidebarTab("properties");
         }}
@@ -450,54 +541,7 @@ export default function AdminFormBuilderPage() {
             )}
           </div>
 
-          <div className="canvas-node-actions">
-            <button
-              type="button"
-              className="node-tool-btn"
-              title="Move up"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleMoveNode(idx, idx - 1, isMobile);
-              }}
-              disabled={idx === 0}
-            >
-              &uarr;
-            </button>
-            <button
-              type="button"
-              className="node-tool-btn"
-              title="Move down"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleMoveNode(idx, idx + 1, isMobile);
-              }}
-              disabled={idx === nodeList.length - 1}
-            >
-              &darr;
-            </button>
-            <button
-              type="button"
-              className="node-tool-btn"
-              title="Duplicate field"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDuplicateNode(node, isMobile);
-              }}
-            >
-              ⧉
-            </button>
-            <button
-              type="button"
-              className="node-tool-btn danger"
-              title="Delete field"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteNode(node.id, isMobile);
-              }}
-            >
-              &times;
-            </button>
-          </div>
+          <span className="node-type-pill">{node.type.replace("_", " ")}</span>
         </div>
 
         <div className="canvas-node-preview">
@@ -1012,9 +1056,27 @@ export default function AdminFormBuilderPage() {
             </aside>
 
             {/* COLUMN 2: CENTER FIGMA CANVAS STAGE (DUAL DESKTOP + MOBILE ARTBOARDS) */}
-            <main className="studio-canvas-stage" aria-label="Visual Form Studio Canvas">
-              {/* ARTBOARDS CONTAINER (ONLY DESKTOP & MOBILE FRAMES) */}
-              <div className={`canvas-artboards-container ${canvasView}`}>
+            <main
+              className={`studio-canvas-stage ${canvasTool === "hand" ? (isPanning ? "panning" : "hand-tool") : ""}`}
+              aria-label="Visual Form Studio Canvas"
+              onMouseDown={handleStageMouseDown}
+              onMouseMove={handleStageMouseMove}
+              onMouseUp={handleStageMouseUp}
+              onMouseLeave={handleStageMouseUp}
+              onWheel={handleStageWheel}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setSelectedNodeId(null);
+              }}
+            >
+              {/* ARTBOARDS CONTAINER (TRANSFORMED BY PAN & ZOOM - ZERO SCROLLBARS) */}
+              <div
+                className={`canvas-artboards-container ${canvasView}`}
+                style={{
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                  transformOrigin: "center top",
+                  transition: isPanning ? "none" : "transform 0.08s ease-out",
+                }}
+              >
                 {/* 1. DESKTOP ARTBOARD */}
                 {(canvasView === "dual" || canvasView === "desktop") && (
                   <div className="figma-artboard-frame desktop-artboard">
@@ -1117,6 +1179,170 @@ export default function AdminFormBuilderPage() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* FIGMA BOTTOM FLOATING TOOLBAR */}
+              <div className="figma-bottom-toolbar" role="toolbar" aria-label="Figma Canvas Floating Tools">
+                {/* 1. Mode Switcher (Select vs Hand/Pan) */}
+                <div className="figma-tool-group">
+                  <button
+                    type="button"
+                    className={`figma-tool-btn ${canvasTool === "select" ? "active" : ""}`}
+                    onClick={() => setCanvasTool("select")}
+                    title="Select Tool (V) - Click fields to edit and inspect"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 3l7 18 3-7 7-3L3 3z" />
+                    </svg>
+                    <span>Select (V)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`figma-tool-btn ${canvasTool === "hand" ? "active" : ""}`}
+                    onClick={() => setCanvasTool("hand")}
+                    title="Hand Tool (H) - Drag anywhere to pan canvas freely"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 11V6a2 2 0 0 0-4 0v5" />
+                      <path d="M14 10V4a2 2 0 0 0-4 0v7" />
+                      <path d="M10 10.5V6a2 2 0 0 0-4 0v8" />
+                      <path d="M18 8a2 2 0 0 1 4 4v4a8 8 0 0 1-16 0v-2" />
+                    </svg>
+                    <span>Pan (H)</span>
+                  </button>
+                </div>
+
+                <div className="figma-toolbar-divider" />
+
+                {/* 2. Contextual Field Actions (When a field is selected) */}
+                {selectedNode ? (
+                  <div className="figma-tool-group figma-selected-actions">
+                    <span className="figma-selected-pill" title={selectedNode.label}>
+                      <strong>Field:</strong> {selectedNode.label.length > 16 ? selectedNode.label.slice(0, 16) + "…" : selectedNode.label}
+                    </span>
+
+                    <button
+                      type="button"
+                      className="figma-action-btn"
+                      title="Move selected field up"
+                      disabled={selectedNodeIndex <= 0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (selectedNodeIndex > 0) handleMoveNode(selectedNodeIndex, selectedNodeIndex - 1);
+                      }}
+                    >
+                      &uarr; Up
+                    </button>
+
+                    <button
+                      type="button"
+                      className="figma-action-btn"
+                      title="Move selected field down"
+                      disabled={selectedNodeIndex === -1 || selectedNodeIndex >= nodes.length - 1}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (selectedNodeIndex !== -1 && selectedNodeIndex < nodes.length - 1) {
+                          handleMoveNode(selectedNodeIndex, selectedNodeIndex + 1);
+                        }
+                      }}
+                    >
+                      &darr; Down
+                    </button>
+
+                    <button
+                      type="button"
+                      className="figma-action-btn"
+                      title="Duplicate selected field"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDuplicateNode(selectedNode);
+                      }}
+                    >
+                      ⧉ Duplicate
+                    </button>
+
+                    <button
+                      type="button"
+                      className="figma-action-btn danger"
+                      title="Delete selected field"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteNode(selectedNode.id);
+                      }}
+                    >
+                      &times; Delete
+                    </button>
+                  </div>
+                ) : (
+                  /* Quick Element Short-adds when nothing selected */
+                  <div className="figma-tool-group">
+                    <button
+                      type="button"
+                      className="figma-tool-btn"
+                      onClick={() => handleAddNode("short_text")}
+                      title="Quick add single-line text input"
+                    >
+                      <span>+ Text</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="figma-tool-btn"
+                      onClick={() => handleAddNode("dropdown")}
+                      title="Quick add dropdown select field"
+                    >
+                      <span>+ Dropdown</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="figma-tool-btn"
+                      onClick={() => handleAddNode("file_upload")}
+                      title="Quick add Google Drive file attachment"
+                    >
+                      <span>+ File</span>
+                    </button>
+                  </div>
+                )}
+
+                <div className="figma-toolbar-divider" />
+
+                {/* 3. Zoom Controls & Canvas Reset */}
+                <div className="figma-tool-group figma-zoom-group">
+                  <button
+                    type="button"
+                    className="figma-zoom-btn"
+                    onClick={handleZoomOut}
+                    title="Zoom Out (-10%)"
+                    disabled={zoom <= 0.6}
+                  >
+                    &minus;
+                  </button>
+                  <button
+                    type="button"
+                    className="figma-zoom-readout"
+                    onClick={handleResetView}
+                    title="Click to reset zoom (100%) and center canvas"
+                  >
+                    {Math.round(zoom * 100)}%
+                  </button>
+                  <button
+                    type="button"
+                    className="figma-zoom-btn"
+                    onClick={handleZoomIn}
+                    title="Zoom In (+10%)"
+                    disabled={zoom >= 1.4}
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    className="figma-tool-btn"
+                    onClick={handleResetView}
+                    title="Reset canvas pan and zoom to center"
+                  >
+                    ⛶ Center
+                  </button>
+                </div>
               </div>
             </main>
           </div>
