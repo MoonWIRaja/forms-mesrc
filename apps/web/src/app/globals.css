@@ -2043,3 +2043,226 @@ textarea:focus {
   gap: 0.2rem;
   text-align: center;
 }
+
+/* ============================================================================
+   FIGMA DUAL-VIEW CANVAS STUDIO (DESKTOP + MOBILE ARTBOARDS & LIVE SYNC)
+   ============================================================================ */
+.canvas-viewport-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 1100px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-strong);
+  border-radius: 9999px;
+  padding: 0.35rem 0.85rem;
+  box-shadow: 0 4px 14px rgba(24, 24, 27, 0.06);
+  margin-bottom: 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.canvas-view-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.viewport-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.viewport-pill:hover {
+  color: var(--ink);
+  background: var(--surface-muted);
+}
+
+.viewport-pill.active {
+  background: var(--ink);
+  color: #ffffff;
+  border-color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.canvas-sync-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sync-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sync-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sync-status-badge.synced {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.sync-status-badge.unlinked {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.canvas-artboards-container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2.25rem;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.canvas-artboards-container.dual {
+  width: max-content;
+  min-width: 100%;
+  padding: 0 1rem 2rem;
+}
+
+.figma-artboard-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: transform 0.15s ease;
+}
+
+.figma-frame-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.2rem 0.5rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.figma-frame-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ink);
+}
+
+.figma-frame-meta {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding-left: 0.25rem;
+}
+
+.figma-badge {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+/* Desktop Artboard Container */
+.desktop-device-chassis {
+  width: 680px;
+  min-height: 720px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  box-shadow:
+    0 20px 40px -15px rgba(24, 24, 27, 0.12),
+    0 0 0 1px rgba(24, 24, 27, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.desktop-browser-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border-strong);
+  gap: 1rem;
+}
+
+.desktop-browser-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.desktop-browser-dots .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.desktop-browser-dots .dot.red { background: #ef4444; }
+.desktop-browser-dots .dot.yellow { background: #f59e0b; }
+.desktop-browser-dots .dot.green { background: #10b981; }
+
+.desktop-url-bar {
+  flex: 1;
+  max-width: 360px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.74rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 auto;
+}
+
+.desktop-canvas-content {
+  padding: 1.75rem 2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  flex: 1;
+}
+
+/* Specific Phone Width in Dual View */
+.figma-artboard-frame.mobile-artboard .phone-device-chassis {
+  width: 375px;
+  min-width: 375px;
+  max-width: 375px;
+}

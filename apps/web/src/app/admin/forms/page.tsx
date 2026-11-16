@@ -60,6 +60,9 @@ export default function AdminFormBuilderPage() {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [allowlistText, setAllowlistText] = useState("");
   const [nodes, setNodes] = useState<FormFieldNode[]>(FORM_TEMPLATES[0].nodes);
+  const [mobileNodes, setMobileNodes] = useState<FormFieldNode[]>(FORM_TEMPLATES[0].nodes);
+  const [syncViews, setSyncViews] = useState(true);
+  const [canvasView, setCanvasView] = useState<"dual" | "desktop" | "mobile">("dual");
   const [theme, setTheme] = useState<FormTheme>({
     primaryColor: "#1d4ed8",
     cardRadius: "rounded",
@@ -154,7 +157,9 @@ export default function AdminFormBuilderPage() {
         ((allowRows as { email: string }[] | null) ?? []).map((x) => x.email).join("\n"),
       );
       if (ver) {
-        setNodes(((ver as { schema_json: FormFieldNode[] }).schema_json ?? []) as FormFieldNode[]);
+        const parsedNodes = ((ver as { schema_json: FormFieldNode[] }).schema_json ?? []) as FormFieldNode[];
+        setNodes(parsedNodes);
+        setMobileNodes(parsedNodes);
         setTheme(((ver as { theme_json: FormTheme }).theme_json ?? {}) as FormTheme);
       }
       setSelectedNodeId(null);
@@ -177,10 +182,25 @@ export default function AdminFormBuilderPage() {
     setDescription(tpl.description);
     setKind(tpl.kind);
     setAllowAppeal(tpl.allowAppeal);
-    setNodes(tpl.nodes.map((n) => ({ ...n })));
+    const cloned = tpl.nodes.map((n) => ({ ...n }));
+    setNodes(cloned);
+    setMobileNodes(cloned);
     setSelectedNodeId(null);
     setActiveTab("studio");
     setInfo(`Loaded template: ${tpl.name}`);
+  }
+
+  function updateNode(nodeId: string, patch: Partial<FormFieldNode>) {
+    setNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, ...patch } : n)));
+    if (syncViews) {
+      setMobileNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, ...patch } : n)));
+    } else {
+      setMobileNodes((prev) =>
+        prev.some((n) => n.id === nodeId)
+          ? prev.map((n) => (n.id === nodeId ? { ...n, ...patch } : n))
+          : prev,
+      );
+    }
   }
 
   function handleAddNode(type: FieldType) {
@@ -199,10 +219,13 @@ export default function AdminFormBuilderPage() {
       width: "full",
     };
     setNodes((prev) => [...prev, newNode]);
+    if (syncViews) {
+      setMobileNodes((prev) => [...prev, newNode]);
+    }
     setSelectedNodeId(id);
   }
 
-  function handleDuplicateNode(nodeToCopy: FormFieldNode) {
+  function handleDuplicateNode(nodeToCopy: FormFieldNode, isMobile = false) {
     seqRef.current += 1;
     const newId = `fld_${nodes.length + seqRef.current}`;
     const cloned: FormFieldNode = {
@@ -210,23 +233,52 @@ export default function AdminFormBuilderPage() {
       id: newId,
       label: `${nodeToCopy.label} (Copy)`,
     };
-    const idx = nodes.findIndex((n) => n.id === nodeToCopy.id);
-    const updated = [...nodes];
-    updated.splice(idx + 1, 0, cloned);
-    setNodes(updated);
+    if (isMobile && !syncViews) {
+      const idx = mobileNodes.findIndex((n) => n.id === nodeToCopy.id);
+      const updated = [...mobileNodes];
+      updated.splice(idx + 1, 0, cloned);
+      setMobileNodes(updated);
+    } else {
+      const idx = nodes.findIndex((n) => n.id === nodeToCopy.id);
+      const updated = [...nodes];
+      updated.splice(idx + 1, 0, cloned);
+      setNodes(updated);
+      if (syncViews) {
+        setMobileNodes([...updated]);
+      }
+    }
     setSelectedNodeId(newId);
   }
 
-  function handleMoveNode(fromIdx: number, toIdx: number) {
+  function handleMoveNode(fromIdx: number, toIdx: number, isMobile = false) {
+    if (isMobile && !syncViews) {
+      if (toIdx < 0 || toIdx >= mobileNodes.length || fromIdx === toIdx) return;
+      const copy = [...mobileNodes];
+      const [moved] = copy.splice(fromIdx, 1);
+      copy.splice(toIdx, 0, moved);
+      setMobileNodes(copy);
+      return;
+    }
     if (toIdx < 0 || toIdx >= nodes.length || fromIdx === toIdx) return;
     const copy = [...nodes];
     const [moved] = copy.splice(fromIdx, 1);
     copy.splice(toIdx, 0, moved);
     setNodes(copy);
+    if (syncViews) {
+      setMobileNodes([...copy]);
+    }
   }
 
-  function handleDeleteNode(id: string) {
+  function handleDeleteNode(id: string, isMobile = false) {
+    if (isMobile && !syncViews) {
+      setMobileNodes((prev) => prev.filter((n) => n.id !== id));
+      if (selectedNodeId === id) setSelectedNodeId(null);
+      return;
+    }
     setNodes((prev) => prev.filter((n) => n.id !== id));
+    if (syncViews) {
+      setMobileNodes((prev) => prev.filter((n) => n.id !== id));
+    }
     if (selectedNodeId === id) setSelectedNodeId(null);
   }
 
@@ -345,8 +397,169 @@ export default function AdminFormBuilderPage() {
     );
   }
 
-  const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
+  const selectedNode =
+    nodes.find((n) => n.id === selectedNodeId) ??
+    mobileNodes.find((n) => n.id === selectedNodeId) ??
+    null;
   const currentFormRecord = forms.find((f) => f.id === selectedFormId);
+
+  function renderNodeCard(
+    node: FormFieldNode,
+    idx: number,
+    nodeList: FormFieldNode[],
+    isMobile: boolean,
+  ) {
+    const isSelected = selectedNodeId === node.id;
+    return (
+      <div
+        key={node.id}
+        draggable
+        onDragStart={() => setDragIndex(idx)}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={() => {
+          if (dragIndex !== null) handleMoveNode(dragIndex, idx, isMobile);
+          setDragIndex(null);
+        }}
+        onClick={() => setSelectedNodeId(node.id)}
+        className={`canvas-node-card ${isSelected ? "selected" : ""}`}
+      >
+        {isSelected && (
+          <span className="node-selection-badge">Selected Field</span>
+        )}
+
+        <div className="canvas-node-top">
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span
+              className="canvas-node-drag-handle"
+              title="Drag up or down to reorder"
+            >
+              ⠿
+            </span>
+            <strong style={{ fontSize: "0.88rem", color: "var(--ink)" }}>
+              {node.label}
+            </strong>
+            {node.required && (
+              <span style={{ color: "var(--err-text)", fontWeight: 700 }} title="Required field">*</span>
+            )}
+          </div>
+
+          <div className="canvas-node-actions">
+            <button
+              type="button"
+              className="node-tool-btn"
+              title="Move up"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMoveNode(idx, idx - 1, isMobile);
+              }}
+              disabled={idx === 0}
+            >
+              &uarr;
+            </button>
+            <button
+              type="button"
+              className="node-tool-btn"
+              title="Move down"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMoveNode(idx, idx + 1, isMobile);
+              }}
+              disabled={idx === nodeList.length - 1}
+            >
+              &darr;
+            </button>
+            <button
+              type="button"
+              className="node-tool-btn"
+              title="Duplicate field"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDuplicateNode(node, isMobile);
+              }}
+            >
+              ⧉
+            </button>
+            <button
+              type="button"
+              className="node-tool-btn danger"
+              title="Delete field"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteNode(node.id, isMobile);
+              }}
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+
+        <div className="canvas-node-preview">
+          {node.type === "heading" ? (
+            <h3 style={{ margin: "0.2rem 0", color: "var(--ink)", fontWeight: 800 }}>{node.label}</h3>
+          ) : node.type === "instructions" ? (
+            <p className="notice" style={{ fontSize: "0.82rem", margin: "0.2rem 0" }}>
+              {node.helpText || "Instruction text for the applicant..."}
+            </p>
+          ) : node.type === "section" ? (
+            <div style={{ borderTop: "2px dashed var(--border-strong)", margin: "0.5rem 0" }} />
+          ) : node.type === "long_text" ? (
+            <div className="phone-mock-input" style={{ minHeight: "56px", alignItems: "flex-start" }}>
+              <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>
+                {node.placeholder || "Enter detailed response..."}
+              </span>
+            </div>
+          ) : node.type === "dropdown" ? (
+            <div className="phone-mock-input phone-mock-select">
+              <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
+                {node.placeholder || "Select an option..."}
+              </span>
+              <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>▼</span>
+            </div>
+          ) : node.type === "single_choice" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", marginTop: "0.3rem" }}>
+              {(node.options ?? ["Option 1", "Option 2"]).map((opt, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.82rem", color: "var(--ink-secondary)" }}>
+                  <span style={{ width: "14px", height: "14px", borderRadius: "50%", border: "1.5px solid var(--border-strong)", display: "inline-block" }} />
+                  <span>{opt}</span>
+                </div>
+              ))}
+            </div>
+          ) : node.type === "multiple_choice" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", marginTop: "0.3rem" }}>
+              {(node.options ?? ["Option A", "Option B"]).map((opt, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.82rem", color: "var(--ink-secondary)" }}>
+                  <span style={{ width: "14px", height: "14px", borderRadius: "3px", border: "1.5px solid var(--border-strong)", display: "inline-block" }} />
+                  <span>{opt}</span>
+                </div>
+              ))}
+            </div>
+          ) : node.type === "date" ? (
+            <div className="phone-mock-input phone-mock-select">
+              <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>dd/mm/yyyy</span>
+              <span style={{ fontSize: "0.85rem" }}>📅</span>
+            </div>
+          ) : node.type === "file_upload" ? (
+            <div className="phone-mock-file">
+              <span style={{ fontSize: "0.82rem", fontWeight: 600 }}>Choose file or drag here</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--muted)" }}>Google Drive upload up to 1 GiB</span>
+            </div>
+          ) : (
+            <div className="phone-mock-input">
+              <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>
+                {node.placeholder || `Enter ${node.label.toLowerCase()}...`}
+              </span>
+            </div>
+          )}
+
+          {node.helpText && node.type !== "instructions" && (
+            <div style={{ fontSize: "0.74rem", color: "var(--muted)", marginTop: "0.35rem" }}>
+              {node.helpText}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="studio-shell studio-mode">
@@ -523,189 +736,165 @@ export default function AdminFormBuilderPage() {
               </div>
             </aside>
 
-            {/* COLUMN 2: CENTER CANVAS STAGE (Phone Device Frame - Widened for Desktop) */}
+            {/* COLUMN 2: CENTER FIGMA CANVAS STAGE (DUAL DESKTOP + MOBILE ARTBOARDS) */}
             <main className="studio-canvas-stage" aria-label="Visual Form Studio Canvas">
-              <div className="phone-device-chassis">
-                {/* Top Dynamic Island Notch */}
-                <div className="phone-island-notch" aria-hidden="true">
-                  <span className="phone-camera-lens" />
+              {/* TOP VIEWPORT COMMAND BAR */}
+              <div className="canvas-viewport-bar">
+                <div className="canvas-view-switcher">
+                  <button
+                    type="button"
+                    className={`viewport-pill ${canvasView === "dual" ? "active" : ""}`}
+                    onClick={() => setCanvasView("dual")}
+                    title="View Desktop and Mobile artboards side-by-side (Figma style)"
+                  >
+                    <span>⚡ Dual View (Figma)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`viewport-pill ${canvasView === "desktop" ? "active" : ""}`}
+                    onClick={() => setCanvasView("desktop")}
+                    title="Desktop Frame Only"
+                  >
+                    <span>🖥️ Desktop</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`viewport-pill ${canvasView === "mobile" ? "active" : ""}`}
+                    onClick={() => setCanvasView("mobile")}
+                    title="Mobile Phone Chassis Only"
+                  >
+                    <span>📱 Mobile</span>
+                  </button>
                 </div>
 
-                {/* Phone Screen Inner Content / Canvas */}
-                <div className="phone-screen-content">
-                  <div className="artboard-header">
-                    <h2 className="artboard-title">{title || "Untitled Form"}</h2>
-                    <p className="artboard-desc">{description || "Please fill out this form."}</p>
-                  </div>
+                <div className="canvas-sync-toggle">
+                  <label className="sync-checkbox-label" title="When checked, content added or modified in Desktop automatically syncs to Mobile in real-time">
+                    <input
+                      type="checkbox"
+                      checked={syncViews}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSyncViews(checked);
+                        if (checked) {
+                          setMobileNodes([...nodes]);
+                          setInfo("Views synchronized: Content in Desktop is mirrored to Mobile.");
+                        } else {
+                          setInfo("Views unlinked: You can now adjust Desktop and Mobile layouts independently.");
+                        }
+                      }}
+                    />
+                    <span className="sync-text">Sync Desktop &amp; Mobile</span>
+                    <span className={`sync-status-badge ${syncViews ? "synced" : "unlinked"}`}>
+                      {syncViews ? "✓ Live Synced" : "Unlinked"}
+                    </span>
+                  </label>
+                </div>
+              </div>
 
-                  {nodes.length === 0 ? (
-                    <div className="canvas-empty-state">
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                        <line x1="12" y1="8" x2="12" y2="16" />
-                        <line x1="8" y1="12" x2="16" y2="12" />
-                      </svg>
-                      <strong style={{ fontSize: "0.95rem" }}>Phone Form is Empty</strong>
-                      <span style={{ fontSize: "0.8rem" }}>Click any element from the left palette to add fields to this form.</span>
+              {/* ARTBOARDS CONTAINER */}
+              <div className={`canvas-artboards-container ${canvasView}`}>
+                {/* 1. DESKTOP ARTBOARD */}
+                {(canvasView === "dual" || canvasView === "desktop") && (
+                  <div className="figma-artboard-frame desktop-artboard">
+                    <div className="figma-frame-header">
+                      <div className="figma-frame-title">
+                        <span>🖥️</span>
+                        <strong>Desktop Frame</strong>
+                        <span className="figma-frame-meta">1024 × Auto</span>
+                      </div>
+                      <span className="figma-badge">Desktop Preview</span>
                     </div>
-                  ) : (
-                    nodes.map((node, idx) => {
-                      const isSelected = selectedNodeId === node.id;
-                      return (
-                        <div
-                          key={node.id}
-                          draggable
-                          onDragStart={() => setDragIndex(idx)}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={() => {
-                            if (dragIndex !== null) handleMoveNode(dragIndex, idx);
-                            setDragIndex(null);
-                          }}
-                          onClick={() => setSelectedNodeId(node.id)}
-                          className={`canvas-node-card ${isSelected ? "selected" : ""}`}
-                        >
-                          {isSelected && (
-                            <span className="node-selection-badge">Selected Field</span>
-                          )}
 
-                          <div className="canvas-node-top">
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                              <span
-                                className="canvas-node-drag-handle"
-                                title="Drag up or down to reorder"
-                              >
-                                ⠿
-                              </span>
-                              <strong style={{ fontSize: "0.88rem", color: "var(--ink)" }}>
-                                {node.label}
-                              </strong>
-                              {node.required && (
-                                <span style={{ color: "var(--err-text)", fontWeight: 700 }} title="Required field">*</span>
-                              )}
-                            </div>
-
-                            <div className="canvas-node-actions">
-                              <button
-                                type="button"
-                                className="node-tool-btn"
-                                title="Move up"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleMoveNode(idx, idx - 1);
-                                }}
-                                disabled={idx === 0}
-                              >
-                                &uarr;
-                              </button>
-                              <button
-                                type="button"
-                                className="node-tool-btn"
-                                title="Move down"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleMoveNode(idx, idx + 1);
-                                }}
-                                disabled={idx === nodes.length - 1}
-                              >
-                                &darr;
-                              </button>
-                              <button
-                                type="button"
-                                className="node-tool-btn"
-                                title="Duplicate field"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDuplicateNode(node);
-                                }}
-                              >
-                                ⧉
-                              </button>
-                              <button
-                                type="button"
-                                className="node-tool-btn danger"
-                                title="Delete field"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteNode(node.id);
-                                }}
-                              >
-                                &times;
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="canvas-node-preview">
-                            {node.type === "heading" ? (
-                              <h3 style={{ margin: "0.2rem 0", color: "var(--ink)", fontWeight: 800 }}>{node.label}</h3>
-                            ) : node.type === "instructions" ? (
-                              <p className="notice" style={{ fontSize: "0.82rem", margin: "0.2rem 0" }}>
-                                {node.helpText || "Instruction text for the applicant..."}
-                              </p>
-                            ) : node.type === "section" ? (
-                              <div style={{ borderTop: "2px dashed var(--border-strong)", margin: "0.5rem 0" }} />
-                            ) : node.type === "long_text" ? (
-                              <div className="phone-mock-input" style={{ minHeight: "56px", alignItems: "flex-start" }}>
-                                <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>
-                                  {node.placeholder || "Enter detailed response..."}
-                                </span>
-                              </div>
-                            ) : node.type === "dropdown" ? (
-                              <div className="phone-mock-input phone-mock-select">
-                                <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
-                                  {node.placeholder || "Select an option..."}
-                                </span>
-                                <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>▼</span>
-                              </div>
-                            ) : node.type === "single_choice" ? (
-                              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", marginTop: "0.3rem" }}>
-                                {(node.options ?? ["Option 1", "Option 2"]).map((opt, i) => (
-                                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.82rem", color: "var(--ink-secondary)" }}>
-                                    <span style={{ width: "14px", height: "14px", borderRadius: "50%", border: "1.5px solid var(--border-strong)", display: "inline-block" }} />
-                                    <span>{opt}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : node.type === "multiple_choice" ? (
-                              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", marginTop: "0.3rem" }}>
-                                {(node.options ?? ["Option A", "Option B"]).map((opt, i) => (
-                                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.82rem", color: "var(--ink-secondary)" }}>
-                                    <span style={{ width: "14px", height: "14px", borderRadius: "3px", border: "1.5px solid var(--border-strong)", display: "inline-block" }} />
-                                    <span>{opt}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : node.type === "date" ? (
-                              <div className="phone-mock-input phone-mock-select">
-                                <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>dd/mm/yyyy</span>
-                                <span style={{ fontSize: "0.85rem" }}>📅</span>
-                              </div>
-                            ) : node.type === "file_upload" ? (
-                              <div className="phone-mock-file">
-                                <span style={{ fontSize: "0.82rem", fontWeight: 600 }}>Choose file or drag here</span>
-                                <span style={{ fontSize: "0.72rem", color: "var(--muted)" }}>Google Drive upload up to 1 GiB</span>
-                              </div>
-                            ) : (
-                              <div className="phone-mock-input">
-                                <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>
-                                  {node.placeholder || `Enter ${node.label.toLowerCase()}...`}
-                                </span>
-                              </div>
-                            )}
-
-                            {node.helpText && node.type !== "instructions" && (
-                              <div style={{ fontSize: "0.74rem", color: "var(--muted)", marginTop: "0.35rem" }}>
-                                {node.helpText}
-                              </div>
-                            )}
-                          </div>
+                    <div className="desktop-device-chassis">
+                      {/* Browser Mock Window Bar */}
+                      <div className="desktop-browser-bar">
+                        <div className="desktop-browser-dots">
+                          <span className="dot red" />
+                          <span className="dot yellow" />
+                          <span className="dot green" />
                         </div>
-                      );
-                    })
-                  )}
-                </div>
+                        <div className="desktop-url-bar">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          <span>forms.mesrc.com.my/forms/{slug || "new-form"}</span>
+                        </div>
+                        <div style={{ width: 44 }} />
+                      </div>
 
-                {/* Bottom Home Indicator */}
-                <div className="phone-home-indicator" aria-hidden="true" />
+                      {/* Desktop Canvas Content */}
+                      <div className="desktop-canvas-content">
+                        <div className="artboard-header">
+                          <h2 className="artboard-title">{title || "Untitled Form"}</h2>
+                          <p className="artboard-desc">{description || "Please fill out this form."}</p>
+                        </div>
+
+                        {nodes.length === 0 ? (
+                          <div className="canvas-empty-state">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                              <line x1="12" y1="8" x2="12" y2="16" />
+                              <line x1="8" y1="12" x2="16" y2="12" />
+                            </svg>
+                            <strong style={{ fontSize: "0.95rem" }}>Desktop Form is Empty</strong>
+                            <span style={{ fontSize: "0.8rem" }}>Click any element from the left palette to add fields to this form.</span>
+                          </div>
+                        ) : (
+                          nodes.map((node, idx) => renderNodeCard(node, idx, nodes, false))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. MOBILE PHONE ARTBOARD */}
+                {(canvasView === "dual" || canvasView === "mobile") && (
+                  <div className="figma-artboard-frame mobile-artboard">
+                    <div className="figma-frame-header">
+                      <div className="figma-frame-title">
+                        <span>📱</span>
+                        <strong>Mobile Frame</strong>
+                        <span className="figma-frame-meta">390 × 844 · iPhone 16</span>
+                      </div>
+                      <span className="figma-badge">Mobile Preview</span>
+                    </div>
+
+                    <div className="phone-device-chassis">
+                      {/* Top Dynamic Island Notch */}
+                      <div className="phone-island-notch" aria-hidden="true">
+                        <span className="phone-camera-lens" />
+                      </div>
+
+                      {/* Phone Screen Inner Content / Canvas */}
+                      <div className="phone-screen-content">
+                        <div className="artboard-header">
+                          <h2 className="artboard-title" style={{ fontSize: "1.2rem" }}>{title || "Untitled Form"}</h2>
+                          <p className="artboard-desc" style={{ fontSize: "0.82rem" }}>{description || "Please fill out this form."}</p>
+                        </div>
+
+                        {(syncViews ? nodes : mobileNodes).length === 0 ? (
+                          <div className="canvas-empty-state">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                              <line x1="12" y1="8" x2="12" y2="16" />
+                              <line x1="8" y1="12" x2="16" y2="12" />
+                            </svg>
+                            <strong style={{ fontSize: "0.95rem" }}>Mobile Form is Empty</strong>
+                            <span style={{ fontSize: "0.8rem" }}>Click any element from the left palette to add fields to this form.</span>
+                          </div>
+                        ) : (
+                          (syncViews ? nodes : mobileNodes).map((node, idx) =>
+                            renderNodeCard(node, idx, syncViews ? nodes : mobileNodes, true)
+                          )
+                        )}
+                      </div>
+
+                      {/* Bottom Home Indicator */}
+                      <div className="phone-home-indicator" aria-hidden="true" />
+                    </div>
+                  </div>
+                )}
               </div>
             </main>
 
@@ -747,13 +936,7 @@ export default function AdminFormBuilderPage() {
                       id="prop-label"
                       type="text"
                       value={selectedNode.label}
-                      onChange={(e) =>
-                        setNodes((prev) =>
-                          prev.map((n) =>
-                            n.id === selectedNode.id ? { ...n, label: e.target.value } : n,
-                          ),
-                        )
-                      }
+                      onChange={(e) => updateNode(selectedNode.id, { label: e.target.value })}
                     />
                   </div>
 
@@ -768,15 +951,7 @@ export default function AdminFormBuilderPage() {
                             type="text"
                             placeholder="e.g. Enter your department name..."
                             value={selectedNode.placeholder ?? ""}
-                            onChange={(e) =>
-                              setNodes((prev) =>
-                                prev.map((n) =>
-                                  n.id === selectedNode.id
-                                    ? { ...n, placeholder: e.target.value }
-                                    : n,
-                                ),
-                              )
-                            }
+                            onChange={(e) => updateNode(selectedNode.id, { placeholder: e.target.value })}
                           />
                         </div>
 
@@ -787,15 +962,7 @@ export default function AdminFormBuilderPage() {
                             type="text"
                             placeholder="Optional instructions below input..."
                             value={selectedNode.helpText ?? ""}
-                            onChange={(e) =>
-                              setNodes((prev) =>
-                                prev.map((n) =>
-                                  n.id === selectedNode.id
-                                    ? { ...n, helpText: e.target.value }
-                                    : n,
-                                ),
-                              )
-                            }
+                            onChange={(e) => updateNode(selectedNode.id, { helpText: e.target.value })}
                           />
                         </div>
 
@@ -803,15 +970,7 @@ export default function AdminFormBuilderPage() {
                           <input
                             type="checkbox"
                             checked={Boolean(selectedNode.required)}
-                            onChange={(e) =>
-                              setNodes((prev) =>
-                                prev.map((n) =>
-                                  n.id === selectedNode.id
-                                    ? { ...n, required: e.target.checked }
-                                    : n,
-                                ),
-                              )
-                            }
+                            onChange={(e) => updateNode(selectedNode.id, { required: e.target.checked })}
                           />
                           Mandatory / Required Field
                         </label>
@@ -828,19 +987,12 @@ export default function AdminFormBuilderPage() {
                         rows={4}
                         value={(selectedNode.options ?? []).join("\n")}
                         onChange={(e) =>
-                          setNodes((prev) =>
-                            prev.map((n) =>
-                              n.id === selectedNode.id
-                                ? {
-                                    ...n,
-                                    options: e.target.value
-                                      .split("\n")
-                                      .map((s) => s.trim())
-                                      .filter(Boolean),
-                                  }
-                                : n,
-                            ),
-                          )
+                          updateNode(selectedNode.id, {
+                            options: e.target.value
+                              .split("\n")
+                              .map((s) => s.trim())
+                              .filter(Boolean),
+                          })
                         }
                       />
                     </div>
