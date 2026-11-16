@@ -645,428 +645,289 @@ a:hover {
 }
 
 /* ============================================================================
-   HOME PORTAL SCENE — PAPER WORLD ASSEMBLY (ONLY 2 BIG CHOICES)
+   NATIVE MOBILE APP STYLING (Forms MESRC Mobile App Experience)
    ============================================================================ */
-.paper-home-stage {
-  margin: auto;
+
+.app-home-stage {
   width: 100%;
-  max-width: 1080px;
-  padding: 1.5rem 0 3rem;
+  max-width: 960px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
+  gap: 1.25rem;
+  padding: 1rem 0 2.5rem;
+}
+
+.app-home-header {
+  display: flex;
   align-items: center;
-  gap: 2rem;
-}
-
-.paper-home-intro {
-  text-align: center;
-  max-width: 520px;
-  animation: paperBackLayerIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.paper-home-intro h1 {
-  font-size: 2rem;
-  letter-spacing: -0.03em;
-  margin-bottom: 0.45rem;
-}
-
-.paper-choice-duo {
+  justify-content: space-between;
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
+  padding: 0.25rem 0.25rem 0.5rem;
 }
 
-.paper-choice-trio {
-  width: 100%;
+.app-role-pill {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.app-home-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin: 0 0 0.15rem;
+}
+
+.app-home-subtitle {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.app-choice-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  gap: 1.25rem;
+  width: 100%;
 }
 
-@media (max-width: 980px) {
-  .paper-choice-trio {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem;
-  }
+.app-choice-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  text-decoration: none;
+  color: var(--ink);
+  box-shadow:
+    0 1px 0 #ffffff inset,
+    0 2px 6px rgba(24, 24, 27, 0.04),
+    0 8px 16px -4px rgba(24, 24, 27, 0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
 }
 
+.app-choice-card:hover {
+  transform: translateY(-3px);
+  border-color: #cbd5e1;
+  box-shadow:
+    0 1px 0 #ffffff inset,
+    0 4px 12px rgba(24, 24, 27, 0.06),
+    0 12px 24px -4px rgba(24, 24, 27, 0.08);
+}
+
+.app-choice-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+
+.forms-icon-box {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.complaints-icon-box {
+  background: #fffbeb;
+  color: #d97706;
+  border-color: #fde68a;
+}
+
+.voting-icon-box {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.app-choice-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-choice-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 0.25rem;
+  line-height: 1.25;
+}
+
+.app-choice-desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.app-choice-chevron {
+  display: none;
+}
+
+/* Mobile View: Sleek Native App Rows */
 @media (max-width: 920px) {
-  .paper-home-stage {
-    min-height: auto;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    padding: 0.25rem 0 1.25rem !important;
-    gap: 0.65rem !important;
+  .app-home-stage {
     max-width: 480px;
-    width: 100%;
-    margin: 0 auto;
+    padding: 0.5rem 0.25rem 1.5rem !important;
+    gap: 0.85rem !important;
   }
 
-  .paper-home-intro {
-    margin-bottom: 0.1rem !important;
+  .app-home-title {
+    font-size: 1.3rem !important;
   }
 
-  .paper-home-intro h1 {
-    font-size: 1.25rem !important;
-    margin: 0.05rem 0 0.15rem !important;
-    letter-spacing: -0.02em;
-  }
-
-  .paper-home-intro .badge-role {
-    margin-bottom: 0.12rem !important;
-    font-size: 0.6rem !important;
-    padding: 0.12rem 0.45rem !important;
-  }
-
-  .paper-home-intro .notice {
+  .app-home-subtitle {
     font-size: 0.78rem !important;
-    line-height: 1.3 !important;
-    margin: 0 auto !important;
-    max-width: 36ch !important;
   }
 
-  .paper-choice-duo,
-  .paper-choice-trio {
+  .app-choice-grid {
     display: flex !important;
     flex-direction: column !important;
-    gap: 0.5rem !important;
+    gap: 0.65rem !important;
     width: 100% !important;
   }
 
-  .paper-portal-card {
-    display: flex !important;
+  .app-choice-card {
     flex-direction: row !important;
     align-items: center !important;
-    text-align: left !important;
-    padding: 0.6rem 0.8rem !important;
-    gap: 0.75rem !important;
-    border-radius: 12px !important;
-    min-height: 0 !important;
-    box-shadow:
-      0 1px 0 #ffffff inset,
-      0 1px 2px rgba(24, 24, 27, 0.04),
-      0 3px 8px -1px rgba(24, 24, 27, 0.05) !important;
+    padding: 0.85rem 1rem !important;
+    gap: 0.85rem !important;
+    border-radius: 16px !important;
+    box-shadow: 0 1px 3px rgba(24, 24, 27, 0.04) !important;
     transform: none !important;
   }
 
-  .paper-portal-card::before {
-    display: none !important;
+  .app-choice-card:active {
+    transform: scale(0.985) !important;
+    background: #f8fafc !important;
   }
 
-  .paper-portal-card:hover {
-    transform: none !important;
-  }
-
-  .paper-diorama-stage {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
+  .app-choice-icon-box {
+    width: 44px !important;
+    height: 44px !important;
     margin-bottom: 0 !important;
-    border-radius: 9px !important;
-    background: var(--surface-muted) !important;
-    border: 1px solid var(--border-subtle) !important;
-    padding: 2px !important;
-    flex-shrink: 0 !important;
+    border-radius: 12px !important;
   }
 
-  .diorama-svg {
-    width: 100% !important;
-    height: 100% !important;
+  .app-choice-title {
+    font-size: 0.98rem !important;
+    margin: 0 0 0.12rem !important;
   }
 
-  .paper-portal-body {
-    flex: 1 !important;
-    min-width: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    text-align: left !important;
-  }
-
-  .paper-card-badge {
-    display: inline-block !important;
-    margin-bottom: 0.1rem !important;
-    font-size: 0.56rem !important;
-    padding: 0.08rem 0.4rem !important;
-    line-height: 1.2 !important;
-  }
-
-  .paper-portal-title {
-    font-size: 0.95rem !important;
-    font-weight: 700 !important;
-    margin: 0 0 0.1rem !important;
-    line-height: 1.2 !important;
-  }
-
-  .paper-portal-sub {
-    font-size: 0.73rem !important;
-    line-height: 1.25 !important;
-    margin: 0 !important;
-    max-width: 100% !important;
+  .app-choice-desc {
+    font-size: 0.75rem !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
   }
 
-  .paper-portal-cta {
-    flex-shrink: 0 !important;
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    padding: 0 !important;
-    border-radius: 50% !important;
+  .app-choice-chevron {
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 1rem !important;
-    box-shadow: 0 1px 2px rgba(24, 24, 27, 0.08) !important;
-  }
-
-  .cta-label {
-    display: none !important;
-  }
-
-  .cta-arrow {
-    display: inline !important;
-    margin-left: 0 !important;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    flex-shrink: 0;
   }
 }
 
-/* Multi-Layer Paper Assembly Choice Card */
-.paper-portal-card {
-  position: relative;
+/* Native App Navigation Bar on Subpages */
+.app-mobile-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.25rem 0 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.app-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 0.28rem 0.55rem;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04);
+  transition: background-color 0.12s ease;
+}
+
+.app-back-btn:active {
+  background: var(--surface-muted);
+}
+
+.app-mobile-nav-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+/* Success Card for Form / Complaint / Vote Completion */
+.app-success-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 2.4rem 1.6rem 2rem;
-  background: var(--surface-elevated);
+  padding: 2rem 1.25rem;
+  background: var(--surface);
   border: 1px solid var(--border-strong);
-  border-radius: 20px;
-  text-decoration: none;
-  color: var(--ink);
-  box-shadow:
-    0 1px 0 #ffffff inset,
-    0 12px 24px -8px rgba(24, 24, 27, 0.08);
-  transition:
-    transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 0.2s ease;
-  z-index: 1;
-  animation: paperMidLayerIn 0.34s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(24, 24, 27, 0.04);
+  max-width: 480px;
+  margin: 1.5rem auto;
+  gap: 0.75rem;
 }
 
-/* LAYER 1 (BACKING SHEET): Physical offset paper sheet behind the card */
-.paper-portal-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 20px;
-  z-index: -1;
-  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.26s ease;
-}
-
-.paper-portal-forms::before {
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-border);
-  transform: translate(7px, 7px) rotate(-1.2deg);
-  box-shadow: 0 8px 18px -6px rgba(29, 78, 216, 0.12);
-}
-
-.paper-portal-tickets::before {
-  background: var(--amber-soft);
-  border: 1px solid var(--amber-border);
-  transform: translate(7px, 7px) rotate(1.2deg);
-  box-shadow: 0 8px 18px -6px rgba(180, 83, 9, 0.12);
-}
-
-.paper-portal-voting::before {
+.app-success-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
   background: #ecfdf5;
-  border: 1px solid #6ee7b7;
-  transform: translate(7px, 7px) rotate(-1deg);
-  box-shadow: 0 8px 18px -6px rgba(5, 150, 105, 0.12);
-}
-
-/* Hover: Layers separate in 3D space (Back sheet pushes deeper, card lifts up) */
-.paper-portal-card:hover {
-  transform: translateY(-6px);
-  color: var(--ink);
-  border-color: var(--ink);
-  box-shadow:
-    0 1px 0 #ffffff inset,
-    0 22px 38px -12px rgba(24, 24, 27, 0.14);
-}
-
-.paper-portal-forms:hover::before {
-  transform: translate(12px, 13px) rotate(-2.2deg);
-}
-
-.paper-portal-tickets:hover::before {
-  transform: translate(12px, 13px) rotate(2.2deg);
-}
-
-.paper-portal-voting:hover::before {
-  transform: translate(12px, 13px) rotate(-2deg);
-}
-
-.paper-portal-voting .paper-portal-cta {
-  background: #059669;
-  color: #ffffff;
-  border-color: #047857;
-}
-
-.paper-portal-voting:hover .paper-portal-cta {
-  background: #047857;
-  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.28);
-}
-
-.paper-card-badge {
-  display: inline-block;
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.2rem 0.65rem;
-  border-radius: 9999px;
-  margin-bottom: 0.75rem;
-  border: 1px solid currentColor;
-}
-
-.paper-card-badge.badge-blue {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border-color: #bfdbfe;
-}
-
-.paper-card-badge.badge-amber {
-  background: #fffbeb;
-  color: #b45309;
-  border-color: #fde68a;
-}
-
-.paper-card-badge.badge-green {
-  background: #ecfdf5;
-  color: #047857;
-  border-color: #a7f3d0;
-}
-
-/* LAYER 3 (FRONT DIORAMA SCENE): Multi-layer SVG paper cutout */
-.paper-diorama-stage {
-  width: 112px;
-  height: 112px;
-  margin-bottom: 1.4rem;
-  position: relative;
+  color: #059669;
+  border: 2px solid #a7f3d0;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: paperFrontLayerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.14s both;
-}
-
-.diorama-svg {
-  width: 108px;
-  height: 108px;
-  overflow: visible;
-}
-
-.diorama-layer-back {
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-  transform-origin: center;
-}
-
-.diorama-layer-mid {
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-  transform-origin: center;
-}
-
-.diorama-layer-front {
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-  transform-origin: center;
-}
-
-.paper-portal-card:hover .diorama-layer-back {
-  transform: translate(-4px, 3px) rotate(-4deg) scale(0.98);
-}
-
-.paper-portal-card:hover .diorama-layer-mid {
-  transform: translateY(-4px) scale(1.03);
-}
-
-.paper-portal-card:hover .diorama-layer-front {
-  transform: translate(4px, -7px) rotate(3deg) scale(1.07);
-}
-
-.paper-portal-title {
   font-size: 1.5rem;
   font-weight: 800;
-  letter-spacing: -0.025em;
-  margin: 0 0 0.5rem;
-  color: var(--ink);
-  animation: paperFrontLayerIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
 }
 
-.paper-portal-sub {
-  font-size: 0.94rem;
-  color: var(--muted);
-  max-width: 30ch;
-  line-height: 1.5;
-  margin: 0 0 1.75rem;
-  animation: paperFrontLayerIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
-}
-
-.paper-portal-body {
+.app-success-actions {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.cta-label {
-  display: inline;
-}
-
-.cta-arrow {
-  display: inline;
-  margin-left: 0.25rem;
-}
-
-/* Mounted Front Paper Action Pill inside Portal Card */
-.paper-portal-cta {
-  display: inline-flex;
-  align-items: center;
   gap: 0.5rem;
-  padding: 0.68rem 1.4rem;
-  border-radius: 9999px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  background: var(--surface-muted);
-  color: var(--ink);
-  border: 1px solid var(--border-strong);
-  box-shadow:
-    0 1px 0 #ffffff inset,
-    0 2.5px 0 var(--paper-back-edge),
-    0 4px 8px rgba(24, 24, 27, 0.06);
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  animation: paperFrontLayerIn 0.44s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both;
+  width: 100%;
+  margin-top: 0.5rem;
 }
 
-.paper-portal-forms:hover .paper-portal-cta {
-  background: var(--accent);
-  color: #ffffff;
-  border-color: var(--accent-hover);
-  box-shadow: 0 3px 0 #172554, 0 6px 14px rgba(29, 78, 216, 0.25);
-  transform: translateY(-2px);
-}
 
-.paper-portal-tickets:hover .paper-portal-cta {
-  background: var(--amber);
-  color: #ffffff;
-  border-color: #92400e;
-  box-shadow: 0 3px 0 #78350f, 0 6px 14px rgba(180, 83, 9, 0.25);
-  transform: translateY(-2px);
-}
+
+
 
 /* ============================================================================
    BRAND LOGO MARK

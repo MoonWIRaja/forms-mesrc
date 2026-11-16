@@ -177,14 +177,20 @@ export default function TicketsPage() {
 
   return (
     <div className="stack">
+      <div className="app-mobile-nav">
+        <Link href="/" className="app-back-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          <span>Menu Utama</span>
+        </Link>
+        <span className="app-mobile-nav-title">Aduan Staf</span>
+        <div style={{ width: 40 }} />
+      </div>
+
       {/* Header Banner */}
       <section className="card row-between">
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.4rem" }}>
-            <Link href="/" className="btn btn-secondary btn-sm" style={{ padding: "0.2rem 0.55rem", fontSize: "0.78rem" }}>
-              &larr; Back to Home
-            </Link>
-          </div>
           <span className="badge badge-admin" style={{ marginBottom: "0.45rem" }}>
             Support &amp; Resolution Desk
           </span>
@@ -215,9 +221,12 @@ export default function TicketsPage() {
         </p>
       )}
       {successMsg && (
-        <p className="alert alert-ok" role="status">
-          {successMsg}
-        </p>
+        <div className="alert alert-ok" role="status" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+          <span>{successMsg}</span>
+          <Link href="/" className="btn btn-secondary btn-sm" style={{ padding: "0.2rem 0.5rem", fontSize: "0.78rem" }}>
+            Kembali ke Menu Utama &rarr;
+          </Link>
+        </div>
       )}
 
       {/* New Complaint / Appeal Composer */}

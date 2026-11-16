@@ -98,226 +98,77 @@ export default function HomePage() {
     );
   }
 
-  // 3. Signed-In Home: 3-Pillar Paper Portal (Forms, Complaints, Voting & Scoring)
+  // 3. Signed-In Home: 3-Pillar Native App Hub (Forms, Complaints, Voting & Scoring)
   return (
-    <div className="paper-home-stage">
-      <div className="paper-home-header-row">
-        <BrandLogo size="sm" subtitle="Workspace" />
+    <div className="app-home-stage">
+      <header className="app-home-header">
+        <div>
+          <span className="app-role-pill">{profile.role.toUpperCase()} WORKSPACE</span>
+          <h1 className="app-home-title">Forms MESRC</h1>
+          <p className="app-home-subtitle">Pilih modul di bawah untuk mula</p>
+        </div>
         <UserProfileMenu profile={profile} onSignOut={handleSignOut} compact />
-      </div>
+      </header>
 
-      <div className="paper-home-intro">
-        <span className="badge badge-role" style={{ alignSelf: "center", marginBottom: "0.2rem" }}>
-          {profile.role.toUpperCase()} WORKSPACE
-        </span>
-        <h1>Company Hub</h1>
-        <p className="notice">
-          Select a category below to submit forms, file complaints, or score sessions.
-        </p>
-      </div>
-
-      <div className="paper-choice-trio">
-        {/* CHOICE 1: FORMS (Assembled Back -> Mid -> Front) */}
-        <Link href="/forms/" className="paper-portal-card paper-portal-forms">
-          <div className="paper-diorama-stage" aria-hidden="true">
-            <svg className="diorama-svg" viewBox="0 0 120 120" fill="none">
-              {/* Layer 1 (Back): Folder backing cardstock */}
-              <g className="diorama-layer-back">
-                <rect
-                  x="18"
-                  y="20"
-                  width="68"
-                  height="82"
-                  rx="10"
-                  transform="rotate(-6 52 61)"
-                  fill="#dbeafe"
-                  stroke="#93b4f8"
-                  strokeWidth="1.5"
-                />
-              </g>
-              {/* Layer 2 (Mid): Main form sheet cardstock */}
-              <g className="diorama-layer-mid">
-                <rect
-                  x="26"
-                  y="16"
-                  width="68"
-                  height="84"
-                  rx="10"
-                  fill="#ffffff"
-                  stroke="#18181b"
-                  strokeWidth="1.8"
-                />
-                <rect x="36" y="28" width="28" height="6" rx="3" fill="#1d4ed8" />
-                <rect x="36" y="42" width="48" height="5" rx="2.5" fill="#e2ddd4" />
-                <rect x="36" y="54" width="48" height="5" rx="2.5" fill="#e2ddd4" />
-                <rect x="36" y="66" width="34" height="5" rx="2.5" fill="#e2ddd4" />
-              </g>
-              {/* Layer 3 (Front): Mounted stamp badge */}
-              <g className="diorama-layer-front">
-                <circle
-                  cx="82"
-                  cy="82"
-                  r="18"
-                  fill="#1d4ed8"
-                  stroke="#ffffff"
-                  strokeWidth="2.5"
-                />
-                <path
-                  d="M75 82.5L80 87.5L90 77.5"
-                  stroke="#ffffff"
-                  strokeWidth="2.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </g>
+      <div className="app-choice-grid">
+        {/* TILE 1: FORMS */}
+        <Link href="/forms/" className="app-choice-card app-card-forms">
+          <div className="app-choice-icon-box forms-icon-box" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
             </svg>
           </div>
-
-          <div className="paper-portal-body">
-            <span className="paper-card-badge badge-blue">Official Forms</span>
-            <h2 className="paper-portal-title">Company Forms</h2>
-            <p className="paper-portal-sub">
-              Official company forms, requisition slips, and services.
-            </p>
+          <div className="app-choice-info">
+            <h2 className="app-choice-title">Borang Syarikat</h2>
+            <p className="app-choice-desc">Borang rasmi, permohonan servis &amp; rekod</p>
           </div>
-          <span className="paper-portal-cta">
-            <span className="cta-label">Open Forms</span>
-            <span className="cta-arrow" aria-hidden="true">&rarr;</span>
-          </span>
+          <div className="app-choice-chevron" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
         </Link>
 
-        {/* CHOICE 2: COMPLAINTS & TICKETS (Assembled Back -> Mid -> Front) */}
-        <Link href="/tickets/" className="paper-portal-card paper-portal-tickets">
-          <div className="paper-diorama-stage" aria-hidden="true">
-            <svg className="diorama-svg" viewBox="0 0 120 120" fill="none">
-              {/* Layer 1 (Back): Envelope/Support backing cardstock */}
-              <g className="diorama-layer-back">
-                <rect
-                  x="22"
-                  y="22"
-                  width="72"
-                  height="76"
-                  rx="10"
-                  transform="rotate(6 58 60)"
-                  fill="#fef3c7"
-                  stroke="#f59e0b"
-                  strokeWidth="1.5"
-                />
-              </g>
-              {/* Layer 2 (Mid): Main ticket dispatch sheet */}
-              <g className="diorama-layer-mid">
-                <rect
-                  x="22"
-                  y="20"
-                  width="72"
-                  height="76"
-                  rx="10"
-                  fill="#ffffff"
-                  stroke="#18181b"
-                  strokeWidth="1.8"
-                />
-                <rect x="33" y="33" width="32" height="6" rx="3" fill="#b45309" />
-                <rect x="33" y="47" width="50" height="5" rx="2.5" fill="#e2ddd4" />
-                <rect x="33" y="59" width="42" height="5" rx="2.5" fill="#e2ddd4" />
-                <rect x="33" y="71" width="26" height="5" rx="2.5" fill="#e2ddd4" />
-              </g>
-              {/* Layer 3 (Front): Mounted dialogue / resolution badge */}
-              <g className="diorama-layer-front">
-                <rect
-                  x="64"
-                  y="64"
-                  width="36"
-                  height="32"
-                  rx="10"
-                  fill="#b45309"
-                  stroke="#ffffff"
-                  strokeWidth="2.5"
-                />
-                <path
-                  d="M75 76H89M75 83H84"
-                  stroke="#ffffff"
-                  strokeWidth="2.6"
-                  strokeLinecap="round"
-                />
-              </g>
+        {/* TILE 2: COMPLAINTS */}
+        <Link href="/tickets/" className="app-choice-card app-card-complaints">
+          <div className="app-choice-icon-box complaints-icon-box" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
-
-          <div className="paper-portal-body">
-            <span className="paper-card-badge badge-amber">Confidential</span>
-            <h2 className="paper-portal-title">Staff Complaints</h2>
-            <p className="paper-portal-sub">
-              Discreet grievance reporting for misconduct, harassment, or tickets.
-            </p>
+          <div className="app-choice-info">
+            <h2 className="app-choice-title">Aduan Staf</h2>
+            <p className="app-choice-desc">Aduan sulit, salah laku &amp; rayuan tiket</p>
           </div>
-          <span className="paper-portal-cta">
-            <span className="cta-label">File Complaint</span>
-            <span className="cta-arrow" aria-hidden="true">&rarr;</span>
-          </span>
+          <div className="app-choice-chevron" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
         </Link>
 
-        {/* CHOICE 3: VOTING & EVALUATION (Assembled Back -> Mid -> Front) */}
-        <Link href="/voting/" className="paper-portal-card paper-portal-voting">
-          <div className="paper-diorama-stage" aria-hidden="true">
-            <svg className="diorama-svg" viewBox="0 0 120 120" fill="none">
-              {/* Layer 1 (Back): Emerald ballot sheet */}
-              <g className="diorama-layer-back">
-                <rect
-                  x="20"
-                  y="20"
-                  width="70"
-                  height="80"
-                  rx="10"
-                  transform="rotate(-5 55 60)"
-                  fill="#d1fae5"
-                  stroke="#34d399"
-                  strokeWidth="1.5"
-                />
-              </g>
-              {/* Layer 2 (Mid): Scorecard sheet */}
-              <g className="diorama-layer-mid">
-                <rect
-                  x="24"
-                  y="18"
-                  width="72"
-                  height="82"
-                  rx="10"
-                  fill="#ffffff"
-                  stroke="#18181b"
-                  strokeWidth="1.8"
-                />
-                <rect x="34" y="30" width="30" height="6" rx="3" fill="#047857" />
-                <rect x="34" y="44" width="22" height="5" rx="2" fill="#059669" />
-                <rect x="60" y="44" width="24" height="5" rx="2.5" fill="#e2ddd4" />
-                <rect x="34" y="56" width="22" height="5" rx="2" fill="#059669" />
-                <rect x="60" y="56" width="24" height="5" rx="2.5" fill="#e2ddd4" />
-                <rect x="34" y="68" width="22" height="5" rx="2" fill="#059669" />
-                <rect x="60" y="68" width="24" height="5" rx="2.5" fill="#e2ddd4" />
-              </g>
-              {/* Layer 3 (Front): Star rating / Ballot podium stamp */}
-              <g className="diorama-layer-front">
-                <circle cx="82" cy="82" r="18" fill="#047857" stroke="#ffffff" strokeWidth="2.5" />
-                <path
-                  d="M82 72L84.5 77.5L90.5 78.2L86 82.3L87.2 88.2L82 85.2L76.8 88.2L78 82.3L73.5 78.2L79.5 77.5L82 72Z"
-                  fill="#fef08a"
-                  stroke="#ca8a04"
-                  strokeWidth="1"
-                />
-              </g>
+        {/* TILE 3: VOTING & SCORING */}
+        <Link href="/voting/" className="app-choice-card app-card-voting">
+          <div className="app-choice-icon-box voting-icon-box" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
           </div>
-
-          <div className="paper-portal-body">
-            <span className="paper-card-badge badge-green">Scoring &amp; Polls</span>
-            <h2 className="paper-portal-title">Voting &amp; Scoring</h2>
-            <p className="paper-portal-sub">
-              Weekly Wednesday presentation grading (Speaker, Emcee, Coordinator) &amp; polls.
-            </p>
+          <div className="app-choice-info">
+            <h2 className="app-choice-title">Penilaian &amp; Undian</h2>
+            <p className="app-choice-desc">Markah sesi Rabu, undian staf &amp; laporan</p>
           </div>
-          <span className="paper-portal-cta">
-            <span className="cta-label">Enter Voting</span>
-            <span className="cta-arrow" aria-hidden="true">&rarr;</span>
-          </span>
+          <div className="app-choice-chevron" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
         </Link>
       </div>
     </div>

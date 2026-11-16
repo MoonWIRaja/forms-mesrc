@@ -238,32 +238,49 @@ export default function FillFormPage() {
 
   if (submittedId) {
     return (
-      <section className="card stack">
-        <h1>Submission Received</h1>
-        <p className="alert alert-ok">
-          Your response for <strong>{form.title}</strong> (v{form.current_published_version}) has
-          been recorded. Reference ID: <code>{submittedId}</code>.
+      <div className="app-success-card">
+        <div className="app-success-icon" aria-hidden="true">✓</div>
+        <h2 style={{ fontSize: "1.35rem", fontWeight: 800, margin: "0.2rem 0" }}>Borang Berjaya Dihantar!</h2>
+        <p className="notice" style={{ maxWidth: "38ch", margin: "0 auto" }}>
+          Maklum balas anda untuk <strong>{form.title}</strong> (v{form.current_published_version}) telah direkodkan.
+          <br />
+          <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>No. Rujukan: <code>{submittedId}</code></span>
         </p>
-        <div className="row-actions">
-          <Link href="/forms/" className="btn btn-primary">
-            Return to Forms Catalog
+        <div className="app-success-actions">
+          <Link href="/" className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }}>
+            Kembali ke Menu Utama
+          </Link>
+          <Link href="/forms/" className="btn btn-secondary" style={{ width: "100%", justifyContent: "center" }}>
+            Lihat Borang Lain
           </Link>
         </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="card stack fill-form-container">
-      <div className="row-between">
-        <div>
-          <h1>{form.title}</h1>
-          {form.description && <p className="notice">{form.description}</p>}
-        </div>
-        <span className="badge badge-not_configured">
-          Timer: {Math.floor(elapsedSeconds / 60)}m {elapsedSeconds % 60}s
-        </span>
+    <div className="stack">
+      <div className="app-mobile-nav">
+        <Link href="/forms/" className="app-back-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          <span>Borang</span>
+        </Link>
+        <span className="app-mobile-nav-title">{form.title}</span>
+        <div style={{ width: 40 }} />
       </div>
+
+      <section className="card stack fill-form-container">
+        <div className="row-between">
+          <div>
+            <h1>{form.title}</h1>
+            {form.description && <p className="notice">{form.description}</p>}
+          </div>
+          <span className="badge badge-not_configured">
+            Timer: {Math.floor(elapsedSeconds / 60)}m {elapsedSeconds % 60}s
+          </span>
+        </div>
 
       {error && (
         <p className="alert alert-error" role="alert">
@@ -387,5 +404,6 @@ export default function FillFormPage() {
         </div>
       </form>
     </section>
+  </div>
   );
 }
