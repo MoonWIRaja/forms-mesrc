@@ -5,6 +5,33 @@ import { useEffect, useRef, useState } from "react";
 import BrandLogo from "@/components/BrandLogo";
 import ChunkLoader from "@/components/ChunkLoader";
 import {
+  PixelArrowDownIcon,
+  PixelArrowLeftIcon,
+  PixelArrowRightIcon,
+  PixelArrowUpIcon,
+  PixelCatalogIcon,
+  PixelCheckboxIcon,
+  PixelClipIcon,
+  PixelDateIcon,
+  PixelDesktopIcon,
+  PixelDividerIcon,
+  PixelDragHandleIcon,
+  PixelDropdownIcon,
+  PixelDuplicateIcon,
+  PixelEyeIcon,
+  PixelFieldTypeIcon,
+  PixelLockIcon,
+  PixelPhoneIcon,
+  PixelPlusIcon,
+  PixelQuestionsIcon,
+  PixelRadioIcon,
+  PixelSaveIcon,
+  PixelSettingsIcon,
+  PixelSparkleIcon,
+  PixelTextIcon,
+  PixelTrashIcon,
+} from "@/components/PixelIcons";
+import {
   FORM_TEMPLATES,
   type FieldType,
   type FormFieldNode,
@@ -15,19 +42,19 @@ import {
 } from "@/lib/form-types";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
-const FIELD_TYPE_OPTIONS: { type: FieldType; label: string; icon: string }[] = [
-  { type: "short_text", label: "Short Text", icon: "≡" },
-  { type: "long_text", label: "Paragraph / Long Text", icon: "¶" },
-  { type: "dropdown", label: "Dropdown Select", icon: "▾" },
-  { type: "single_choice", label: "Multiple Choice (Radio)", icon: "◉" },
-  { type: "multiple_choice", label: "Checkboxes", icon: "☑" },
-  { type: "date", label: "Date", icon: "📅" },
-  { type: "email", label: "Email Address", icon: "@" },
-  { type: "number", label: "Number", icon: "#" },
-  { type: "file_upload", label: "File Upload (Drive)", icon: "📎" },
-  { type: "heading", label: "Section Heading", icon: "T" },
-  { type: "instructions", label: "Helper / Instructions", icon: "ℹ" },
-  { type: "section", label: "Divider Line", icon: "—" },
+const FIELD_TYPE_OPTIONS: { type: FieldType; label: string }[] = [
+  { type: "short_text", label: "Short Text" },
+  { type: "long_text", label: "Paragraph / Long Text" },
+  { type: "dropdown", label: "Dropdown Select" },
+  { type: "single_choice", label: "Multiple Choice (Radio)" },
+  { type: "multiple_choice", label: "Checkboxes" },
+  { type: "date", label: "Date Picker" },
+  { type: "email", label: "Email Address" },
+  { type: "number", label: "Numeric Value" },
+  { type: "file_upload", label: "File Upload (Drive)" },
+  { type: "heading", label: "Section Heading" },
+  { type: "instructions", label: "Helper / Instructions" },
+  { type: "section", label: "Divider Line" },
 ];
 
 const THEME_ACCENTS = [
@@ -205,13 +232,12 @@ export default function AdminFormBuilderPage() {
             ? "Instructions for applicant"
             : type === "section"
               ? "Section Break"
-              : `Untitled Question`,
+              : "Untitled Question",
       required: false,
       options: defaultOptions,
       width: "full",
     };
 
-    // Insert after selected node, or append at end
     const selectedIdx = nodes.findIndex((n) => n.id === selectedNodeId);
     if (selectedIdx !== -1) {
       const updated = [...nodes];
@@ -257,7 +283,6 @@ export default function AdminFormBuilderPage() {
     }
   }
 
-  // Inline Option Helpers
   function handleAddOption(nodeId: string) {
     setNodes((prev) =>
       prev.map((n) => {
@@ -388,7 +413,7 @@ export default function AdminFormBuilderPage() {
   }
 
   if (loading) {
-    return <ChunkLoader title="Form Studio" subtitle="Loading Google Forms layout..." />;
+    return <ChunkLoader title="Form Studio" subtitle="Assembling papercraft studio..." />;
   }
 
   if (!profile || (profile.role !== "admin" && profile.role !== "maintenance")) {
@@ -413,16 +438,17 @@ export default function AdminFormBuilderPage() {
   return (
     <div className="gf-studio-shell">
       {/* ======================================================================
-          TOP COMMAND BAR (GOOGLE FORMS / TALLY STYLE)
+          TOP PAPERCRAFT + PIXEL ART COMMAND BAR
           ====================================================================== */}
       <header className="gf-studio-toolbar" aria-label="Studio Command Bar">
         <div className="gf-toolbar-left">
-          <Link href="/admin/" className="btn btn-secondary gf-exit-btn" title="Exit to Submissions Dashboard">
-            &larr; Exit
+          <Link href="/admin/" className="pixel-paper-btn gf-exit-btn" title="Exit to Submissions Dashboard">
+            <PixelArrowLeftIcon size={14} />
+            <span>Exit</span>
           </Link>
-          <div className="gf-brand-badge" title="Forms MESRC Studio">
+          <div className="gf-brand-badge" title="Forms MESRC Paper Studio">
             <BrandLogo size="sm" />
-            <span className="gf-brand-name">Forms MESRC</span>
+            <span className="gf-brand-name">Studio</span>
           </div>
           <input
             type="text"
@@ -433,19 +459,20 @@ export default function AdminFormBuilderPage() {
             placeholder="Form Title..."
           />
           <span
-            className={`badge ${
-              currentFormRecord?.state === "published"
-                ? "badge-configured"
-                : "badge-not_configured"
+            className={`pixel-stamp-badge ${
+              currentFormRecord?.state === "published" ? "live" : "draft"
             }`}
           >
-            {currentFormRecord
-              ? `v${currentFormRecord.latest_version} (${currentFormRecord.state})`
-              : "New Draft"}
+            <PixelSparkleIcon size={11} />
+            <span>
+              {currentFormRecord
+                ? `v${currentFormRecord.latest_version} ${currentFormRecord.state.toUpperCase()}`
+                : "NEW DRAFT"}
+            </span>
           </span>
         </div>
 
-        {/* CENTER NAVIGATION TABS */}
+        {/* CENTER STACKED PAPER TABS */}
         <div className="gf-toolbar-center">
           <nav className="gf-nav-tabs" role="tablist">
             <button
@@ -455,7 +482,7 @@ export default function AdminFormBuilderPage() {
               className={`gf-tab-btn ${activeTab === "questions" ? "active" : ""}`}
               onClick={() => setActiveTab("questions")}
             >
-              <span className="gf-tab-icon">📝</span>
+              <PixelQuestionsIcon size={15} />
               <span>Questions</span>
             </button>
             <button
@@ -465,7 +492,7 @@ export default function AdminFormBuilderPage() {
               className={`gf-tab-btn ${activeTab === "preview" ? "active" : ""}`}
               onClick={() => setActiveTab("preview")}
             >
-              <span className="gf-tab-icon">👁️</span>
+              <PixelEyeIcon size={15} />
               <span>Live Preview</span>
             </button>
             <button
@@ -475,7 +502,7 @@ export default function AdminFormBuilderPage() {
               className={`gf-tab-btn ${activeTab === "catalog" ? "active" : ""}`}
               onClick={() => setActiveTab("catalog")}
             >
-              <span className="gf-tab-icon">📋</span>
+              <PixelCatalogIcon size={15} />
               <span>Catalog ({forms.length})</span>
             </button>
             <button
@@ -485,31 +512,32 @@ export default function AdminFormBuilderPage() {
               className={`gf-tab-btn ${activeTab === "settings" ? "active" : ""}`}
               onClick={() => setActiveTab("settings")}
             >
-              <span className="gf-tab-icon">⚙️</span>
+              <PixelSettingsIcon size={15} />
               <span>Settings</span>
             </button>
           </nav>
         </div>
 
-        {/* RIGHT ACTIONS */}
+        {/* RIGHT TACTILE PIXEL-PAPER BUTTONS */}
         <div className="gf-toolbar-right">
           <button
             type="button"
-            className="btn btn-secondary"
-            style={{ padding: "0.45rem 0.85rem", fontSize: "0.82rem" }}
+            className="pixel-paper-btn"
             disabled={busy}
             onClick={handleSaveDraft}
           >
-            {busy ? "Saving..." : "Save Draft"}
+            <PixelSaveIcon size={14} />
+            <span>{busy ? "Saving..." : "Save Draft"}</span>
           </button>
           <button
             type="button"
-            className="btn btn-accent"
-            style={{ padding: "0.45rem 0.95rem", fontSize: "0.82rem" }}
+            className="pixel-paper-btn primary"
+            style={{ backgroundColor: primaryAccent }}
             disabled={busy}
             onClick={handlePublish}
           >
-            Publish Live &rarr;
+            <span>Publish Live</span>
+            <PixelArrowRightIcon size={14} />
           </button>
         </div>
       </header>
@@ -526,16 +554,26 @@ export default function AdminFormBuilderPage() {
       )}
 
       {/* ======================================================================
-          VIEW 1: QUESTIONS EDITOR STREAM (GOOGLE FORMS INLINE CARD STREAM)
+          VIEW 1: QUESTIONS DOCUMENT STREAM (PAPERCRAFT + PIXEL ART)
           ====================================================================== */}
       {activeTab === "questions" && (
         <main className="gf-editor-stage" aria-label="Questions Document Stream">
           <div className="gf-document-stream">
-            {/* 1. FORM HEADER CARD (TITLE, DESCRIPTION, THEME ACCENT) */}
+            {/* 1. DOUBLE-LAYERED PAPERCRAFT FORM HEADER CARD */}
             <div
               className="gf-header-card"
               style={{ borderTop: `8px solid ${primaryAccent}` }}
             >
+              <div className="gf-header-top-meta">
+                <span className="pixel-tag-pill">
+                  <PixelQuestionsIcon size={12} />
+                  <span>FORM BLUEPRINT SHEET</span>
+                </span>
+                <span className="gf-question-count-pill">
+                  {nodes.length} {nodes.length === 1 ? "ITEM" : "ITEMS"}
+                </span>
+              </div>
+
               <input
                 type="text"
                 value={title}
@@ -553,7 +591,7 @@ export default function AdminFormBuilderPage() {
 
               <div className="gf-header-footer">
                 <div className="gf-theme-picker">
-                  <span className="gf-theme-label">Theme Color:</span>
+                  <span className="gf-theme-label">Paper Accent:</span>
                   <div className="gf-theme-swatches">
                     {THEME_ACCENTS.map((acc) => (
                       <button
@@ -586,13 +624,16 @@ export default function AdminFormBuilderPage() {
             {/* 2. QUESTION CARDS LIST */}
             {nodes.length === 0 ? (
               <div className="gf-empty-stream-card">
-                <p>This form currently has no questions.</p>
+                <PixelQuestionsIcon size={32} className="gf-empty-pixel-icon" />
+                <p style={{ margin: 0, fontWeight: 700 }}>This paper sheet has no questions yet.</p>
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="pixel-paper-btn primary"
+                  style={{ backgroundColor: primaryAccent }}
                   onClick={() => handleAddNode("short_text")}
                 >
-                  + Add First Question
+                  <PixelPlusIcon size={14} />
+                  <span>Add First Question</span>
                 </button>
               </div>
             ) : (
@@ -614,18 +655,14 @@ export default function AdminFormBuilderPage() {
                     className={`gf-card ${isActive ? "active" : ""}`}
                     style={isActive ? { borderLeft: `6px solid ${primaryAccent}` } : undefined}
                   >
-                    {/* CARD TOP REORDER HANDLE */}
-                    <div
-                      className="gf-card-reorder-bar"
-                      title="Drag to reorder questions"
-                    >
-                      <span className="gf-reorder-dots">⠿⠿</span>
+                    {/* CARD TOP PIXEL GRIP BAR */}
+                    <div className="gf-card-reorder-bar" title="Drag to reorder question cards">
+                      <PixelDragHandleIcon size={16} />
                     </div>
 
-                    {/* ACTIVE STATE: INLINE FULL EDITING CONTROLS */}
+                    {/* ACTIVE STATE: INLINE PAPERCRAFT + PIXEL EDITING CONTROLS */}
                     {isActive ? (
                       <div className="gf-card-edit-body stack">
-                        {/* Question Title & Field Type Row */}
                         <div className="gf-card-row-top">
                           <input
                             type="text"
@@ -637,6 +674,9 @@ export default function AdminFormBuilderPage() {
                           />
 
                           <div className="gf-type-select-wrap">
+                            <span className="gf-type-select-icon">
+                              <PixelFieldTypeIcon type={node.type} size={15} />
+                            </span>
                             <select
                               value={node.type}
                               onChange={(e) => {
@@ -655,23 +695,21 @@ export default function AdminFormBuilderPage() {
                             >
                               {FIELD_TYPE_OPTIONS.map((opt) => (
                                 <option key={opt.type} value={opt.type}>
-                                  {opt.icon} {opt.label}
+                                  {opt.label}
                                 </option>
                               ))}
                             </select>
                           </div>
                         </div>
 
-                        {/* Optional Subtitle / Helper instructions */}
                         <input
                           type="text"
                           value={node.helpText ?? ""}
                           onChange={(e) => updateNode(node.id, { helpText: e.target.value })}
-                          placeholder="Description / helper text (optional)..."
+                          placeholder="Helper text or instructions (optional)..."
                           className="gf-card-help-input"
                         />
 
-                        {/* Field-Specific Inline Content */}
                         {(node.type === "short_text" || node.type === "email" || node.type === "number") && (
                           <div className="gf-inline-mock-input">
                             <input
@@ -698,20 +736,19 @@ export default function AdminFormBuilderPage() {
 
                         {node.type === "date" && (
                           <div className="gf-inline-mock-input gf-date-mock">
-                            <span>dd/mm/yyyy</span>
-                            <span>📅</span>
+                            <span>dd / mm / yyyy</span>
+                            <PixelDateIcon size={15} />
                           </div>
                         )}
 
                         {node.type === "file_upload" && (
                           <div className="gf-file-upload-mock">
-                            <span className="gf-file-icon">☁️</span>
-                            <strong>Files uploaded to company Google Drive</strong>
-                            <span className="gf-file-sub">Supported formats: PDF, Images, Spreadsheets, Docs up to 1 GiB.</span>
+                            <PixelClipIcon size={22} />
+                            <strong>Files routed to Company Google Drive</strong>
+                            <span className="gf-file-sub">Supports PDF, Images, Docs, and Spreadsheets up to 1 GiB.</span>
                           </div>
                         )}
 
-                        {/* Choice & Dropdown Options Editor */}
                         {(node.type === "dropdown" ||
                           node.type === "single_choice" ||
                           node.type === "multiple_choice") && (
@@ -719,11 +756,13 @@ export default function AdminFormBuilderPage() {
                             {(node.options ?? ["Option 1"]).map((opt, optIdx) => (
                               <div key={optIdx} className="gf-option-row">
                                 <span className="gf-opt-symbol">
-                                  {node.type === "single_choice"
-                                    ? "○"
-                                    : node.type === "multiple_choice"
-                                      ? "□"
-                                      : `${optIdx + 1}.`}
+                                  {node.type === "single_choice" ? (
+                                    <span className="gf-pixel-radio-shape" />
+                                  ) : node.type === "multiple_choice" ? (
+                                    <span className="gf-pixel-check-shape" />
+                                  ) : (
+                                    `${optIdx + 1}.`
+                                  )}
                                 </span>
                                 <input
                                   type="text"
@@ -737,7 +776,7 @@ export default function AdminFormBuilderPage() {
                                     type="button"
                                     className="gf-opt-remove-btn"
                                     onClick={() => handleRemoveOption(node.id, optIdx)}
-                                    title="Remove this option"
+                                    title="Remove option"
                                   >
                                     &times;
                                   </button>
@@ -747,30 +786,25 @@ export default function AdminFormBuilderPage() {
 
                             <div className="gf-add-option-row">
                               <span className="gf-opt-symbol">
-                                {node.type === "single_choice"
-                                  ? "○"
-                                  : node.type === "multiple_choice"
-                                    ? "□"
-                                    : "+"}
+                                <PixelPlusIcon size={12} />
                               </span>
                               <button
                                 type="button"
                                 className="gf-add-opt-btn"
                                 onClick={() => handleAddOption(node.id)}
                               >
-                                Add option
+                                Add another option
                               </button>
                             </div>
                           </div>
                         )}
 
-                        {/* CARD ACTION FOOTER */}
+                        {/* CARD ACTION FOOTER (MATCHING PIXEL-PAPERCRAFT TOOL TILES) */}
                         <div className="gf-card-footer">
-                          {/* Reordering Up / Down buttons */}
                           <div className="gf-footer-left">
                             <button
                               type="button"
-                              className="gf-footer-btn"
+                              className="gf-pixel-tile-btn"
                               title="Move question up"
                               disabled={idx === 0}
                               onClick={(e) => {
@@ -778,11 +812,11 @@ export default function AdminFormBuilderPage() {
                                 handleMoveNode(idx, idx - 1);
                               }}
                             >
-                              &uarr; Up
+                              <PixelArrowUpIcon size={14} />
                             </button>
                             <button
                               type="button"
-                              className="gf-footer-btn"
+                              className="gf-pixel-tile-btn"
                               title="Move question down"
                               disabled={idx === nodes.length - 1}
                               onClick={(e) => {
@@ -790,39 +824,33 @@ export default function AdminFormBuilderPage() {
                                 handleMoveNode(idx, idx + 1);
                               }}
                             >
-                              &darr; Down
+                              <PixelArrowDownIcon size={14} />
                             </button>
-                          </div>
-
-                          {/* Duplicate, Delete, Required Switch */}
-                          <div className="gf-footer-right">
                             <button
                               type="button"
-                              className="gf-footer-icon-btn"
+                              className="gf-pixel-tile-btn"
                               title="Duplicate question"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDuplicateNode(node);
                               }}
                             >
-                              <span style={{ fontSize: "1rem" }}>⧉</span>
-                              <span>Duplicate</span>
+                              <PixelDuplicateIcon size={14} />
                             </button>
                             <button
                               type="button"
-                              className="gf-footer-icon-btn danger"
+                              className="gf-pixel-tile-btn danger"
                               title="Delete question"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteNode(node.id);
                               }}
                             >
-                              <span style={{ fontSize: "1rem" }}>🗑️</span>
-                              <span>Delete</span>
+                              <PixelTrashIcon size={14} />
                             </button>
+                          </div>
 
-                            <div className="gf-footer-divider" />
-
+                          <div className="gf-footer-right">
                             {node.type !== "heading" &&
                               node.type !== "instructions" &&
                               node.type !== "section" && (
@@ -830,6 +858,7 @@ export default function AdminFormBuilderPage() {
                                   <span>Required</span>
                                   <input
                                     type="checkbox"
+                                    className="gf-pixel-switch-input"
                                     checked={Boolean(node.required)}
                                     onChange={(e) => updateNode(node.id, { required: e.target.checked })}
                                   />
@@ -839,14 +868,17 @@ export default function AdminFormBuilderPage() {
                         </div>
                       </div>
                     ) : (
-                      /* INACTIVE (IDLE) STATE: CLEAN QUESTION PREVIEW */
+                      /* INACTIVE CARD: CLEAN PAPERCRAFT PREVIEW */
                       <div className="gf-card-idle-body">
                         <div className="gf-idle-top">
                           <div className="gf-idle-title-wrap">
                             <span className="gf-question-label">{node.label}</span>
                             {node.required && <span className="gf-req-star">*</span>}
                           </div>
-                          <span className="gf-idle-type-pill">{node.type.replace("_", " ")}</span>
+                          <span className="gf-idle-type-pill">
+                            <PixelFieldTypeIcon type={node.type} size={12} />
+                            <span>{node.type.replace("_", " ")}</span>
+                          </span>
                         </div>
 
                         {node.helpText && <p className="gf-idle-help">{node.helpText}</p>}
@@ -873,13 +905,13 @@ export default function AdminFormBuilderPage() {
                               <span className="gf-idle-placeholder">
                                 {node.placeholder || "Choose an option..."}
                               </span>
-                              <span>▾</span>
+                              <PixelArrowDownIcon size={12} />
                             </div>
                           ) : node.type === "single_choice" ? (
                             <div className="stack" style={{ gap: "0.35rem" }}>
                               {(node.options ?? ["Option 1", "Option 2"]).map((opt, i) => (
                                 <div key={i} className="gf-idle-choice-row">
-                                  <span className="gf-idle-radio-dot" />
+                                  <span className="gf-pixel-radio-shape" />
                                   <span>{opt}</span>
                                 </div>
                               ))}
@@ -888,24 +920,25 @@ export default function AdminFormBuilderPage() {
                             <div className="stack" style={{ gap: "0.35rem" }}>
                               {(node.options ?? ["Option A", "Option B"]).map((opt, i) => (
                                 <div key={i} className="gf-idle-choice-row">
-                                  <span className="gf-idle-check-box" />
+                                  <span className="gf-pixel-check-shape" />
                                   <span>{opt}</span>
                                 </div>
                               ))}
                             </div>
                           ) : node.type === "date" ? (
                             <div className="gf-idle-mock-input row-between">
-                              <span className="gf-idle-placeholder">dd/mm/yyyy</span>
-                              <span>📅</span>
+                              <span className="gf-idle-placeholder">dd / mm / yyyy</span>
+                              <PixelDateIcon size={14} />
                             </div>
                           ) : node.type === "file_upload" ? (
                             <div className="gf-idle-file-box">
-                              <span>📎 Choose file (Google Drive up to 1 GiB)</span>
+                              <PixelClipIcon size={14} />
+                              <span>Choose file (Google Drive up to 1 GiB)</span>
                             </div>
                           ) : (
                             <div className="gf-idle-mock-input">
                               <span className="gf-idle-placeholder">
-                                {node.placeholder || `Short answer text...`}
+                                {node.placeholder || "Short answer text..."}
                               </span>
                             </div>
                           )}
@@ -916,9 +949,56 @@ export default function AdminFormBuilderPage() {
                 );
               })
             )}
+
+            {/* BOTTOM QUICK-ADD PAPERCRAFT DOCK */}
+            <div className="gf-bottom-quick-add">
+              <span className="gf-quick-add-label">Quick Add Card:</span>
+              <div className="gf-quick-add-pills">
+                <button
+                  type="button"
+                  className="pixel-paper-btn compact"
+                  onClick={() => handleAddNode("short_text")}
+                >
+                  <PixelPlusIcon size={12} />
+                  <span>Question</span>
+                </button>
+                <button
+                  type="button"
+                  className="pixel-paper-btn compact"
+                  onClick={() => handleAddNode("dropdown")}
+                >
+                  <PixelDropdownIcon size={12} />
+                  <span>Dropdown</span>
+                </button>
+                <button
+                  type="button"
+                  className="pixel-paper-btn compact"
+                  onClick={() => handleAddNode("single_choice")}
+                >
+                  <PixelRadioIcon size={12} />
+                  <span>Choice</span>
+                </button>
+                <button
+                  type="button"
+                  className="pixel-paper-btn compact"
+                  onClick={() => handleAddNode("file_upload")}
+                >
+                  <PixelClipIcon size={12} />
+                  <span>File Upload</span>
+                </button>
+                <button
+                  type="button"
+                  className="pixel-paper-btn compact"
+                  onClick={() => handleAddNode("heading")}
+                >
+                  <PixelTextIcon size={12} />
+                  <span>Heading</span>
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* 3. GOOGLE FORMS FLOATING / DOCKED ACTION RAIL */}
+          {/* 3. FLOATING PAPERCRAFT + PIXEL ART ACTION RAIL */}
           <aside className="gf-action-rail" aria-label="Add Element Quick Actions">
             <div className="gf-rail-box">
               <button
@@ -927,7 +1007,7 @@ export default function AdminFormBuilderPage() {
                 onClick={() => handleAddNode("short_text")}
                 title="Add Question (Short Text)"
               >
-                <span className="gf-rail-icon">＋</span>
+                <PixelPlusIcon size={16} />
                 <span className="gf-rail-tooltip">Add Question</span>
               </button>
 
@@ -937,7 +1017,7 @@ export default function AdminFormBuilderPage() {
                 onClick={() => handleAddNode("heading")}
                 title="Add Section Heading"
               >
-                <span className="gf-rail-icon">T</span>
+                <PixelTextIcon size={16} />
                 <span className="gf-rail-tooltip">Title / Heading</span>
               </button>
 
@@ -947,7 +1027,7 @@ export default function AdminFormBuilderPage() {
                 onClick={() => handleAddNode("dropdown")}
                 title="Add Dropdown Select"
               >
-                <span className="gf-rail-icon">▾</span>
+                <PixelDropdownIcon size={16} />
                 <span className="gf-rail-tooltip">Dropdown Select</span>
               </button>
 
@@ -957,8 +1037,28 @@ export default function AdminFormBuilderPage() {
                 onClick={() => handleAddNode("single_choice")}
                 title="Add Multiple Choice (Radio)"
               >
-                <span className="gf-rail-icon">◉</span>
+                <PixelRadioIcon size={16} />
                 <span className="gf-rail-tooltip">Multiple Choice</span>
+              </button>
+
+              <button
+                type="button"
+                className="gf-rail-btn"
+                onClick={() => handleAddNode("multiple_choice")}
+                title="Add Checkboxes"
+              >
+                <PixelCheckboxIcon size={16} />
+                <span className="gf-rail-tooltip">Checkboxes</span>
+              </button>
+
+              <button
+                type="button"
+                className="gf-rail-btn"
+                onClick={() => handleAddNode("date")}
+                title="Add Date Picker"
+              >
+                <PixelDateIcon size={16} />
+                <span className="gf-rail-tooltip">Date Picker</span>
               </button>
 
               <button
@@ -967,7 +1067,7 @@ export default function AdminFormBuilderPage() {
                 onClick={() => handleAddNode("file_upload")}
                 title="Add Google Drive File Upload"
               >
-                <span className="gf-rail-icon">📎</span>
+                <PixelClipIcon size={16} />
                 <span className="gf-rail-tooltip">File Upload</span>
               </button>
 
@@ -977,7 +1077,7 @@ export default function AdminFormBuilderPage() {
                 onClick={() => handleAddNode("section")}
                 title="Add Section Divider"
               >
-                <span className="gf-rail-icon">—</span>
+                <PixelDividerIcon size={16} />
                 <span className="gf-rail-tooltip">Section Divider</span>
               </button>
             </div>
@@ -990,7 +1090,6 @@ export default function AdminFormBuilderPage() {
           ====================================================================== */}
       {activeTab === "preview" && (
         <section className="gf-preview-stage" aria-label="Live Interactive Preview">
-          {/* DEVICE SWITCHER BAR */}
           <div className="gf-preview-controls">
             <div className="gf-device-switcher">
               <button
@@ -998,30 +1097,29 @@ export default function AdminFormBuilderPage() {
                 className={`gf-device-btn ${previewDevice === "phone" ? "active" : ""}`}
                 onClick={() => setPreviewDevice("phone")}
               >
-                <span>📱 Mobile Phone (iPhone 16)</span>
+                <PixelPhoneIcon size={15} />
+                <span>Mobile Phone (iPhone 16)</span>
               </button>
               <button
                 type="button"
                 className={`gf-device-btn ${previewDevice === "desktop" ? "active" : ""}`}
                 onClick={() => setPreviewDevice("desktop")}
               >
-                <span>🖥️ Desktop Browser (1024px)</span>
+                <PixelDesktopIcon size={15} />
+                <span>Desktop Browser (1024px)</span>
               </button>
             </div>
             <span className="notice" style={{ fontSize: "0.8rem", margin: 0 }}>
-              Scrollable live preview: test how applicants see and fill this form in real-time.
+              Scrollable live preview: test how applicants experience this paper form on phone or desktop.
             </span>
           </div>
 
-          {/* 1. MOBILE PHONE PREVIEW CHASSIS (WITH INTERNAL SCROLLING) */}
           {previewDevice === "phone" && (
             <div className="gf-phone-chassis">
-              {/* Dynamic Island Notch */}
               <div className="gf-phone-notch">
                 <span className="gf-phone-lens" />
               </div>
 
-              {/* Scrollable Phone Screen */}
               <div className="gf-phone-screen">
                 <div
                   className="gf-preview-header-card"
@@ -1030,7 +1128,10 @@ export default function AdminFormBuilderPage() {
                   <h2 className="gf-preview-title">{title || "Untitled Form"}</h2>
                   <p className="gf-preview-desc">{description}</p>
                   <div className="gf-preview-meta">
-                    <span className="badge badge-configured">Forms MESRC Official</span>
+                    <span className="pixel-stamp-badge live">
+                      <PixelSparkleIcon size={10} />
+                      <span>FORMS MESRC</span>
+                    </span>
                     <span style={{ fontSize: "0.72rem", color: "var(--muted)" }}>* Required</span>
                   </div>
                 </div>
@@ -1095,7 +1196,7 @@ export default function AdminFormBuilderPage() {
                           <input type="date" className="input" style={{ width: "100%" }} />
                         ) : node.type === "file_upload" ? (
                           <div className="gf-preview-file-dropzone">
-                            <span style={{ fontSize: "1.2rem" }}>📎</span>
+                            <PixelClipIcon size={20} />
                             <span style={{ fontSize: "0.8rem", fontWeight: 600 }}>Tap to add attachment</span>
                             <span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>Google Drive safe storage</span>
                           </div>
@@ -1111,37 +1212,35 @@ export default function AdminFormBuilderPage() {
                     </div>
                   ))}
 
-                  {/* SUBMIT BUTTON MOCK */}
                   <div className="gf-preview-submit-wrap">
                     <button
                       type="button"
-                      className="btn btn-primary"
-                      style={{ width: "100%", padding: "0.75rem", backgroundColor: primaryAccent }}
+                      className="pixel-paper-btn primary"
+                      style={{ width: "100%", justifyContent: "center", padding: "0.75rem", backgroundColor: primaryAccent }}
                     >
-                      Submit Form &rarr;
+                      <span>Submit Form</span>
+                      <PixelArrowRightIcon size={14} />
                     </button>
                     {allowSaveDraft && (
                       <button
                         type="button"
-                        className="btn btn-secondary"
-                        style={{ width: "100%", padding: "0.6rem", fontSize: "0.82rem" }}
+                        className="pixel-paper-btn"
+                        style={{ width: "100%", justifyContent: "center", padding: "0.6rem" }}
                       >
-                        Save Draft
+                        <PixelSaveIcon size={14} />
+                        <span>Save Draft</span>
                       </button>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Bottom Home Indicator */}
               <div className="gf-phone-home-bar" />
             </div>
           )}
 
-          {/* 2. DESKTOP BROWSER PREVIEW CHASSIS (WITH INTERNAL SCROLLING) */}
           {previewDevice === "desktop" && (
             <div className="gf-desktop-chassis">
-              {/* Browser Window Header */}
               <div className="gf-desktop-browser-bar">
                 <div className="gf-browser-dots">
                   <span className="dot red" />
@@ -1149,12 +1248,12 @@ export default function AdminFormBuilderPage() {
                   <span className="dot green" />
                 </div>
                 <div className="gf-browser-url-pill">
-                  <span>🔒 forms.mesrc.com.my/forms/{slug || "new-form"}</span>
+                  <PixelLockIcon size={12} />
+                  <span>forms.mesrc.com.my/forms/{slug || "new-form"}</span>
                 </div>
                 <div style={{ width: 44 }} />
               </div>
 
-              {/* Scrollable Desktop Body */}
               <div className="gf-desktop-screen">
                 <div
                   className="gf-preview-header-card"
@@ -1165,7 +1264,10 @@ export default function AdminFormBuilderPage() {
                   </h1>
                   <p className="gf-preview-desc">{description}</p>
                   <div className="gf-preview-meta">
-                    <span className="badge badge-configured">Forms MESRC Official</span>
+                    <span className="pixel-stamp-badge live">
+                      <PixelSparkleIcon size={10} />
+                      <span>FORMS MESRC OFFICIAL</span>
+                    </span>
                     <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>* Indicates required question</span>
                   </div>
                 </div>
@@ -1230,7 +1332,7 @@ export default function AdminFormBuilderPage() {
                           <input type="date" className="input" style={{ width: "100%", maxWidth: "260px" }} />
                         ) : node.type === "file_upload" ? (
                           <div className="gf-preview-file-dropzone" style={{ maxWidth: "500px" }}>
-                            <span style={{ fontSize: "1.4rem" }}>📎</span>
+                            <PixelClipIcon size={24} />
                             <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Choose file or drag here</span>
                             <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Google Drive storage up to 1 GiB</span>
                           </div>
@@ -1246,18 +1348,19 @@ export default function AdminFormBuilderPage() {
                     </div>
                   ))}
 
-                  {/* DESKTOP SUBMIT ACTIONS */}
                   <div className="row-actions" style={{ marginTop: "1rem", gap: "0.75rem" }}>
                     <button
                       type="button"
-                      className="btn btn-primary"
+                      className="pixel-paper-btn primary"
                       style={{ padding: "0.75rem 1.75rem", backgroundColor: primaryAccent }}
                     >
-                      Submit Form &rarr;
+                      <span>Submit Form</span>
+                      <PixelArrowRightIcon size={14} />
                     </button>
                     {allowSaveDraft && (
-                      <button type="button" className="btn btn-secondary">
-                        Save Draft
+                      <button type="button" className="pixel-paper-btn">
+                        <PixelSaveIcon size={14} />
+                        <span>Save Draft</span>
                       </button>
                     )}
                   </div>
@@ -1286,10 +1389,11 @@ export default function AdminFormBuilderPage() {
                   <button
                     key={tpl.key}
                     type="button"
-                    className="btn btn-secondary"
+                    className="pixel-paper-btn compact"
                     onClick={() => handleLoadTemplate(tpl.key)}
                   >
-                    + Template: {tpl.name}
+                    <PixelPlusIcon size={12} />
+                    <span>Template: {tpl.name}</span>
                   </button>
                 ))}
               </div>
@@ -1326,13 +1430,11 @@ export default function AdminFormBuilderPage() {
                         <td>{f.kind}</td>
                         <td>
                           <span
-                            className={`badge ${
-                              f.state === "published"
-                                ? "badge-configured"
-                                : "badge-not_configured"
+                            className={`pixel-stamp-badge ${
+                              f.state === "published" ? "live" : "draft"
                             }`}
                           >
-                            {f.state}
+                            {f.state.toUpperCase()}
                           </span>
                         </td>
                         <td>
@@ -1342,20 +1444,20 @@ export default function AdminFormBuilderPage() {
                         <td className="row-actions">
                           <button
                             type="button"
-                            className="btn btn-primary"
-                            style={{ padding: "0.26rem 0.65rem", fontSize: "0.78rem" }}
+                            className="pixel-paper-btn compact primary"
                             onClick={() => handleSelectExistingForm(f)}
                           >
-                            Open in Studio &rarr;
+                            <span>Open in Studio</span>
+                            <PixelArrowRightIcon size={12} />
                           </button>
                           {f.state !== "archived" && (
                             <button
                               type="button"
-                              className="btn btn-secondary"
-                              style={{ padding: "0.26rem 0.65rem", fontSize: "0.78rem", color: "var(--err-text)" }}
+                              className="pixel-paper-btn compact danger"
                               onClick={() => handleArchive(f.id)}
                             >
-                              Archive
+                              <PixelTrashIcon size={12} />
+                              <span>Archive</span>
                             </button>
                           )}
                         </td>
