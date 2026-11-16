@@ -162,12 +162,17 @@ export default function HomePage() {
             </svg>
           </div>
 
-          <span className="paper-card-badge badge-blue">Official Forms</span>
-          <h2 className="paper-portal-title">Company Forms</h2>
-          <p className="paper-portal-sub">
-            Browse, complete, and submit official company forms, requisition slips, and services.
-          </p>
-          <span className="paper-portal-cta">Open Forms &rarr;</span>
+          <div className="paper-portal-body">
+            <span className="paper-card-badge badge-blue">Official Forms</span>
+            <h2 className="paper-portal-title">Company Forms</h2>
+            <p className="paper-portal-sub">
+              Official company forms, requisition slips, and services.
+            </p>
+          </div>
+          <span className="paper-portal-cta">
+            <span className="cta-label">Open Forms</span>
+            <span className="cta-arrow" aria-hidden="true">&rarr;</span>
+          </span>
         </Link>
 
         {/* CHOICE 2: COMPLAINTS & TICKETS (Assembled Back -> Mid -> Front) */}
@@ -227,12 +232,17 @@ export default function HomePage() {
             </svg>
           </div>
 
-          <span className="paper-card-badge badge-amber">Confidential</span>
-          <h2 className="paper-portal-title">Staff Complaints</h2>
-          <p className="paper-portal-sub">
-            Discreet grievance reporting for harassment, misconduct, or operational tickets with status tracking.
-          </p>
-          <span className="paper-portal-cta">File Complaint &rarr;</span>
+          <div className="paper-portal-body">
+            <span className="paper-card-badge badge-amber">Confidential</span>
+            <h2 className="paper-portal-title">Staff Complaints</h2>
+            <p className="paper-portal-sub">
+              Discreet grievance reporting for misconduct, harassment, or tickets.
+            </p>
+          </div>
+          <span className="paper-portal-cta">
+            <span className="cta-label">File Complaint</span>
+            <span className="cta-arrow" aria-hidden="true">&rarr;</span>
+          </span>
         </Link>
 
         {/* CHOICE 3: VOTING & EVALUATION (Assembled Back -> Mid -> Front) */}
@@ -286,12 +296,17 @@ export default function HomePage() {
             </svg>
           </div>
 
-          <span className="paper-card-badge badge-green">Scoring &amp; Polls</span>
-          <h2 className="paper-portal-title">Voting &amp; Scoring</h2>
-          <p className="paper-portal-sub">
-            Weekly Wednesday presentation grading (Speaker, Emcee, Coordinator), MCEP polls, and team voting.
-          </p>
-          <span className="paper-portal-cta">Enter Voting &rarr;</span>
+          <div className="paper-portal-body">
+            <span className="paper-card-badge badge-green">Scoring &amp; Polls</span>
+            <h2 className="paper-portal-title">Voting &amp; Scoring</h2>
+            <p className="paper-portal-sub">
+              Weekly Wednesday presentation grading (Speaker, Emcee, Coordinator) &amp; polls.
+            </p>
+          </div>
+          <span className="paper-portal-cta">
+            <span className="cta-label">Enter Voting</span>
+            <span className="cta-arrow" aria-hidden="true">&rarr;</span>
+          </span>
         </Link>
       </div>
     </div>
