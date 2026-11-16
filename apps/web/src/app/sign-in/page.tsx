@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import BrandLogo from "@/components/BrandLogo";
 import OtpBoxInput from "@/components/OtpBoxInput";
@@ -12,6 +13,7 @@ import {
 } from "@/lib/supabase";
 
 export default function SignInPage() {
+  const router = useRouter();
   const [setupState, setSetupState] = useState<SystemSetupState | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [email, setEmail] = useState("");
@@ -34,10 +36,14 @@ export default function SignInPage() {
           .select("*")
           .eq("id", uid)
           .maybeSingle();
-        setProfile((prof as UserProfile | null) ?? null);
+        const loadedProfile = (prof as UserProfile | null) ?? null;
+        setProfile(loadedProfile);
+        if (loadedProfile) {
+          router.replace("/");
+        }
       }
     });
-  }, []);
+  }, [router]);
 
   async function handleRequestOtp(e: React.FormEvent) {
     e.preventDefault();
@@ -86,8 +92,11 @@ export default function SignInPage() {
           .eq("id", uid)
           .maybeSingle();
         setProfile((prof as UserProfile | null) ?? null);
+        router.replace("/");
+        return;
       }
-      setInfo("Signed in successfully.");
+      setInfo("Signed in successfully. Entering workspace...");
+      router.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid or expired 4-digit verification code.");
     } finally {
@@ -117,26 +126,16 @@ export default function SignInPage() {
   if (profile) {
     return (
       <div className="center-stage">
-        <section className="card stack">
-          <h1>Signed In</h1>
+        <section className="card stack" style={{ textAlign: "center", alignItems: "center" }}>
+          <BrandLogo size="md" subtitle="Workspace" />
+          <h1 style={{ fontSize: "1.25rem", margin: "0.5rem 0 0.2rem" }}>Signed In</h1>
           <p className="notice">
-            You are signed in as <strong>{profile.email}</strong> (role:{" "}
-            <code>{profile.role}</code>).
+            Signed in as <strong>{profile.email}</strong>. Entering workspace...
           </p>
-          <div className="row-actions">
-            <Link href="/forms/" className="btn btn-primary">
-              Go to Forms
+          <div className="row-actions" style={{ justifyContent: "center", marginTop: "0.5rem" }}>
+            <Link href="/" className="btn btn-primary">
+              Continue to Workspace &rarr;
             </Link>
-            {(profile.role === "admin" || profile.role === "maintenance") && (
-              <Link href="/admin/" className="btn btn-secondary">
-                Admin Workspace
-              </Link>
-            )}
-            {profile.role === "maintenance" && (
-              <Link href="/maintenance/" className="btn btn-secondary">
-                Maintenance Workspace
-              </Link>
-            )}
           </div>
         </section>
       </div>

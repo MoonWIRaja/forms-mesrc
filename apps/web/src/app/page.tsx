@@ -92,17 +92,20 @@ export default function HomePage() {
     );
   }
 
-  // 3. Signed-In Home: Pure 2-Choice Paper World Assembly (Forms vs Complaints/Appeals)
+  // 3. Signed-In Home: 3-Pillar Paper Portal (Forms, Complaints, Voting & Scoring)
   return (
     <div className="paper-home-stage">
       <div className="paper-home-intro">
-        <h1>How can we help you today?</h1>
+        <span className="badge badge-role" style={{ alignSelf: "center", marginBottom: "0.4rem" }}>
+          {profile.role.toUpperCase()} WORKSPACE
+        </span>
+        <h1>Company Hub</h1>
         <p className="notice">
-          Select an option below to fill out an official company form or submit a complaint / appeal.
+          Select a category below to submit company forms, file a confidential workplace complaint, or score active evaluation sessions.
         </p>
       </div>
 
-      <div className="paper-choice-duo">
+      <div className="paper-choice-trio">
         {/* CHOICE 1: FORMS (Assembled Back -> Mid -> Front) */}
         <Link href="/forms/" className="paper-portal-card paper-portal-forms">
           <div className="paper-diorama-stage" aria-hidden="true">
@@ -159,14 +162,15 @@ export default function HomePage() {
             </svg>
           </div>
 
-          <h2 className="paper-portal-title">Forms</h2>
+          <span className="paper-card-badge badge-blue">Official Forms</span>
+          <h2 className="paper-portal-title">Company Forms</h2>
           <p className="paper-portal-sub">
-            Browse and complete official company forms and applications.
+            Browse, complete, and submit official company forms, requisition slips, and services.
           </p>
           <span className="paper-portal-cta">Open Forms &rarr;</span>
         </Link>
 
-        {/* CHOICE 2: ADUAN / TICKETS (Assembled Back -> Mid -> Front) */}
+        {/* CHOICE 2: COMPLAINTS & TICKETS (Assembled Back -> Mid -> Front) */}
         <Link href="/tickets/" className="paper-portal-card paper-portal-tickets">
           <div className="paper-diorama-stage" aria-hidden="true">
             <svg className="diorama-svg" viewBox="0 0 120 120" fill="none">
@@ -223,11 +227,71 @@ export default function HomePage() {
             </svg>
           </div>
 
-          <h2 className="paper-portal-title">Complaints &amp; Appeals</h2>
+          <span className="paper-card-badge badge-amber">Confidential</span>
+          <h2 className="paper-portal-title">Staff Complaints</h2>
           <p className="paper-portal-sub">
-            Submit a new operational complaint (aduan) or track your appeals.
+            Discreet grievance reporting for harassment, misconduct, or operational tickets with status tracking.
           </p>
-          <span className="paper-portal-cta">Open Tickets &rarr;</span>
+          <span className="paper-portal-cta">File Complaint &rarr;</span>
+        </Link>
+
+        {/* CHOICE 3: VOTING & EVALUATION (Assembled Back -> Mid -> Front) */}
+        <Link href="/voting/" className="paper-portal-card paper-portal-voting">
+          <div className="paper-diorama-stage" aria-hidden="true">
+            <svg className="diorama-svg" viewBox="0 0 120 120" fill="none">
+              {/* Layer 1 (Back): Emerald ballot sheet */}
+              <g className="diorama-layer-back">
+                <rect
+                  x="20"
+                  y="20"
+                  width="70"
+                  height="80"
+                  rx="10"
+                  transform="rotate(-5 55 60)"
+                  fill="#d1fae5"
+                  stroke="#34d399"
+                  strokeWidth="1.5"
+                />
+              </g>
+              {/* Layer 2 (Mid): Scorecard sheet */}
+              <g className="diorama-layer-mid">
+                <rect
+                  x="24"
+                  y="18"
+                  width="72"
+                  height="82"
+                  rx="10"
+                  fill="#ffffff"
+                  stroke="#18181b"
+                  strokeWidth="1.8"
+                />
+                <rect x="34" y="30" width="30" height="6" rx="3" fill="#047857" />
+                <rect x="34" y="44" width="22" height="5" rx="2" fill="#059669" />
+                <rect x="60" y="44" width="24" height="5" rx="2.5" fill="#e2ddd4" />
+                <rect x="34" y="56" width="22" height="5" rx="2" fill="#059669" />
+                <rect x="60" y="56" width="24" height="5" rx="2.5" fill="#e2ddd4" />
+                <rect x="34" y="68" width="22" height="5" rx="2" fill="#059669" />
+                <rect x="60" y="68" width="24" height="5" rx="2.5" fill="#e2ddd4" />
+              </g>
+              {/* Layer 3 (Front): Star rating / Ballot podium stamp */}
+              <g className="diorama-layer-front">
+                <circle cx="82" cy="82" r="18" fill="#047857" stroke="#ffffff" strokeWidth="2.5" />
+                <path
+                  d="M82 72L84.5 77.5L90.5 78.2L86 82.3L87.2 88.2L82 85.2L76.8 88.2L78 82.3L73.5 78.2L79.5 77.5L82 72Z"
+                  fill="#fef08a"
+                  stroke="#ca8a04"
+                  strokeWidth="1"
+                />
+              </g>
+            </svg>
+          </div>
+
+          <span className="paper-card-badge badge-green">Scoring &amp; Polls</span>
+          <h2 className="paper-portal-title">Voting &amp; Scoring</h2>
+          <p className="paper-portal-sub">
+            Weekly Wednesday presentation grading (Speaker, Emcee, Coordinator), MCEP polls, and team voting.
+          </p>
+          <span className="paper-portal-cta">Enter Voting &rarr;</span>
         </Link>
       </div>
     </div>
