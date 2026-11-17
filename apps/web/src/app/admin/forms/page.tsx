@@ -146,7 +146,7 @@ export default function AdminFormBuilderPage() {
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [title, setTitle] = useState("Untitled Form");
   const [slug, setSlug] = useState("untitled-form");
-  const [description, setDescription] = useState("Please fill out this form with accurate information.");
+  const [description, setDescription] = useState("");
   const [category, setCategory] = useState<FormCategory>("company_forms");
   const [kind, setKind] = useState<FormKind>("general");
   const [allowSaveDraft, setAllowSaveDraft] = useState(true);

@@ -8,7 +8,6 @@ import {
   PixelArrowRightIcon,
   PixelLockIcon,
   PixelPauseIcon,
-  PixelSparkleIcon,
 } from "@/components/PixelIcons";
 import {
   FORM_CATEGORIES,
@@ -16,28 +15,14 @@ import {
   type FormCategory,
   type FormRow,
   type FormTheme,
-  type ServiceRow,
 } from "@/lib/form-types";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
-
-interface SubmissionRow {
-  id: string;
-  form_id: string;
-  form_version: number;
-  status: "draft" | "submitted";
-  duration_seconds: number | null;
-  submitted_at: string | null;
-  created_at: string;
-}
 
 export default function FormsCatalogPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [forms, setForms] = useState<FormRow[]>([]);
   const [themesMap, setThemesMap] = useState<Record<string, FormTheme>>({});
-  const [services, setServices] = useState<ServiceRow[]>([]);
-  const [formServiceMap, setFormServiceMap] = useState<Record<string, string[]>>({});
-  const [mySubmissions, setMySubmissions] = useState<SubmissionRow[]>([]);
-  const [categoryFilter, setCategoryFilter] = useState<"all" | FormCategory>(() => {
+  const [categoryFilter] = useState<"all" | FormCategory>(() => {
     if (typeof window === "undefined") return "company_forms";
     const c = new URLSearchParams(window.location.search).get("category");
     if (c === "all" || c === "company_forms" || c === "staff_complaints" || c === "voting_evaluation") {
@@ -45,7 +30,6 @@ export default function FormsCatalogPage() {
     }
     return "company_forms";
   });
-  const [serviceFilter, setServiceFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,33 +41,19 @@ export default function FormsCatalogPage() {
         const uid = sess.session?.user?.id;
         if (!uid) return;
 
-        const [{ data: prof }, { data: fRows }, { data: sRows }, { data: fsRows }, { data: subRows }] =
-          await Promise.all([
-            supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
-            supabase
-              .from("forms")
-              .select("*")
-              .eq("state", "published")
-              .order("title", { ascending: true }),
-            supabase
-              .from("services")
-              .select("*")
-              .eq("is_active", true)
-              .order("sort_order", { ascending: true }),
-            supabase.from("form_services").select("form_id,service_id"),
-            supabase
-              .from("submissions")
-              .select("id,form_id,form_version,status,duration_seconds,submitted_at,created_at")
-              .eq("user_id", uid)
-              .order("created_at", { ascending: false }),
-          ]);
+        const [{ data: prof }, { data: fRows }] = await Promise.all([
+          supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
+          supabase
+            .from("forms")
+            .select("*")
+            .eq("state", "published")
+            .order("title", { ascending: true }),
+        ]);
 
         if (!active) return;
         const formList = (fRows as FormRow[] | null) ?? [];
         setProfile((prof as UserProfile | null) ?? null);
         setForms(formList);
-        setServices((sRows as ServiceRow[] | null) ?? []);
-        setMySubmissions((subRows as SubmissionRow[] | null) ?? []);
 
         if (formList.length > 0) {
           const { data: verRows } = await supabase
@@ -109,12 +79,6 @@ export default function FormsCatalogPage() {
           }
           setThemesMap(tMap);
         }
-
-        const map: Record<string, string[]> = {};
-        for (const r of (fsRows as { form_id: string; service_id: string }[] | null) ?? []) {
-          map[r.form_id] = [...(map[r.form_id] ?? []), r.service_id];
-        }
-        setFormServiceMap(map);
       } finally {
         if (active) setLoading(false);
       }
@@ -125,12 +89,7 @@ export default function FormsCatalogPage() {
   }, []);
 
   if (loading) {
-    return (
-      <ChunkLoader
-        title="Forms Directory"
-        subtitle="Loading published forms..."
-      />
-    );
+    return <ChunkLoader title="Company Forms" subtitle="Loading forms..." />;
   }
 
   if (!profile) {
@@ -151,13 +110,9 @@ export default function FormsCatalogPage() {
 
   const filteredForms = forms.filter((f) => {
     const fCat = resolveFormCategory(f, themesMap[f.id]);
-    const catMatch = categoryFilter === "all" || fCat === categoryFilter;
-    const svcMatch =
-      serviceFilter === "all" || (formServiceMap[f.id] ?? []).includes(serviceFilter);
-    return catMatch && svcMatch;
+    return categoryFilter === "all" || fCat === categoryFilter;
   });
 
-  const formTitleById = Object.fromEntries(forms.map((f) => [f.id, f.title]));
   const activeCategoryMeta = FORM_CATEGORIES.find((c) => c.key === categoryFilter);
 
   return (
@@ -168,7 +123,7 @@ export default function FormsCatalogPage() {
           <span>Main Menu</span>
         </Link>
         <span className="app-mobile-nav-title">
-          {activeCategoryMeta ? activeCategoryMeta.label : "All Forms"}
+          {activeCategoryMeta ? activeCategoryMeta.label : "Forms"}
         </span>
         <div style={{ width: 40 }} />
       </div>
@@ -183,8 +138,6 @@ export default function FormsCatalogPage() {
             const fTheme = themesMap[f.id];
             const accent = fTheme?.primaryColor || "#1d4ed8";
             const isPaused = Boolean(fTheme?.submissionsClosed);
-            const fCat = resolveFormCategory(f, fTheme);
-            const catLabel = FORM_CATEGORIES.find((c) => c.key === fCat)?.label ?? "General";
 
             if (isPaused) {
               return (
@@ -203,24 +156,18 @@ export default function FormsCatalogPage() {
                     </div>
                   )}
 
-                  <div className="row-between" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
+                  <div className="row-between" style={{ alignItems: "center", gap: "0.5rem" }}>
                     <strong style={{ fontSize: "1.05rem", color: "var(--ink)" }}>{f.title}</strong>
                     <span className="pixel-stamp-badge paused">
                       <PixelPauseIcon size={10} />
-                      <span>CLOSED / PAUSED</span>
+                      <span>CLOSED</span>
                     </span>
                   </div>
-
-                  {f.description && (
-                    <p className="notice" style={{ margin: 0 }}>
-                      {f.description}
-                    </p>
-                  )}
 
                   <div className="gf-paused-reason-strip">
                     <PixelLockIcon size={13} />
                     <span>
-                      {fTheme?.closedReason || "Submissions are currently closed by administrator."}
+                      {fTheme?.closedReason || "Submissions are currently closed."}
                     </span>
                   </div>
                 </section>
@@ -249,20 +196,8 @@ export default function FormsCatalogPage() {
 
                 <div className="row-between" style={{ alignItems: "center", gap: "0.5rem" }}>
                   <strong style={{ fontSize: "1.05rem", color: "var(--ink)" }}>{f.title}</strong>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
-                    <span className="pixel-stamp-badge live">
-                      <PixelSparkleIcon size={10} />
-                      <span>{catLabel}</span>
-                    </span>
-                    <PixelArrowRightIcon size={15} />
-                  </div>
+                  <PixelArrowRightIcon size={16} />
                 </div>
-
-                {f.description && (
-                  <p className="notice" style={{ margin: 0 }}>
-                    {f.description}
-                  </p>
-                )}
               </Link>
             );
           })}

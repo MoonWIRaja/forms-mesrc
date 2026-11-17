@@ -296,19 +296,13 @@ export default function VotingPage() {
                         </div>
                       )}
 
-                      <div className="row-between" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
+                      <div className="row-between" style={{ alignItems: "center", gap: "0.5rem" }}>
                         <strong style={{ fontSize: "1.08rem", color: "var(--ink)" }}>{f.title}</strong>
                         <span className="pixel-stamp-badge paused">
                           <PixelPauseIcon size={10} />
-                          <span>VOTING CLOSED</span>
+                          <span>CLOSED</span>
                         </span>
                       </div>
-
-                      {f.description && (
-                        <p className="notice" style={{ margin: 0 }}>
-                          {f.description}
-                        </p>
-                      )}
 
                       <div className="gf-paused-reason-strip">
                         <PixelLockIcon size={13} />
@@ -342,20 +336,8 @@ export default function VotingPage() {
 
                     <div className="row-between" style={{ alignItems: "center", gap: "0.5rem" }}>
                       <strong style={{ fontSize: "1.08rem", color: "var(--ink)" }}>{f.title}</strong>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
-                        <span className="pixel-stamp-badge live">
-                          <PixelSparkleIcon size={10} />
-                          <span>OPEN FOR JUDGES</span>
-                        </span>
-                        <PixelArrowRightIcon size={15} />
-                      </div>
+                      <PixelArrowRightIcon size={16} />
                     </div>
-
-                    {f.description && (
-                      <p className="notice" style={{ margin: 0 }}>
-                        {f.description}
-                      </p>
-                    )}
                   </Link>
                 );
               })}
