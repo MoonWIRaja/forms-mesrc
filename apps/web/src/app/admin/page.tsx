@@ -238,13 +238,7 @@ export default function AdminPage() {
                 </p>
               </div>
             ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
-                  gap: "1rem",
-                }}
-              >
+              <div className="stack" style={{ gap: "0.75rem" }}>
                 {formsList.map((f) => {
                   const ver = versionsMap[`${f.id}:${f.latest_version}`];
                   const fTheme = ver?.theme_json;
@@ -261,33 +255,28 @@ export default function AdminPage() {
                   return (
                     <div
                       key={f.id}
-                      className="card stack catalog-form-card"
+                      className="card row-between catalog-form-card"
                       style={{
                         margin: 0,
-                        borderTop: `6px solid ${accent}`,
-                        padding: "1rem 1.15rem",
+                        width: "100%",
+                        borderLeft: `6px solid ${accent}`,
+                        padding: "0.9rem 1.25rem",
+                        gap: "1rem",
+                        flexWrap: "wrap",
                       }}
                     >
-                      {fTheme?.bannerImageUrl && (
-                        <div className="catalog-banner-thumb" style={{ height: "96px" }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={fTheme.bannerImageUrl} alt={f.title} />
-                        </div>
-                      )}
-
-                      <div className="row-between" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
-                        <strong style={{ color: "var(--ink)", fontSize: "1.02rem" }}>{f.title}</strong>
+                      <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap", minWidth: "240px", flex: 1 }}>
+                        <strong style={{ color: "var(--ink)", fontSize: "1rem" }}>{f.title}</strong>
+                        <span className="pixel-tag-pill">{catLabel}</span>
                         <span className={`pixel-stamp-badge ${todayCount > 0 ? "live" : "draft"}`}>
                           {todayCount} TODAY
                         </span>
+                        <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+                          {allCount} total submissions
+                        </span>
                       </div>
 
-                      <div className="row-between" style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
-                        <span className="pixel-tag-pill">{catLabel}</span>
-                        <span>{allCount} total submissions</span>
-                      </div>
-
-                      <div className="row-actions" style={{ marginTop: "auto", paddingTop: "0.35rem" }}>
+                      <div className="row-actions">
                         <button
                           type="button"
                           className="pixel-paper-btn compact primary"

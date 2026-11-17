@@ -245,13 +245,7 @@ export default function AdminFormsListPage() {
               </p>
             </div>
           ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
-                gap: "1rem",
-              }}
-            >
+            <div className="stack" style={{ gap: "0.75rem" }}>
               {filteredForms.map((f) => {
                 const fTheme = themesMap[f.id];
                 const fCat = resolveFormCategory(f, fTheme);
@@ -263,27 +257,24 @@ export default function AdminFormsListPage() {
                 return (
                   <div
                     key={f.id}
-                    className={`card stack catalog-form-card ${isPaused ? "paused" : ""}`}
+                    className={`card row-between catalog-form-card ${isPaused ? "paused" : ""}`}
                     style={{
                       margin: 0,
-                      borderTop: `6px solid ${isPaused ? "#94a3b8" : accent}`,
-                      padding: "1rem 1.15rem",
+                      width: "100%",
+                      borderLeft: `6px solid ${isPaused ? "#94a3b8" : accent}`,
+                      padding: "0.9rem 1.25rem",
+                      gap: "1rem",
+                      flexWrap: "wrap",
                     }}
                   >
-                    {fTheme?.bannerImageUrl && (
-                      <div className="catalog-banner-thumb" style={{ height: "96px" }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={fTheme.bannerImageUrl} alt={f.title} />
-                      </div>
-                    )}
-
-                    <div className="row-between" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap", minWidth: "240px", flex: 1 }}>
                       <div>
-                        <strong style={{ color: "var(--ink)", fontSize: "1.02rem" }}>{f.title}</strong>
-                        <div style={{ fontSize: "0.74rem", color: "var(--muted)", marginTop: "0.15rem" }}>
+                        <strong style={{ color: "var(--ink)", fontSize: "1rem" }}>{f.title}</strong>
+                        <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: "0.15rem" }}>
                           <code>{f.slug}</code>
                         </div>
                       </div>
+                      <span className="pixel-tag-pill">{catLabel}</span>
                       {f.state === "archived" ? (
                         <span className="pixel-stamp-badge draft">ARCHIVED</span>
                       ) : isPaused ? (
@@ -299,17 +290,13 @@ export default function AdminFormsListPage() {
                       ) : (
                         <span className="pixel-stamp-badge draft">DRAFT</span>
                       )}
-                    </div>
-
-                    <div className="row-between" style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
-                      <span className="pixel-tag-pill">{catLabel}</span>
-                      <span>
+                      <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
                         v{f.latest_version}{" "}
                         {f.current_published_version ? `(Live v${f.current_published_version})` : ""}
                       </span>
                     </div>
 
-                    <div className="row-actions" style={{ gap: "0.4rem", flexWrap: "wrap", marginTop: "auto", paddingTop: "0.35rem" }}>
+                    <div className="row-actions" style={{ gap: "0.45rem", flexWrap: "wrap" }}>
                       <Link
                         href={`/admin/forms/?id=${encodeURIComponent(f.id)}`}
                         className="pixel-paper-btn compact primary"
