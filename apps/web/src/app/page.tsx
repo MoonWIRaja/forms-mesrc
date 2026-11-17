@@ -161,12 +161,7 @@ export default function HomePage() {
             <PixelQuestionsIcon size={22} />
           </div>
           <div className="app-choice-info">
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <h2 className="app-choice-title">Company Forms</h2>
-              {categoryCounts.company_forms > 0 && (
-                <span className="pixel-tag-pill">{categoryCounts.company_forms}</span>
-              )}
-            </div>
+            <h2 className="app-choice-title">Company Forms</h2>
             <p className="app-choice-desc">
               Check-in / Check-out, service requests &amp; official records
             </p>
@@ -182,12 +177,7 @@ export default function HomePage() {
             <PixelShieldAlertIcon size={22} />
           </div>
           <div className="app-choice-info">
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <h2 className="app-choice-title">Staff Complaints</h2>
-              {categoryCounts.staff_complaints > 0 && (
-                <span className="pixel-tag-pill">{categoryCounts.staff_complaints}</span>
-              )}
-            </div>
+            <h2 className="app-choice-title">Staff Complaints</h2>
             <p className="app-choice-desc">
               Submit reports &amp; track live complaint resolution status
             </p>
@@ -203,12 +193,7 @@ export default function HomePage() {
             <PixelStarIcon size={22} />
           </div>
           <div className="app-choice-info">
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <h2 className="app-choice-title">Voting &amp; Evaluation</h2>
-              {categoryCounts.voting_evaluation > 0 && (
-                <span className="pixel-tag-pill">{categoryCounts.voting_evaluation}</span>
-              )}
-            </div>
+            <h2 className="app-choice-title">Voting &amp; Evaluation</h2>
             <p className="app-choice-desc">
               Finalis MCEP judging, presentation star ratings &amp; polls
             </p>
