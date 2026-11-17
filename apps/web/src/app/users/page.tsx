@@ -125,181 +125,179 @@ export default function UsersDirectoryPage() {
   });
 
   return (
-    <div className="stack">
-      {/* Header with Clean Tab Switcher */}
-      <section className="card row-between">
-        <div>
-          <span className="badge" style={{ marginBottom: "0.4rem" }}>
-            Admin Panel
-          </span>
-          <h1>Users &amp; Invites</h1>
-          <p className="notice">
-            Manage team member accounts, roles, and email invitations.
-          </p>
+    <div className="stack" style={{ flex: 1 }}>
+      <section
+        className="card stack admin-full-card"
+        style={{ flex: 1, height: "calc(100dvh - 2.5rem)", margin: 0, overflow: "hidden" }}
+      >
+        <div className="row-between" style={{ flexWrap: "wrap", gap: "0.75rem" }}>
+          <h2 style={{ margin: 0 }}>
+            {activeTab === "members"
+              ? `Registered Members (${filteredUsers.length})`
+              : "Send & Manage Invites"}
+          </h2>
+
+          <div className="row-actions" style={{ gap: "0.45rem", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className={`pixel-paper-btn compact ${activeTab === "members" ? "primary" : ""}`}
+              onClick={() => setActiveTab("members")}
+            >
+              Members ({users.length})
+            </button>
+            <button
+              type="button"
+              className={`pixel-paper-btn compact ${activeTab === "invites" ? "primary" : ""}`}
+              onClick={() => setActiveTab("invites")}
+            >
+              + Send &amp; Manage Invites
+            </button>
+
+            {activeTab === "members" && (
+              <>
+                <input
+                  type="text"
+                  placeholder="Search by email..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{ minWidth: "190px", padding: "0.35rem 0.65rem", fontSize: "0.84rem" }}
+                />
+                <select
+                  value={filterRole}
+                  onChange={(e) => setFilterRole(e.target.value)}
+                  style={{ padding: "0.35rem 0.65rem", fontSize: "0.84rem" }}
+                >
+                  <option value="all">All Roles</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="admin">Admin</option>
+                  <option value="user">User</option>
+                </select>
+              </>
+            )}
+          </div>
         </div>
-        <div className="row-actions">
-          <button
-            type="button"
-            className={`btn ${activeTab === "members" ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => setActiveTab("members")}
-          >
-            Members ({users.length})
-          </button>
-          <button
-            type="button"
-            className={`btn ${activeTab === "invites" ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => setActiveTab("invites")}
-          >
-            + Send &amp; Manage Invites
-          </button>
+
+        {actionError && (
+          <p className="alert alert-error" role="alert">
+            {actionError}
+          </p>
+        )}
+        {actionSuccess && (
+          <p className="alert alert-ok" role="status">
+            {actionSuccess}
+          </p>
+        )}
+
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+          {activeTab === "members" ? (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="notice" style={{ textAlign: "center", padding: "2rem" }}>
+                        No members match your search criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((u) => {
+                      const isSelf = u.id === profile.id;
+                      const canManage =
+                        profile.role === "maintenance" ||
+                        (profile.role === "admin" && u.role === "user");
+
+                      return (
+                        <tr key={u.id}>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                              <div className="member-avatar">
+                                {u.email.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <strong style={{ fontSize: "0.9rem", color: "var(--ink)" }}>
+                                  {u.email}
+                                </strong>
+                                {isSelf && (
+                                  <span
+                                    style={{
+                                      fontSize: "0.74rem",
+                                      marginLeft: "0.45rem",
+                                      color: "var(--muted)",
+                                    }}
+                                  >
+                                    (You)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span
+                              className={`badge ${
+                                u.role === "maintenance"
+                                  ? "badge-configured"
+                                  : u.role === "admin"
+                                  ? "badge-admin"
+                                  : "badge-not_configured"
+                              }`}
+                            >
+                              {u.role}
+                            </span>
+                          </td>
+                          <td>
+                            <span
+                              className={`badge ${
+                                u.is_active ? "badge-configured" : "badge-connection_failed"
+                              }`}
+                            >
+                              {u.is_active ? "Active" : "Suspended"}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: "0.84rem", color: "var(--muted)" }}>
+                            {new Date(u.created_at).toLocaleDateString()}
+                          </td>
+                          <td>
+                            {isSelf ? (
+                              <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Current</span>
+                            ) : canManage ? (
+                              <button
+                                type="button"
+                                className={`btn ${u.is_active ? "btn-secondary" : "btn-primary"}`}
+                                style={{ fontSize: "0.78rem", padding: "0.26rem 0.65rem" }}
+                                disabled={busyId === u.id}
+                                onClick={() => handleToggleActive(u)}
+                              >
+                                {busyId === u.id
+                                  ? "Updating..."
+                                  : u.is_active
+                                  ? "Deactivate"
+                                  : "Reactivate"}
+                              </button>
+                            ) : (
+                              <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <InvitationManager callerRole={profile.role} />
+          )}
         </div>
       </section>
-
-      {actionError && (
-        <p className="alert alert-error" role="alert">
-          {actionError}
-        </p>
-      )}
-      {actionSuccess && (
-        <p className="alert alert-ok" role="status">
-          {actionSuccess}
-        </p>
-      )}
-
-      {activeTab === "members" ? (
-        <section className="card stack">
-          <div className="row-between" style={{ flexWrap: "wrap", gap: "0.75rem" }}>
-            <h2>Registered Members ({filteredUsers.length})</h2>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              <input
-                type="text"
-                placeholder="Search by email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ minWidth: "210px", padding: "0.4rem 0.7rem", fontSize: "0.86rem" }}
-              />
-              <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                style={{ padding: "0.4rem 0.7rem", fontSize: "0.86rem" }}
-              >
-                <option value="all">All Roles</option>
-                <option value="maintenance">Maintenance</option>
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Member</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Joined</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="notice" style={{ textAlign: "center", padding: "2rem" }}>
-                      No members match your search criteria.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredUsers.map((u) => {
-                    const isSelf = u.id === profile.id;
-                    const canManage =
-                      profile.role === "maintenance" ||
-                      (profile.role === "admin" && u.role === "user");
-
-                    return (
-                      <tr key={u.id}>
-                        <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                            <div className="member-avatar">
-                              {u.email.slice(0, 2).toUpperCase()}
-                            </div>
-                            <div>
-                              <strong style={{ fontSize: "0.9rem", color: "var(--ink)" }}>
-                                {u.email}
-                              </strong>
-                              {isSelf && (
-                                <span
-                                  style={{
-                                    fontSize: "0.74rem",
-                                    marginLeft: "0.45rem",
-                                    color: "var(--muted)",
-                                  }}
-                                >
-                                  (You)
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <span
-                            className={`badge ${
-                              u.role === "maintenance"
-                                ? "badge-configured"
-                                : u.role === "admin"
-                                ? "badge-admin"
-                                : "badge-not_configured"
-                            }`}
-                          >
-                            {u.role}
-                          </span>
-                        </td>
-                        <td>
-                          <span
-                            className={`badge ${
-                              u.is_active ? "badge-configured" : "badge-connection_failed"
-                            }`}
-                          >
-                            {u.is_active ? "Active" : "Suspended"}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: "0.84rem", color: "var(--muted)" }}>
-                          {new Date(u.created_at).toLocaleDateString()}
-                        </td>
-                        <td>
-                          {isSelf ? (
-                            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Current</span>
-                          ) : canManage ? (
-                            <button
-                              type="button"
-                              className={`btn ${u.is_active ? "btn-secondary" : "btn-primary"}`}
-                              style={{ fontSize: "0.78rem", padding: "0.26rem 0.65rem" }}
-                              disabled={busyId === u.id}
-                              onClick={() => handleToggleActive(u)}
-                            >
-                              {busyId === u.id
-                                ? "Updating..."
-                                : u.is_active
-                                ? "Deactivate"
-                                : "Reactivate"}
-                            </button>
-                          ) : (
-                            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>—</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : (
-        <section className="card">
-          <InvitationManager callerRole={profile.role} />
-        </section>
-      )}
     </div>
   );
 }
