@@ -7,7 +7,7 @@
     "node": ">=20.9"
   },
   "scripts": {
-    "dev": "next dev -H 0.0.0.0",
+    "dev": "node scripts/dev-lan.mjs",
     "build": "next build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
