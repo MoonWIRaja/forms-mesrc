@@ -8,7 +8,6 @@ import {
   PixelArrowRightIcon,
   PixelLockIcon,
   PixelPauseIcon,
-  PixelQuestionsIcon,
   PixelSparkleIcon,
 } from "@/components/PixelIcons";
 import {
@@ -174,65 +173,6 @@ export default function FormsCatalogPage() {
         <div style={{ width: 40 }} />
       </div>
 
-      <section className="card stack">
-        <div className="row-between" style={{ alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.35rem" }}>
-              <PixelQuestionsIcon size={18} />
-              <span className="pixel-tag-pill">FORMS DIRECTORY</span>
-            </div>
-            <h1 style={{ margin: "0 0 0.25rem" }}>
-              {activeCategoryMeta ? activeCategoryMeta.label : "All Published Forms"}
-            </h1>
-            <p className="notice" style={{ margin: 0 }}>
-              Signed in as <strong>{profile.email}</strong> (Recorded automatically on submissions).
-            </p>
-          </div>
-
-          <div className="field" style={{ minWidth: "200px" }}>
-            <label htmlFor="cat-svc">Filter by Department / Service</label>
-            <select
-              id="cat-svc"
-              value={serviceFilter}
-              onChange={(e) => setServiceFilter(e.target.value)}
-            >
-              <option value="all">All Services</option>
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Category Filter Tabs */}
-        <div className="row-actions" style={{ gap: "0.45rem", flexWrap: "wrap" }}>
-          <button
-            type="button"
-            className={`pixel-paper-btn compact ${categoryFilter === "all" ? "primary" : ""}`}
-            onClick={() => setCategoryFilter("all")}
-          >
-            All Categories ({forms.length})
-          </button>
-          {FORM_CATEGORIES.map((cat) => {
-            const count = forms.filter(
-              (f) => resolveFormCategory(f, themesMap[f.id]) === cat.key,
-            ).length;
-            return (
-              <button
-                key={cat.key}
-                type="button"
-                className={`pixel-paper-btn compact ${categoryFilter === cat.key ? "primary" : ""}`}
-                onClick={() => setCategoryFilter(cat.key)}
-              >
-                {cat.label} ({count})
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
       {filteredForms.length === 0 ? (
         <section className="card">
           <p className="notice">No forms published in this category yet.</p>
@@ -319,61 +259,6 @@ export default function FormsCatalogPage() {
           })}
         </div>
       )}
-
-      <section className="card stack">
-        <h2>My Submissions &amp; Saved Drafts ({mySubmissions.length})</h2>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Form</th>
-                <th>Version</th>
-                <th>Status</th>
-                <th>Completion Time</th>
-                <th>Date</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mySubmissions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="notice">
-                    You have not saved or submitted any forms yet.
-                  </td>
-                </tr>
-              ) : (
-                mySubmissions.map((sub) => (
-                  <tr key={sub.id}>
-                    <td>{formTitleById[sub.form_id] ?? sub.form_id.slice(0, 8)}</td>
-                    <td>v{sub.form_version}</td>
-                    <td>
-                      <span
-                        className={`pixel-stamp-badge ${sub.status === "submitted" ? "live" : "draft"}`}
-                      >
-                        {sub.status.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>{sub.duration_seconds != null ? `${sub.duration_seconds}s` : "—"}</td>
-                    <td>
-                      {new Date(sub.submitted_at ?? sub.created_at).toLocaleString()}
-                    </td>
-                    <td>
-                      {sub.status === "draft" && !themesMap[sub.form_id]?.submissionsClosed && (
-                        <Link
-                          href={`/forms/fill/?id=${encodeURIComponent(sub.form_id)}&draft=${encodeURIComponent(sub.id)}`}
-                          className="pixel-paper-btn compact"
-                        >
-                          Resume Draft
-                        </Link>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
     </div>
   );
 }
