@@ -42,10 +42,10 @@ export default function FormRenderer({
 
   return (
     <div
-      className="stack"
+      className="fr-questions-stack"
       style={{
         ["--primary" as string]: accent,
-        gap: compactCards || theme?.density === "compact" ? "0.75rem" : "1rem",
+        gap: compactCards || theme?.density === "compact" ? "0.65rem" : "0.85rem",
       }}
     >
       {nodes.map((node) => {
@@ -54,7 +54,7 @@ export default function FormRenderer({
             <div key={node.id} className="fr-section-heading" style={{ borderLeft: `4px solid ${accent}` }}>
               <h3 style={{ margin: 0, color: accent }}>{node.label}</h3>
               {node.helpText && (
-                <p className="notice" style={{ margin: "0.2rem 0 0", fontSize: "0.84rem" }}>
+                <p className="notice" style={{ margin: "0.2rem 0 0", fontSize: "0.82rem" }}>
                   {node.helpText}
                 </p>
               )}
@@ -76,7 +76,7 @@ export default function FormRenderer({
           return (
             <hr
               key={node.id}
-              style={{ border: 0, borderTop: "2px dashed var(--border-strong)", margin: "0.4rem 0" }}
+              style={{ border: 0, borderTop: "2px dashed var(--border-strong)", margin: "0.25rem 0" }}
             />
           );
         }
@@ -85,7 +85,7 @@ export default function FormRenderer({
           return (
             <div key={node.id} className="fr-question-card">
               {node.label && (
-                <div style={{ fontWeight: 700, marginBottom: "0.5rem", fontSize: "0.94rem" }}>
+                <div className="fr-question-label" style={{ marginBottom: "0.45rem" }}>
                   {node.label}
                 </div>
               )}
@@ -98,7 +98,7 @@ export default function FormRenderer({
                     className="fr-embedded-image"
                   />
                   {(node.caption || node.helpText) && (
-                    <figcaption className="notice" style={{ marginTop: "0.45rem", fontSize: "0.82rem" }}>
+                    <figcaption className="notice" style={{ marginTop: "0.4rem", fontSize: "0.8rem" }}>
                       {node.caption || node.helpText}
                     </figcaption>
                   )}
@@ -116,19 +116,44 @@ export default function FormRenderer({
         const val = answers[node.id];
         const strVal = typeof val === "string" ? val : "";
         const numVal = typeof val === "number" ? val : Number(strVal) || 0;
+        const isDateTimeType =
+          node.type === "date" || node.type === "time" || node.type === "date_time";
 
         return (
           <div key={node.id} className="fr-question-card field">
-            <label htmlFor={`fld-${node.id}`} className="fr-question-label">
-              <span>
-                {node.label}
-                {node.required && <span style={{ color: "#dc2626" }}> *</span>}
-              </span>
-            </label>
+            <div className="fr-question-top">
+              <label htmlFor={`fld-${node.id}`} className="fr-question-label">
+                <span>
+                  {node.label}
+                  {node.required && <span className="fr-req-mark"> *</span>}
+                </span>
+              </label>
+
+              {isDateTimeType && !disabled && (
+                <button
+                  type="button"
+                  className="fr-now-pill"
+                  title="Reset to current live date/time"
+                  onClick={() => {
+                    const now = getLocalNowParts();
+                    onChange(
+                      node.id,
+                      node.type === "date"
+                        ? now.date
+                        : node.type === "time"
+                          ? now.time
+                          : now.dateTime,
+                    );
+                  }}
+                >
+                  <PixelRefreshIcon size={11} />
+                  <span>{node.type === "date" ? "Today" : "Now"}</span>
+                </button>
+              )}
+            </div>
+
             {node.helpText && (
-              <span className="notice" style={{ fontSize: "0.82rem", marginBottom: "0.25rem", display: "block" }}>
-                {node.helpText}
-              </span>
+              <span className="fr-help-text">{node.helpText}</span>
             )}
 
             {node.type === "short_text" && (
@@ -168,53 +193,25 @@ export default function FormRenderer({
             )}
 
             {node.type === "date" && (
-              <div className="fr-datetime-row">
-                <input
-                  id={`fld-${node.id}`}
-                  type="date"
-                  required={node.required}
-                  disabled={disabled}
-                  value={strVal}
-                  onChange={(e) => onChange(node.id, e.target.value)}
-                  style={{ maxWidth: "220px" }}
-                />
-                {!disabled && (
-                  <button
-                    type="button"
-                    className="pixel-paper-btn compact"
-                    title="Set to today's date"
-                    onClick={() => onChange(node.id, getLocalNowParts().date)}
-                  >
-                    <PixelRefreshIcon size={12} />
-                    <span>Today</span>
-                  </button>
-                )}
-              </div>
+              <input
+                id={`fld-${node.id}`}
+                type="date"
+                required={node.required}
+                disabled={disabled}
+                value={strVal}
+                onChange={(e) => onChange(node.id, e.target.value)}
+              />
             )}
 
             {node.type === "time" && (
-              <div className="fr-datetime-row">
-                <input
-                  id={`fld-${node.id}`}
-                  type="time"
-                  required={node.required}
-                  disabled={disabled}
-                  value={strVal}
-                  onChange={(e) => onChange(node.id, e.target.value)}
-                  style={{ maxWidth: "180px" }}
-                />
-                {!disabled && (
-                  <button
-                    type="button"
-                    className="pixel-paper-btn compact"
-                    title="Set to current real-world time"
-                    onClick={() => onChange(node.id, getLocalNowParts().time)}
-                  >
-                    <PixelRefreshIcon size={12} />
-                    <span>Now</span>
-                  </button>
-                )}
-              </div>
+              <input
+                id={`fld-${node.id}`}
+                type="time"
+                required={node.required}
+                disabled={disabled}
+                value={strVal}
+                onChange={(e) => onChange(node.id, e.target.value)}
+              />
             )}
 
             {node.type === "date_time" && (() => {
@@ -223,49 +220,35 @@ export default function FormRenderer({
               const curDate = parsed.date || (node.defaultToNow !== false ? fallbackNow.date : "");
               const curTime = parsed.time || (node.defaultToNow !== false ? fallbackNow.time : "");
               return (
-                <div className="fr-datetime-stack">
-                  <div className="fr-datetime-row">
-                    <div className="fr-datetime-sub">
-                      <span className="fr-mini-label">Date</span>
-                      <input
-                        id={`fld-${node.id}`}
-                        type="date"
-                        required={node.required}
-                        disabled={disabled}
-                        value={curDate}
-                        onChange={(e) => {
-                          const nextDate = e.target.value;
-                          const nextTime = curTime || getLocalNowParts().time;
-                          onChange(node.id, nextDate ? `${nextDate} ${nextTime}` : "");
-                        }}
-                      />
-                    </div>
-                    <div className="fr-datetime-sub">
-                      <span className="fr-mini-label">Time</span>
-                      <input
-                        type="time"
-                        required={node.required}
-                        disabled={disabled}
-                        value={curTime}
-                        onChange={(e) => {
-                          const nextTime = e.target.value;
-                          const nextDate = curDate || getLocalNowParts().date;
-                          onChange(node.id, nextTime ? `${nextDate} ${nextTime}` : "");
-                        }}
-                      />
-                    </div>
-                    {!disabled && (
-                      <button
-                        type="button"
-                        className="pixel-paper-btn compact"
-                        style={{ alignSelf: "flex-end", marginBottom: "2px" }}
-                        title="Reset to exact current real-time date & time"
-                        onClick={() => onChange(node.id, getLocalNowParts().dateTime)}
-                      >
-                        <PixelRefreshIcon size={12} />
-                        <span>Live Now</span>
-                      </button>
-                    )}
+                <div className="fr-datetime-grid">
+                  <div className="fr-datetime-sub">
+                    <span className="fr-mini-label">Date</span>
+                    <input
+                      id={`fld-${node.id}`}
+                      type="date"
+                      required={node.required}
+                      disabled={disabled}
+                      value={curDate}
+                      onChange={(e) => {
+                        const nextDate = e.target.value;
+                        const nextTime = curTime || getLocalNowParts().time;
+                        onChange(node.id, nextDate ? `${nextDate} ${nextTime}` : "");
+                      }}
+                    />
+                  </div>
+                  <div className="fr-datetime-sub">
+                    <span className="fr-mini-label">Time</span>
+                    <input
+                      type="time"
+                      required={node.required}
+                      disabled={disabled}
+                      value={curTime}
+                      onChange={(e) => {
+                        const nextTime = e.target.value;
+                        const nextDate = curDate || getLocalNowParts().date;
+                        onChange(node.id, nextTime ? `${nextDate} ${nextTime}` : "");
+                      }}
+                    />
                   </div>
                 </div>
               );
@@ -274,7 +257,7 @@ export default function FormRenderer({
             {node.type === "long_text" && (
               <textarea
                 id={`fld-${node.id}`}
-                rows={4}
+                rows={3}
                 required={node.required}
                 disabled={disabled}
                 placeholder={node.placeholder ?? "Enter your response..."}
@@ -301,12 +284,16 @@ export default function FormRenderer({
             )}
 
             {node.type === "single_choice" && (
-              <div className="stack" style={{ gap: "0.45rem" }}>
+              <div className="fr-choices-list">
                 {(node.options ?? []).map((opt) => (
                   <label
                     key={opt}
                     className={`fr-choice-option ${strVal === opt ? "selected" : ""}`}
-                    style={strVal === opt ? { borderColor: accent, background: `${accent}0f` } : undefined}
+                    style={
+                      strVal === opt
+                        ? { borderColor: accent, background: `${accent}10` }
+                        : undefined
+                    }
                   >
                     <input
                       type="radio"
@@ -323,7 +310,7 @@ export default function FormRenderer({
             )}
 
             {node.type === "multiple_choice" && (
-              <div className="stack" style={{ gap: "0.45rem" }}>
+              <div className="fr-choices-list">
                 {(node.options ?? []).map((opt) => {
                   const arr = Array.isArray(val) ? (val as string[]) : [];
                   const checked = arr.includes(opt);
@@ -331,7 +318,11 @@ export default function FormRenderer({
                     <label
                       key={opt}
                       className={`fr-choice-option ${checked ? "selected" : ""}`}
-                      style={checked ? { borderColor: accent, background: `${accent}0f` } : undefined}
+                      style={
+                        checked
+                          ? { borderColor: accent, background: `${accent}10` }
+                          : undefined
+                      }
                     >
                       <input
                         type="checkbox"
@@ -384,8 +375,8 @@ export default function FormRenderer({
                         </button>
                       );
                     })}
-                    <span className="pixel-stamp-badge draft" style={{ marginLeft: "0.45rem" }}>
-                      {numVal > 0 ? `${numVal} / ${maxStars} STARS` : "NOT RATED"}
+                    <span className="pixel-stamp-badge draft" style={{ marginLeft: "0.35rem" }}>
+                      {numVal > 0 ? `${numVal} / ${maxStars}` : "RATE"}
                     </span>
                   </div>
                   {(node.ratingLabels?.low || node.ratingLabels?.high) && (
@@ -413,7 +404,11 @@ export default function FormRenderer({
                           type="button"
                           disabled={disabled}
                           className={`fr-scale-tile ${active ? "active" : ""}`}
-                          style={active ? { backgroundColor: accent, color: "#fff", borderColor: "var(--ink)" } : undefined}
+                          style={
+                            active
+                              ? { backgroundColor: accent, color: "#fff", borderColor: "var(--ink)" }
+                              : undefined
+                          }
                           onClick={() => onChange(node.id, stepNum)}
                         >
                           {stepNum}
@@ -433,9 +428,9 @@ export default function FormRenderer({
 
             {node.type === "file_upload" && (
               <div className="gf-file-upload-mock" style={{ alignItems: "flex-start", textAlign: "left" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.35rem" }}>
-                  <PixelClipIcon size={16} />
-                  <strong>Attach Supporting File</strong>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.25rem" }}>
+                  <PixelClipIcon size={15} />
+                  <strong style={{ fontSize: "0.86rem" }}>Attach File</strong>
                 </div>
                 <input
                   id={`fld-${node.id}`}
@@ -463,9 +458,6 @@ export default function FormRenderer({
                     );
                   }}
                 />
-                <p className="notice" style={{ margin: "0.35rem 0 0", fontSize: "0.8rem" }}>
-                  Maximum file size: 1 GiB (stored in Google Workspace Shared Drive).
-                </p>
               </div>
             )}
           </div>

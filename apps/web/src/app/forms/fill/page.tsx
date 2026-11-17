@@ -8,7 +8,6 @@ import {
   PixelArrowLeftIcon,
   PixelArrowRightIcon,
   PixelCheckIcon,
-  PixelClockIcon,
   PixelLockIcon,
   PixelPauseIcon,
   PixelSaveIcon,
@@ -22,7 +21,6 @@ import {
   type FormFieldNode,
   type FormRow,
   type FormTheme,
-  type ServiceRow,
 } from "@/lib/form-types";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
@@ -53,7 +51,12 @@ function summarizeSubmissionReason(
 ): string {
   const parts: string[] = [];
   for (const n of fieldNodes) {
-    if (n.type === "heading" || n.type === "instructions" || n.type === "section" || n.type === "image") {
+    if (
+      n.type === "heading" ||
+      n.type === "instructions" ||
+      n.type === "section" ||
+      n.type === "image"
+    ) {
       continue;
     }
     const v = answers[n.id];
@@ -76,13 +79,9 @@ export default function FillFormPage() {
   const [form, setForm] = useState<FormRow | null>(null);
   const [nodes, setNodes] = useState<FormFieldNode[]>([]);
   const [theme, setTheme] = useState<FormTheme>({});
-  const [services, setServices] = useState<ServiceRow[]>([]);
-  const [serviceId, setServiceId] = useState<string>("");
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const [draftId, setDraftId] = useState<string | null>(null);
-
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const startMsRef = useRef<number>(0);
 
   const [loading, setLoading] = useState(true);
@@ -91,23 +90,9 @@ export default function FillFormPage() {
   const [createdTicketId, setCreatedTicketId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [uploadedFiles, setUploadedFiles] = useState<Array<{
-    id: string;
-    file_name: string;
-    mime_type: string;
-    size_bytes: number;
-    drive_file_id: string;
-    drive_web_view_link: string;
-    created_at: string;
-  }>>([]);
-  const [fileError, setFileError] = useState<string | null>(null);
 
   useEffect(() => {
     startMsRef.current = Date.now();
-    const timer = window.setInterval(() => {
-      setElapsedSeconds(Math.floor((Date.now() - startMsRef.current) / 1000));
-    }, 1000);
-    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -144,19 +129,12 @@ export default function FillFormPage() {
         if (active) setForm(typedForm);
 
         const verNum = typedForm.current_published_version ?? typedForm.latest_version;
-        const [{ data: verRow }, { data: sRows }] = await Promise.all([
-          supabase
-            .from("form_versions")
-            .select("*")
-            .eq("form_id", typedForm.id)
-            .eq("version_number", verNum)
-            .maybeSingle(),
-          supabase
-            .from("services")
-            .select("*")
-            .eq("is_active", true)
-            .order("sort_order", { ascending: true }),
-        ]);
+        const { data: verRow } = await supabase
+          .from("form_versions")
+          .select("*")
+          .eq("form_id", typedForm.id)
+          .eq("version_number", verNum)
+          .maybeSingle();
 
         if (!active) return;
         const parsedNodes =
@@ -166,7 +144,6 @@ export default function FillFormPage() {
 
         setNodes(parsedNodes);
         setTheme(parsedTheme);
-        setServices((sRows as ServiceRow[] | null) ?? []);
 
         const initialDefaults = buildDefaultAnswers(parsedNodes, userProf?.email);
 
@@ -214,7 +191,7 @@ export default function FillFormPage() {
       const { data, error: rpcErr } = await supabase.rpc("submit_form_response", {
         p_form_id: form.id,
         p_answers: answers,
-        p_service_id: serviceId || null,
+        p_service_id: null,
         p_duration_seconds: duration,
         p_as_draft: asDraft,
         p_submission_id: draftId,
@@ -223,7 +200,6 @@ export default function FillFormPage() {
       const res = data as { submission_id: string; status: string };
       const submissionId = res.submission_id;
 
-      // Process any attached files for this submission
       const fileNodes = nodes.filter((n) => n.type === "file_upload");
       for (const node of fileNodes) {
         const file = pendingFiles[node.id];
@@ -256,9 +232,8 @@ export default function FillFormPage() {
 
       if (asDraft) {
         setDraftId(submissionId);
-        setInfo("Draft saved. You can resume it anytime from the Forms page.");
+        setInfo("Draft saved.");
       } else {
-        // If Staff Complaints category, automatically create a trackable ticket linked to user's logged-in account!
         const cat = resolveFormCategory(form, theme);
         if (cat === "staff_complaints" || form.kind === "complaint") {
           try {
@@ -284,47 +259,8 @@ export default function FillFormPage() {
     }
   }
 
-  async function handleDownloadFile(fileId: string) {
-    setFileError(null);
-    try {
-      const supabase = getSupabase();
-      const { data, error: dlErr } = await supabase.rpc("get_file_download_url", {
-        p_file_id: fileId,
-      });
-      if (dlErr) throw dlErr;
-      const res = data as { drive_web_view_link: string; file_name: string };
-      if (res.drive_web_view_link) {
-        window.open(res.drive_web_view_link, "_blank");
-      } else {
-        setFileError("No download link available.");
-      }
-    } catch (err) {
-      setFileError(err instanceof Error ? err.message : "Download failed.");
-    }
-  }
-
-  async function handleDeleteFile(fileId: string) {
-    setFileError(null);
-    try {
-      const supabase = getSupabase();
-      const { error: delErr } = await supabase.rpc("delete_submission_file", {
-        p_file_id: fileId,
-      });
-      if (delErr) throw delErr;
-      setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
-      setInfo("File deleted.");
-    } catch (err) {
-      setFileError(err instanceof Error ? err.message : "Delete failed.");
-    }
-  }
-
   if (loading) {
-    return (
-      <ChunkLoader
-        title="Loading Form..."
-        subtitle="Preparing form sheet & live timestamps"
-      />
-    );
+    return <ChunkLoader title="Loading Form..." subtitle="Preparing form fields..." />;
   }
 
   if (!form) {
@@ -369,15 +305,10 @@ export default function FillFormPage() {
             ? "Score & Vote Submitted!"
             : category === "staff_complaints"
               ? "Complaint Logged & Tracked!"
-              : "Form Submitted Successfully!"}
+              : "Form Submitted!"}
         </h2>
         <p className="notice" style={{ maxWidth: "42ch", margin: "0 auto" }}>
-          Your submission for <strong>{form.title}</strong> (v{form.current_published_version}) has been saved
-          under <strong>{profile?.email ?? "your account"}</strong>.
-          <br />
-          <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
-            Reference ID: <code>{submittedId}</code>
-          </span>
+          Recorded under <strong>{profile?.email ?? "your account"}</strong>.
         </p>
 
         <div className="app-success-actions">
@@ -411,7 +342,7 @@ export default function FillFormPage() {
           </Link>
 
           <Link href="/" className="pixel-paper-btn" style={{ width: "100%", justifyContent: "center" }}>
-            <span>Return to Main Dashboard</span>
+            <span>Main Menu</span>
           </Link>
         </div>
       </div>
@@ -445,54 +376,40 @@ export default function FillFormPage() {
         </div>
       )}
 
-      <div className="fill-form-column stack">
-        <div className="row-between" style={{ alignItems: "center" }}>
+      <div className="fill-form-column">
+        {/* Clean Native-App Top Bar */}
+        <div className="fill-top-nav">
           <Link href={backHref} className="pixel-paper-btn compact">
-            <PixelArrowLeftIcon size={13} />
-            <span>Back to {backLabel}</span>
+            <PixelArrowLeftIcon size={12} />
+            <span>{backLabel}</span>
           </Link>
 
-          <span className="pixel-stamp-badge draft">
-            <PixelClockIcon size={11} />
-            <span>
-              Timer: {Math.floor(elapsedSeconds / 60)}m {elapsedSeconds % 60}s
+          {profile && (
+            <span className="fill-account-pill" title={`Submitting as ${profile.email}`}>
+              <PixelLockIcon size={11} />
+              <span>{profile.email}</span>
             </span>
-          </span>
+          )}
         </div>
 
-        {theme.bannerImageUrl && (
-          <div className={`gf-banner-card height-${theme.bannerHeight ?? "medium"}`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={theme.bannerImageUrl} alt={form.title} className="gf-banner-img" />
-          </div>
-        )}
-
-        <section
-          className="gf-header-card"
-          style={{ borderTop: `8px solid ${primaryAccent}` }}
-        >
-          <div className="row-between" style={{ alignItems: "flex-start" }}>
-            <div>
-              <span className="pixel-tag-pill" style={{ marginBottom: "0.45rem" }}>
-                {backLabel.toUpperCase()}
-              </span>
-              <h1 style={{ margin: "0.2rem 0 0.35rem" }}>{form.title}</h1>
-              {form.description && (
-                <p className="notice" style={{ margin: 0 }}>
-                  {form.description}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {profile && (
-            <div className="gf-account-strip">
-              <PixelLockIcon size={13} />
-              <span>
-                Signed in as <strong>{profile.email}</strong> (Recorded automatically for status tracking)
-              </span>
+        {/* Unified Form Header Card (Banner + Accent Strip + Title) */}
+        <section className="fill-header-card">
+          {theme.bannerImageUrl && (
+            <div className={`fill-header-banner height-${theme.bannerHeight ?? "medium"}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={theme.bannerImageUrl} alt={form.title} className="gf-banner-img" />
             </div>
           )}
+
+          <div
+            className="fill-header-body"
+            style={{ borderTop: `6px solid ${primaryAccent}` }}
+          >
+            <h1 className="fill-form-title">{form.title}</h1>
+            {form.description && (
+              <p className="fill-form-desc">{form.description}</p>
+            )}
+          </div>
         </section>
 
         {error && (
@@ -509,7 +426,7 @@ export default function FillFormPage() {
         {theme.submissionsClosed ? (
           <section className="gf-closed-lock-card">
             <PixelPauseIcon size={28} />
-            <h2 style={{ margin: "0.25rem 0" }}>Form Closed / Paused</h2>
+            <h2 style={{ margin: "0.25rem 0" }}>Form Closed</h2>
             <p className="notice" style={{ maxWidth: "46ch", margin: "0 auto" }}>
               {theme.closedReason ||
                 "This form is currently paused by the administrator and is not accepting new responses."}
@@ -525,28 +442,8 @@ export default function FillFormPage() {
               e.preventDefault();
               void handleSaveOrSubmit(false);
             }}
-            className="stack"
+            className="fr-questions-stack"
           >
-            {services.length > 0 && category === "company_forms" && (
-              <div className="fr-question-card field">
-                <label htmlFor="fill-svc" className="fr-question-label">
-                  Related Company Service / Department (Optional)
-                </label>
-                <select
-                  id="fill-svc"
-                  value={serviceId}
-                  onChange={(e) => setServiceId(e.target.value)}
-                >
-                  <option value="">General / Not specified</option>
-                  {services.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
             <FormRenderer
               nodes={nodes}
               theme={theme}
@@ -563,84 +460,27 @@ export default function FillFormPage() {
               disabled={busy}
             />
 
-            {uploadedFiles.length > 0 && (
-              <section className="card stack">
-                <h2>Attached Files</h2>
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>File Name</th>
-                        <th>Type</th>
-                        <th>Size</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {uploadedFiles.map((f) => (
-                        <tr key={f.id}>
-                          <td>{f.file_name}</td>
-                          <td>{f.mime_type}</td>
-                          <td>{(f.size_bytes / 1024 / 1024).toFixed(2)} MB</td>
-                          <td>
-                            <div className="row-actions" style={{ gap: "0.5rem" }}>
-                              <button
-                                type="button"
-                                className="pixel-paper-btn compact"
-                                disabled={busy}
-                                onClick={() => void handleDownloadFile(f.id)}
-                              >
-                                Download
-                              </button>
-                              <button
-                                type="button"
-                                className="pixel-paper-btn compact danger"
-                                disabled={busy}
-                                onClick={() => void handleDeleteFile(f.id)}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {fileError && (
-                  <p className="alert alert-error" role="alert">
-                    {fileError}
-                  </p>
-                )}
-              </section>
-            )}
-
             <div className="fr-submit-bar">
-              <div className="row-actions" style={{ gap: "0.65rem" }}>
+              <button
+                type="submit"
+                className="pixel-paper-btn primary fr-submit-primary"
+                style={{ backgroundColor: primaryAccent }}
+                disabled={busy}
+              >
+                <span>{busy ? "Submitting..." : "Submit Form"}</span>
+                <PixelArrowRightIcon size={14} />
+              </button>
+              {form.allow_save_draft && (
                 <button
-                  type="submit"
-                  className="pixel-paper-btn primary"
-                  style={{ backgroundColor: primaryAccent, padding: "0.65rem 1.4rem" }}
+                  type="button"
+                  className="pixel-paper-btn fr-submit-secondary"
                   disabled={busy}
+                  onClick={() => void handleSaveOrSubmit(true)}
                 >
-                  <span>{busy ? "Submitting..." : "Submit Form"}</span>
-                  <PixelArrowRightIcon size={14} />
+                  <PixelSaveIcon size={14} />
+                  <span>Save Draft</span>
                 </button>
-                {form.allow_save_draft && (
-                  <button
-                    type="button"
-                    className="pixel-paper-btn"
-                    disabled={busy}
-                    onClick={() => void handleSaveOrSubmit(true)}
-                  >
-                    <PixelSaveIcon size={14} />
-                    <span>Save Draft</span>
-                  </button>
-                )}
-              </div>
-              <Link href={backHref} className="pixel-paper-btn compact">
-                Cancel
-              </Link>
+              )}
             </div>
           </form>
         )}

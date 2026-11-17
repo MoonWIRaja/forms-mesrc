@@ -12,7 +12,6 @@ import {
   PixelPauseIcon,
   PixelPlusIcon,
   PixelQuestionsIcon,
-  PixelSparkleIcon,
   PixelStarIcon,
 } from "@/components/PixelIcons";
 import {

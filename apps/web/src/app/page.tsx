@@ -10,22 +10,11 @@ import {
   PixelShieldAlertIcon,
   PixelStarIcon,
 } from "@/components/PixelIcons";
-import {
-  resolveFormCategory,
-  type FormCategory,
-  type FormRow,
-  type FormTheme,
-} from "@/lib/form-types";
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
 export default function HomePage() {
   const [setupState, setSetupState] = useState<SystemSetupState | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [categoryCounts, setCategoryCounts] = useState<Record<FormCategory, number>>({
-    company_forms: 0,
-    staff_complaints: 0,
-    voting_evaluation: 0,
-  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,43 +29,12 @@ export default function HomePage() {
         const uid = sess.session?.user?.id;
 
         if (uid) {
-          const [{ data: prof }, { data: fRows }] = await Promise.all([
-            supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
-            supabase.from("forms").select("*").eq("state", "published"),
-          ]);
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", uid)
+            .maybeSingle();
           setProfile((prof as UserProfile | null) ?? null);
-
-          const publishedForms = (fRows as FormRow[] | null) ?? [];
-          if (publishedForms.length > 0) {
-            const { data: verRows } = await supabase
-              .from("form_versions")
-              .select("form_id,version_number,theme_json,is_published")
-              .in(
-                "form_id",
-                publishedForms.map((f) => f.id),
-              )
-              .eq("is_published", true);
-
-            const counts: Record<FormCategory, number> = {
-              company_forms: 0,
-              staff_complaints: 0,
-              voting_evaluation: 0,
-            };
-            for (const f of publishedForms) {
-              const ver = (
-                verRows as
-                  | { form_id: string; version_number: number; theme_json: FormTheme }[]
-                  | null
-              )?.find(
-                (v) =>
-                  v.form_id === f.id &&
-                  v.version_number === (f.current_published_version ?? f.latest_version),
-              );
-              const cat = resolveFormCategory(f, ver?.theme_json);
-              counts[cat] += 1;
-            }
-            setCategoryCounts(counts);
-          }
         }
       } finally {
         setLoading(false);
