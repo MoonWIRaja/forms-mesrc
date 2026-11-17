@@ -186,13 +186,58 @@ export default function FormsCatalogPage() {
             const fCat = resolveFormCategory(f, fTheme);
             const catLabel = FORM_CATEGORIES.find((c) => c.key === fCat)?.label ?? "General";
 
+            if (isPaused) {
+              return (
+                <section
+                  key={f.id}
+                  className="card stack catalog-form-card paused"
+                  style={{
+                    margin: 0,
+                    borderTop: "6px solid #94a3b8",
+                  }}
+                >
+                  {fTheme?.bannerImageUrl && (
+                    <div className="catalog-banner-thumb">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={fTheme.bannerImageUrl} alt={f.title} />
+                    </div>
+                  )}
+
+                  <div className="row-between" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
+                    <strong style={{ fontSize: "1.05rem", color: "var(--ink)" }}>{f.title}</strong>
+                    <span className="pixel-stamp-badge paused">
+                      <PixelPauseIcon size={10} />
+                      <span>CLOSED / PAUSED</span>
+                    </span>
+                  </div>
+
+                  {f.description && (
+                    <p className="notice" style={{ margin: 0 }}>
+                      {f.description}
+                    </p>
+                  )}
+
+                  <div className="gf-paused-reason-strip">
+                    <PixelLockIcon size={13} />
+                    <span>
+                      {fTheme?.closedReason || "Submissions are currently closed by administrator."}
+                    </span>
+                  </div>
+                </section>
+              );
+            }
+
             return (
-              <section
+              <Link
                 key={f.id}
-                className={`card stack catalog-form-card ${isPaused ? "paused" : ""}`}
+                href={`/forms/fill/?id=${encodeURIComponent(f.id)}`}
+                className="card stack catalog-form-card"
                 style={{
                   margin: 0,
-                  borderTop: `6px solid ${isPaused ? "#94a3b8" : accent}`,
+                  borderTop: `6px solid ${accent}`,
+                  textDecoration: "none",
+                  color: "inherit",
+                  cursor: "pointer",
                 }}
               >
                 {fTheme?.bannerImageUrl && (
@@ -202,19 +247,15 @@ export default function FormsCatalogPage() {
                   </div>
                 )}
 
-                <div className="row-between" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
-                  <strong style={{ fontSize: "1.05rem" }}>{f.title}</strong>
-                  {isPaused ? (
-                    <span className="pixel-stamp-badge paused">
-                      <PixelPauseIcon size={10} />
-                      <span>CLOSED / PAUSED</span>
-                    </span>
-                  ) : (
+                <div className="row-between" style={{ alignItems: "center", gap: "0.5rem" }}>
+                  <strong style={{ fontSize: "1.05rem", color: "var(--ink)" }}>{f.title}</strong>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
                     <span className="pixel-stamp-badge live">
                       <PixelSparkleIcon size={10} />
                       <span>{catLabel}</span>
                     </span>
-                  )}
+                    <PixelArrowRightIcon size={15} />
+                  </div>
                 </div>
 
                 {f.description && (
@@ -222,39 +263,7 @@ export default function FormsCatalogPage() {
                     {f.description}
                   </p>
                 )}
-
-                {isPaused && (
-                  <div className="gf-paused-reason-strip">
-                    <PixelLockIcon size={13} />
-                    <span>
-                      {fTheme?.closedReason || "Submissions are currently closed by administrator."}
-                    </span>
-                  </div>
-                )}
-
-                <div className="row-actions" style={{ marginTop: "auto", paddingTop: "0.4rem" }}>
-                  {isPaused ? (
-                    <button
-                      type="button"
-                      className="pixel-paper-btn"
-                      disabled
-                      aria-disabled="true"
-                    >
-                      <PixelLockIcon size={14} />
-                      <span>Submissions Closed</span>
-                    </button>
-                  ) : (
-                    <Link
-                      href={`/forms/fill/?id=${encodeURIComponent(f.id)}`}
-                      className="pixel-paper-btn primary"
-                      style={{ backgroundColor: accent }}
-                    >
-                      <span>Open &amp; Fill Form</span>
-                      <PixelArrowRightIcon size={14} />
-                    </Link>
-                  )}
-                </div>
-              </section>
+              </Link>
             );
           })}
         </div>
