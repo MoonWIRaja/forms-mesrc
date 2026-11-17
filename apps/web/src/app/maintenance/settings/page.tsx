@@ -75,6 +75,16 @@ export default function MaintenanceSettingsPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const supabase = getSupabase();
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        setProfile(null);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   if (loading) {
     return (
       <ChunkLoader
@@ -103,58 +113,54 @@ export default function MaintenanceSettingsPage() {
   }
 
   return (
-    <div className="stack">
-      <section className="card stack">
-        <div className="row-between">
-          <div>
-            <span className="badge" style={{ marginBottom: "0.4rem" }}>
-              Admin Panel
-            </span>
-            <h1>Settings &amp; Storage</h1>
-            <p className="notice">
-              Configure Google Workspace Shared Drive storage and email/OTP settings.
-            </p>
-          </div>
-          <div className="row-actions">
+    <div className="stack" style={{ flex: 1 }}>
+      <section
+        className="card stack admin-full-card"
+        style={{ flex: 1, height: "calc(100dvh - 2.5rem)", margin: 0, overflow: "hidden" }}
+      >
+        <div className="row-between" style={{ flexWrap: "wrap", gap: "0.75rem" }}>
+          <h2 style={{ margin: 0 }}>
+            {activeTab === "drive" ? "Google Workspace Shared Drive" : "Email & OTP Guide"}
+          </h2>
+
+          <div className="row-actions" style={{ gap: "0.45rem", flexWrap: "wrap" }}>
             <button
               type="button"
-              className={`btn ${activeTab === "drive" ? "btn-primary" : "btn-secondary"}`}
+              className={`pixel-paper-btn compact ${activeTab === "drive" ? "primary" : ""}`}
               onClick={() => setActiveTab("drive")}
             >
               Google Drive Storage
             </button>
             <button
               type="button"
-              className={`btn ${activeTab === "smtp" ? "btn-primary" : "btn-secondary"}`}
+              className={`pixel-paper-btn compact ${activeTab === "smtp" ? "primary" : ""}`}
               onClick={() => setActiveTab("smtp")}
             >
               Email &amp; OTP Guide
             </button>
           </div>
         </div>
+
         {error && (
           <p className="alert alert-error" role="alert">
             {error}
           </p>
         )}
-      </section>
 
-      {activeTab === "drive" ? (
-        <section className="card stack">
-          <h2>Google Workspace Shared Drive</h2>
-          <GoogleDriveSetupForm
-            initialConfig={status?.google_drive.config_public}
-            initialHasSecret={status?.google_drive.has_secret}
-            initialValidationState={status?.google_drive.validation_state}
-            lastCheckedAt={status?.google_drive.last_checked_at}
-            onSaved={refreshStatus}
-          />
-        </section>
-      ) : (
-        <section className="card stack">
-          <SmtpOtpGuideCard />
-        </section>
-      )}
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingRight: "0.25rem" }}>
+          {activeTab === "drive" ? (
+            <GoogleDriveSetupForm
+              initialConfig={status?.google_drive.config_public}
+              initialHasSecret={status?.google_drive.has_secret}
+              initialValidationState={status?.google_drive.validation_state}
+              lastCheckedAt={status?.google_drive.last_checked_at}
+              onSaved={refreshStatus}
+            />
+          ) : (
+            <SmtpOtpGuideCard />
+          )}
+        </div>
+      </section>
     </div>
   );
 }
