@@ -7,7 +7,6 @@ import {
   PixelArrowLeftIcon,
   PixelArrowRightIcon,
   PixelDateIcon,
-  PixelPlusIcon,
   PixelQuestionsIcon,
   PixelShieldAlertIcon,
   PixelStarIcon,
@@ -91,7 +90,11 @@ export default function AdminPage() {
             .select("*")
             .order("created_at", { ascending: false })
             .limit(400),
-          supabase.from("forms").select("*").order("updated_at", { ascending: false }),
+          supabase
+            .from("forms")
+            .select("*")
+            .neq("state", "archived")
+            .order("updated_at", { ascending: false }),
           supabase.from("profiles").select("id,email"),
           supabase.from("form_versions").select("form_id,version_number,schema_json,theme_json"),
           supabase.from("tickets").select("id,submission_id,status"),
@@ -225,13 +228,12 @@ export default function AdminPage() {
         >
           <div className="row-between">
             <h2 style={{ margin: 0 }}>Select a Form ({formsList.length})</h2>
-            <Link href="/admin/forms/" className="pixel-paper-btn compact primary">
-              <PixelPlusIcon size={13} />
-              <span>Craft New Form</span>
-            </Link>
           </div>
 
-          <div className="table-wrap">
+          <div
+            className="table-wrap"
+            style={{ flex: 1, minHeight: "calc(100dvh - 8.5rem)", overflowY: "auto" }}
+          >
             <table>
               <thead>
                 <tr>
