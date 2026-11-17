@@ -5,10 +5,8 @@ import { useEffect, useState } from "react";
 import ChunkLoader from "@/components/ChunkLoader";
 import {
   PixelArrowRightIcon,
-  PixelCatalogIcon,
   PixelPauseIcon,
   PixelPlayIcon,
-  PixelPlusIcon,
   PixelSparkleIcon,
   PixelTrashIcon,
 } from "@/components/PixelIcons";
@@ -188,72 +186,61 @@ export default function AdminFormsListPage() {
   });
 
   return (
-    <div className="stack">
-      <section className="card stack">
-        <div className="row-between" style={{ flexWrap: "wrap", gap: "1rem" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.35rem" }}>
-              <PixelCatalogIcon size={18} />
-              <span className="pixel-tag-pill">ADMIN FORMS MANAGER</span>
-            </div>
-            <h1 style={{ margin: "0 0 0.25rem" }}>All Forms</h1>
-            <p className="notice" style={{ margin: 0 }}>
-              Manage all Company Forms, Voting &amp; Evaluation, and Staff Complaints. Edit in Craft, Pause, Publish, or Delete.
-            </p>
+    <div className="stack" style={{ flex: 1 }}>
+      <section
+        className="card stack admin-full-card"
+        style={{ flex: 1, minHeight: "calc(100dvh - 2.5rem)", margin: 0 }}
+      >
+        <div className="row-between" style={{ flexWrap: "wrap", gap: "0.75rem" }}>
+          <h2 style={{ margin: 0 }}>All Forms ({filteredForms.length})</h2>
+          <div className="row-actions" style={{ gap: "0.45rem", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className={`pixel-paper-btn compact ${categoryFilter === "all" ? "primary" : ""}`}
+              onClick={() => setCategoryFilter("all")}
+            >
+              All Active ({forms.filter((f) => f.state !== "archived").length})
+            </button>
+            {FORM_CATEGORIES.map((cat) => {
+              const count = forms.filter(
+                (f) => f.state !== "archived" && resolveFormCategory(f, themesMap[f.id]) === cat.key,
+              ).length;
+              return (
+                <button
+                  key={cat.key}
+                  type="button"
+                  className={`pixel-paper-btn compact ${categoryFilter === cat.key ? "primary" : ""}`}
+                  onClick={() => setCategoryFilter(cat.key)}
+                >
+                  {cat.label} ({count})
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              className={`pixel-paper-btn compact ${categoryFilter === "archived" ? "primary" : ""}`}
+              onClick={() => setCategoryFilter("archived")}
+            >
+              Archived ({forms.filter((f) => f.state === "archived").length})
+            </button>
           </div>
-
-          <Link href="/admin/forms/" className="pixel-paper-btn primary">
-            <PixelPlusIcon size={14} />
-            <span>Craft New Form</span>
-          </Link>
         </div>
 
-        <div className="row-actions" style={{ gap: "0.45rem", flexWrap: "wrap" }}>
-          <button
-            type="button"
-            className={`pixel-paper-btn compact ${categoryFilter === "all" ? "primary" : ""}`}
-            onClick={() => setCategoryFilter("all")}
-          >
-            All Active ({forms.filter((f) => f.state !== "archived").length})
-          </button>
-          {FORM_CATEGORIES.map((cat) => {
-            const count = forms.filter(
-              (f) => f.state !== "archived" && resolveFormCategory(f, themesMap[f.id]) === cat.key,
-            ).length;
-            return (
-              <button
-                key={cat.key}
-                type="button"
-                className={`pixel-paper-btn compact ${categoryFilter === cat.key ? "primary" : ""}`}
-                onClick={() => setCategoryFilter(cat.key)}
-              >
-                {cat.label} ({count})
-              </button>
-            );
-          })}
-          <button
-            type="button"
-            className={`pixel-paper-btn compact ${categoryFilter === "archived" ? "primary" : ""}`}
-            onClick={() => setCategoryFilter("archived")}
-          >
-            Archived ({forms.filter((f) => f.state === "archived").length})
-          </button>
-        </div>
-      </section>
+        {error && (
+          <p className="alert alert-error" role="alert">
+            {error}
+          </p>
+        )}
+        {info && (
+          <p className="alert alert-ok" role="status">
+            {info}
+          </p>
+        )}
 
-      {error && (
-        <p className="alert alert-error" role="alert">
-          {error}
-        </p>
-      )}
-      {info && (
-        <p className="alert alert-ok" role="status">
-          {info}
-        </p>
-      )}
-
-      <section className="card stack">
-        <div className="table-wrap">
+        <div
+          className="table-wrap"
+          style={{ flex: 1, minHeight: "calc(100dvh - 8.5rem)", overflowY: "auto" }}
+        >
           <table>
             <thead>
               <tr>
