@@ -802,8 +802,7 @@ a:hover {
 
 @media (min-width: 921px) {
   .app-home-footer {
-    right: 2rem;
-    left: auto;
+    display: none;
   }
 }
 
