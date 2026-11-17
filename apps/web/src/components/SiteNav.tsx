@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import BrandLogo from "./BrandLogo";
 import UserProfileMenu from "./UserProfileMenu";
@@ -9,6 +9,7 @@ import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supa
 
 export default function SiteNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [needsSetup, setNeedsSetup] = useState<boolean>(false);
 
@@ -31,15 +32,32 @@ export default function SiteNav() {
       setProfile((data as UserProfile | null) ?? null);
     }
     void load();
-    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        setProfile(null);
+        if (
+          pathname &&
+          !pathname.startsWith("/sign-in") &&
+          !pathname.startsWith("/setup") &&
+          !pathname.startsWith("/invite/accept")
+        ) {
+          router.replace("/sign-in/");
+        }
+        return;
+      }
       void load();
     });
     return () => sub.subscription.unsubscribe();
-  }, [pathname]);
+  }, [pathname, router]);
 
   async function handleSignOut() {
-    await getSupabase().auth.signOut();
     setProfile(null);
+    try {
+      await getSupabase().auth.signOut({ scope: "local" });
+      void getSupabase().auth.signOut();
+    } finally {
+      router.replace("/sign-in/");
+    }
   }
 
   // Hide navigation completely on /setup, /sign-in, /invite/accept, /admin/forms (Studio mode), or while initial setup is needed

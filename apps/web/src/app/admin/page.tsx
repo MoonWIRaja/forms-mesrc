@@ -130,6 +130,16 @@ export default function AdminPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const supabase = getSupabase();
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        setProfile(null);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   if (loading) {
     return <ChunkLoader title="Admin Panel" subtitle="Loading submissions & forms..." />;
   }

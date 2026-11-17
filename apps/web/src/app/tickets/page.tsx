@@ -84,6 +84,16 @@ export default function TicketsPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const supabase = getSupabase();
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        setProfile(null);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   if (loading) {
     return <ChunkLoader title="Staff Complaints" subtitle="Loading forms..." />;
   }

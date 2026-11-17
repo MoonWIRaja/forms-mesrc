@@ -39,6 +39,16 @@ export default function ProfilePage() {
     };
   }, []);
 
+  useEffect(() => {
+    const supabase = getSupabase();
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        setProfile(null);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!profile) return;

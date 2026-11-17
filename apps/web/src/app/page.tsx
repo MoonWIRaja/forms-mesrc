@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import BrandLogo from "@/components/BrandLogo";
 import ChunkLoader from "@/components/ChunkLoader";
@@ -13,14 +14,15 @@ import {
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
 export default function HomePage() {
+  const router = useRouter();
   const [setupState, setSetupState] = useState<SystemSetupState | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const supabase = getSupabase();
     async function load() {
       try {
-        const supabase = getSupabase();
         const [{ data: st }, { data: sess }] = await Promise.all([
           supabase.rpc("get_system_setup_state"),
           supabase.auth.getSession(),
@@ -35,12 +37,23 @@ export default function HomePage() {
             .eq("id", uid)
             .maybeSingle();
           setProfile((prof as UserProfile | null) ?? null);
+        } else {
+          setProfile(null);
         }
       } finally {
         setLoading(false);
       }
     }
     void load();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        setProfile(null);
+        return;
+      }
+      void load();
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   if (loading) {
@@ -52,8 +65,13 @@ export default function HomePage() {
   }
 
   async function handleSignOut() {
-    await getSupabase().auth.signOut();
     setProfile(null);
+    try {
+      await getSupabase().auth.signOut({ scope: "local" });
+      void getSupabase().auth.signOut();
+    } finally {
+      router.replace("/sign-in/");
+    }
   }
 
   if (setupState?.needs_first_maintenance) {

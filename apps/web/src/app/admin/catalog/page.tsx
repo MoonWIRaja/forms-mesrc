@@ -83,6 +83,16 @@ export default function AdminFormsListPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const supabase = getSupabase();
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        setProfile(null);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   async function handlePublishOrPause(f: FormRow, shouldPause: boolean) {
     setBusyId(f.id);
     setError(null);
