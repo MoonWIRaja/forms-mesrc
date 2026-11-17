@@ -147,17 +147,19 @@ export default function MediaPickerModal({
       }}
     >
       <div className="pixel-modal-card">
+        <div className="ios-sheet-handle" aria-hidden="true" />
         <div className="pixel-modal-header">
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <PixelImageIcon size={18} />
-            <h2 style={{ margin: 0, fontSize: "1.05rem" }}>{title}</h2>
+            <h2 style={{ margin: 0, fontSize: "1.08rem", fontWeight: 800 }}>{title}</h2>
           </div>
           <button
             type="button"
-            className="pixel-paper-btn compact"
+            className="ios-sheet-close-btn"
             onClick={onClose}
+            aria-label="Close"
           >
-            &times; Close
+            &times;
           </button>
         </div>
 

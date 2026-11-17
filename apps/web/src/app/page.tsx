@@ -11,6 +11,7 @@ import {
   PixelShieldAlertIcon,
   PixelStarIcon,
 } from "@/components/PixelIcons";
+import ProfileSheetModal from "@/components/ProfileSheetModal";
 import { getSupabase, type SystemSetupState, type UserProfile } from "@/lib/supabase";
 
 export default function HomePage() {
@@ -18,6 +19,7 @@ export default function HomePage() {
   const [setupState, setSetupState] = useState<SystemSetupState | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showProfileSheet, setShowProfileSheet] = useState(false);
 
   useEffect(() => {
     const supabase = getSupabase();
@@ -180,6 +182,18 @@ export default function HomePage() {
         </Link>
       </div>
 
+      {/* Mobile Bottom-Left: Circular Profile Avatar Button */}
+      <button
+        type="button"
+        onClick={() => setShowProfileSheet(true)}
+        className="app-mobile-profile-fab"
+        aria-label="Open My Profile"
+        title={profile.display_name || profile.email}
+      >
+        {(profile.display_name || profile.email || "U").slice(0, 2).toUpperCase()}
+      </button>
+
+      {/* Mobile Bottom-Right: Log Out Button */}
       <div className="app-home-footer">
         <button
           type="button"
@@ -205,6 +219,14 @@ export default function HomePage() {
           <span>Log out</span>
         </button>
       </div>
+
+      {showProfileSheet && (
+        <ProfileSheetModal
+          profile={profile}
+          onClose={() => setShowProfileSheet(false)}
+          onUpdated={(next) => setProfile(next)}
+        />
+      )}
     </div>
   );
 }

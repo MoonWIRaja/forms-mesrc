@@ -203,7 +203,11 @@ export default function SiteNav() {
         </Link>
 
         {profile && (
-          <UserProfileMenu profile={profile} onSignOut={handleSignOut} />
+          <UserProfileMenu
+            profile={profile}
+            onSignOut={handleSignOut}
+            onProfileUpdated={(next) => setProfile(next)}
+          />
         )}
       </div>
     </>
@@ -264,7 +268,11 @@ export default function SiteNav() {
 
       <div className="sidebar-footer">
         {profile ? (
-          <UserProfileMenu profile={profile} onSignOut={handleSignOut} />
+          <UserProfileMenu
+            profile={profile}
+            onSignOut={handleSignOut}
+            onProfileUpdated={(next) => setProfile(next)}
+          />
         ) : (
           <Link href="/sign-in/" className="btn btn-primary sidebar-signin-btn">
             Sign in
