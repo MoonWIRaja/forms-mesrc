@@ -256,6 +256,10 @@ a:hover {
   border: none;
 }
 
+.shell:has(.admin-full-card) {
+  padding: 1.25rem 1.75rem 1.25rem 1.25rem;
+}
+
 .studio-shell {
   width: 100%;
   height: 100dvh;

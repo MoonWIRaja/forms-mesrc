@@ -219,7 +219,10 @@ export default function AdminPage() {
   return (
     <div className="stack" style={{ flex: 1 }}>
       {!selectedFormId && (
-        <section className="card stack" style={{ flex: 1, minHeight: "calc(100dvh - 3.5rem)" }}>
+        <section
+          className="card stack admin-full-card"
+          style={{ flex: 1, minHeight: "calc(100dvh - 2.5rem)", margin: 0 }}
+        >
           <div className="row-between">
             <h2 style={{ margin: 0 }}>Select a Form ({formsList.length})</h2>
             <Link href="/admin/forms/" className="pixel-paper-btn compact primary">
@@ -297,7 +300,10 @@ export default function AdminPage() {
       )}
 
       {selectedFormId && activeForm && (
-        <section className="card stack" style={{ flex: 1, minHeight: "calc(100dvh - 3.5rem)" }}>
+        <section
+          className="card stack admin-full-card"
+          style={{ flex: 1, minHeight: "calc(100dvh - 2.5rem)", margin: 0 }}
+        >
           <div className="row-between" style={{ flexWrap: "wrap", gap: "1rem" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
               <button
