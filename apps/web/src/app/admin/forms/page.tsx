@@ -142,36 +142,38 @@ export default function AdminFormBuilderPage() {
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Form Metadata & Builder State
+  // Form Metadata & Builder State (starts with a fresh blank form)
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
-  const [title, setTitle] = useState(FORM_TEMPLATES[0].title);
-  const [slug, setSlug] = useState(FORM_TEMPLATES[0].slug);
-  const [description, setDescription] = useState(FORM_TEMPLATES[0].description);
-  const [category, setCategory] = useState<FormCategory>(FORM_TEMPLATES[0].category);
-  const [kind, setKind] = useState<FormKind>(FORM_TEMPLATES[0].kind);
+  const [title, setTitle] = useState("Untitled Form");
+  const [slug, setSlug] = useState("untitled-form");
+  const [description, setDescription] = useState("Please fill out this form with accurate information.");
+  const [category, setCategory] = useState<FormCategory>("company_forms");
+  const [kind, setKind] = useState<FormKind>("general");
   const [allowSaveDraft, setAllowSaveDraft] = useState(true);
   const [allowAppeal, setAllowAppeal] = useState(false);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [allowlistText, setAllowlistText] = useState("");
-  const [nodes, setNodes] = useState<FormFieldNode[]>(FORM_TEMPLATES[0].nodes);
-  const [theme, setTheme] = useState<FormTheme>(
-    FORM_TEMPLATES[0].theme ?? {
-      category: "company_forms",
-      primaryColor: "#1d4ed8",
-      backgroundColor: "#efece6",
-      backgroundPattern: "matboard_dots",
+  const [nodes, setNodes] = useState<FormFieldNode[]>([
+    {
+      id: "fld_1",
+      type: "short_text",
+      label: "Untitled Question",
+      required: false,
+      width: "full",
     },
-  );
+  ]);
+  const [theme, setTheme] = useState<FormTheme>({
+    category: "company_forms",
+    primaryColor: "#1d4ed8",
+    backgroundColor: "#efece6",
+    backgroundPattern: "matboard_dots",
+  });
 
   // Navigation & Editor UI State
   const [activeTab, setActiveTab] = useState<"questions" | "preview" | "catalog" | "settings">("questions");
   const [previewDevice, setPreviewDevice] = useState<"phone" | "desktop">("phone");
-  const [previewAnswers, setPreviewAnswers] = useState<Record<string, unknown>>(() =>
-    computeDefaultAnswers(FORM_TEMPLATES[0].nodes),
-  );
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(
-    FORM_TEMPLATES[0].nodes[0]?.id ?? null,
-  );
+  const [previewAnswers, setPreviewAnswers] = useState<Record<string, unknown>>({});
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>("fld_1");
   const [openTypeMenuNodeId, setOpenTypeMenuNodeId] = useState<string | null>(null);
   const [showThemeDrawer, setShowThemeDrawer] = useState(false);
   const [mediaTarget, setMediaTarget] = useState<
