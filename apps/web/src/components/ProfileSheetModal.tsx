@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
 type DetectedPlatform = "iphone" | "android" | "desktop";
@@ -130,7 +131,7 @@ export default function ProfileSheetModal({
     }
   }
 
-  return (
+  const modalNode = (
     <div
       className={`ios-sheet-backdrop device-${deviceEnv.platform}`}
       role="dialog"
@@ -234,4 +235,7 @@ export default function ProfileSheetModal({
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") return null;
+  return createPortal(modalNode, document.body);
 }
