@@ -6,15 +6,12 @@ import ChunkLoader from "@/components/ChunkLoader";
 import {
   PixelArrowLeftIcon,
   PixelArrowRightIcon,
-  PixelCatalogIcon,
   PixelDateIcon,
   PixelPlusIcon,
   PixelQuestionsIcon,
-  PixelSettingsIcon,
   PixelShieldAlertIcon,
   PixelStarIcon,
 } from "@/components/PixelIcons";
-import ServiceManager from "@/components/ServiceManager";
 import {
   FORM_CATEGORIES,
   getLocalNowParts,
@@ -67,7 +64,6 @@ export default function AdminPage() {
   const [usersMap, setUsersMap] = useState<Record<string, string>>({});
   const [ticketsBySubId, setTicketsBySubId] = useState<Record<string, TicketMeta>>({});
 
-  const [activeTab, setActiveTab] = useState<"submissions" | "services">("submissions");
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(() => getLocalNowParts().date);
   const [selectedSub, setSelectedSub] = useState<AdminSubmissionRow | null>(null);
@@ -221,40 +217,9 @@ export default function AdminPage() {
     : [];
 
   return (
-    <div className="stack">
-      <section className="card row-between" style={{ flexWrap: "wrap", gap: "1rem" }}>
-        <div>
-          <span className="pixel-tag-pill" style={{ marginBottom: "0.4rem" }}>
-            ADMIN CONTROL DESK
-          </span>
-          <h1 style={{ margin: "0.2rem 0" }}>Submissions &amp; Operations</h1>
-          <p className="notice" style={{ margin: 0 }}>
-            Select a form to inspect user submissions filtered by date, view judging scoreboards, or manage services.
-          </p>
-        </div>
-
-        <div className="row-actions" style={{ gap: "0.45rem", flexWrap: "wrap" }}>
-          <button
-            type="button"
-            className={`pixel-paper-btn compact ${activeTab === "submissions" ? "primary" : ""}`}
-            onClick={() => setActiveTab("submissions")}
-          >
-            <PixelCatalogIcon size={13} />
-            <span>Submissions ({submissions.length})</span>
-          </button>
-          <button
-            type="button"
-            className={`pixel-paper-btn compact ${activeTab === "services" ? "primary" : ""}`}
-            onClick={() => setActiveTab("services")}
-          >
-            <PixelSettingsIcon size={13} />
-            <span>Services</span>
-          </button>
-        </div>
-      </section>
-
-      {activeTab === "submissions" && !selectedFormId && (
-        <section className="card stack">
+    <div className="stack" style={{ flex: 1 }}>
+      {!selectedFormId && (
+        <section className="card stack" style={{ flex: 1, minHeight: "calc(100dvh - 3.5rem)" }}>
           <div className="row-between">
             <h2 style={{ margin: 0 }}>Select a Form ({formsList.length})</h2>
             <Link href="/admin/forms/" className="pixel-paper-btn compact primary">
@@ -331,8 +296,8 @@ export default function AdminPage() {
         </section>
       )}
 
-      {activeTab === "submissions" && selectedFormId && activeForm && (
-        <section className="card stack">
+      {selectedFormId && activeForm && (
+        <section className="card stack" style={{ flex: 1, minHeight: "calc(100dvh - 3.5rem)" }}>
           <div className="row-between" style={{ flexWrap: "wrap", gap: "1rem" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
               <button
@@ -585,12 +550,6 @@ export default function AdminPage() {
               </div>
             </div>
           )}
-        </section>
-      )}
-
-      {activeTab === "services" && (
-        <section className="card">
-          <ServiceManager />
         </section>
       )}
     </div>
