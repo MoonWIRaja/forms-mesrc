@@ -3,6 +3,73 @@
 import React, { useState } from "react";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
+type DetectedPlatform = "iphone" | "android" | "desktop";
+
+interface DeviceEnvironment {
+  platform: DetectedPlatform;
+  isPwa: boolean;
+  label: string;
+  hint: string | null;
+}
+
+function detectDeviceEnvironment(): DeviceEnvironment {
+  if (typeof window === "undefined") {
+    return {
+      platform: "desktop",
+      isPwa: false,
+      label: "Desktop · Web Browser",
+      hint: null,
+    };
+  }
+
+  const ua = navigator.userAgent || "";
+  const isIpadOs =
+    navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  const isIphoneOrIos = /iPhone|iPad|iPod/i.test(ua) || isIpadOs;
+  const isAndroid = /Android/i.test(ua);
+
+  const platform: DetectedPlatform = isIphoneOrIos
+    ? "iphone"
+    : isAndroid
+      ? "android"
+      : "desktop";
+
+  const navStandalone = (navigator as unknown as { standalone?: boolean }).standalone === true;
+  const displayStandalone =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(display-mode: standalone)").matches;
+  const isPwa = navStandalone || displayStandalone;
+
+  if (platform === "iphone") {
+    return {
+      platform,
+      isPwa,
+      label: isPwa ? "iPhone · PWA App" : "iPhone · Safari Web",
+      hint: isPwa
+        ? null
+        : "Tip: Tap Share → Add to Home Screen for full-screen iPhone app mode.",
+    };
+  }
+
+  if (platform === "android") {
+    return {
+      platform,
+      isPwa,
+      label: isPwa ? "Android · PWA App" : "Android · Mobile Web",
+      hint: isPwa
+        ? null
+        : "Tip: Tap browser menu (⋮) → Install App for Android home screen access.",
+    };
+  }
+
+  return {
+    platform,
+    isPwa,
+    label: isPwa ? "Desktop · PWA App" : "Desktop · Web Browser",
+    hint: null,
+  };
+}
+
 interface ProfileSheetModalProps {
   profile: UserProfile;
   onClose: () => void;
@@ -18,6 +85,9 @@ export default function ProfileSheetModal({
   const [phone, setPhone] = useState(profile.phone ?? "");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [deviceEnv] = useState<DeviceEnvironment>(() =>
+    detectDeviceEnvironment(),
+  );
 
   const initials = (profile.display_name || profile.email || "U")
     .slice(0, 2)
@@ -62,7 +132,7 @@ export default function ProfileSheetModal({
 
   return (
     <div
-      className="ios-sheet-backdrop"
+      className={`ios-sheet-backdrop device-${deviceEnv.platform}`}
       role="dialog"
       aria-modal="true"
       aria-label="My Profile"
@@ -70,8 +140,10 @@ export default function ProfileSheetModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="ios-sheet-card">
-        <div className="ios-sheet-handle" aria-hidden="true" />
+      <div className={`ios-sheet-card device-${deviceEnv.platform}`}>
+        {deviceEnv.platform !== "desktop" && (
+          <div className="ios-sheet-handle" aria-hidden="true" />
+        )}
 
         <div className="ios-sheet-header">
           <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
@@ -93,6 +165,17 @@ export default function ProfileSheetModal({
             &times;
           </button>
         </div>
+
+        <div className="ios-sheet-device-strip">
+          <span className={`ios-device-pill ${deviceEnv.isPwa ? "pwa" : ""}`}>
+            {deviceEnv.label}
+          </span>
+          <span className="ios-sheet-suffix">{profile.role.toUpperCase()}</span>
+        </div>
+
+        {deviceEnv.hint && (
+          <p className="ios-sheet-device-hint">{deviceEnv.hint}</p>
+        )}
 
         {msg && (
           <p className={`alert ${msg.ok ? "alert-ok" : "alert-error"}`} role="status">
@@ -124,10 +207,9 @@ export default function ProfileSheetModal({
           </div>
 
           <div className="ios-sheet-field readonly">
-            <span className="ios-sheet-floating-label">Company email &amp; role</span>
+            <span className="ios-sheet-floating-label">Company email</span>
             <div className="ios-sheet-readonly-row">
               <span>{profile.email}</span>
-              <span className="ios-sheet-suffix">{profile.role.toUpperCase()}</span>
             </div>
           </div>
 

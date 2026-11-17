@@ -147,6 +147,14 @@ export default function AdminFormsListPage() {
   }
 
   async function handleDeleteOrRestore(f: FormRow, restore: boolean) {
+    if (!restore) {
+      const fTheme = themesMap[f.id];
+      const isLive = f.state === "published" && !fTheme?.submissionsClosed;
+      if (isLive) {
+        setError(`"${f.title}" is currently LIVE. Please unpublish it first before deleting.`);
+        return;
+      }
+    }
     const label = restore ? "restore this form to drafts" : "delete (archive) this form";
     if (!confirm(`Are you sure you want to ${label}?`)) return;
     setBusyId(f.id);
@@ -321,9 +329,10 @@ export default function AdminFormsListPage() {
                           className="pixel-paper-btn compact warning"
                           disabled={isBusy}
                           onClick={() => void handlePublishOrPause(f, true)}
+                          title="Unpublish (pause) form before deleting"
                         >
                           <PixelPauseIcon size={12} />
-                          <span>Pause</span>
+                          <span>Unpublish</span>
                         </button>
                       ) : f.state !== "archived" ? (
                         <button
@@ -341,7 +350,12 @@ export default function AdminFormsListPage() {
                         <button
                           type="button"
                           className="pixel-paper-btn compact danger"
-                          disabled={isBusy}
+                          disabled={isBusy || (f.state === "published" && !isPaused)}
+                          title={
+                            f.state === "published" && !isPaused
+                              ? "Unpublish this form first before deleting"
+                              : "Delete (archive) this form"
+                          }
                           onClick={() => void handleDeleteOrRestore(f, false)}
                         >
                           <PixelTrashIcon size={12} />

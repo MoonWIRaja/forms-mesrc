@@ -4407,6 +4407,61 @@ textarea:focus {
   max-width: 680px;
 }
 
+.ios-sheet-backdrop.device-desktop {
+  align-items: center;
+  padding: 1rem;
+}
+
+.ios-sheet-card.device-desktop {
+  max-width: 470px;
+  border-bottom: 1.5px solid var(--border-strong);
+  border-radius: 22px;
+  padding: 1.25rem 1.45rem 1.45rem;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.22);
+}
+
+.ios-sheet-card.device-iphone {
+  padding-bottom: max(1.65rem, env(safe-area-inset-bottom));
+}
+
+.ios-sheet-card.device-iphone .ios-sheet-field input,
+.ios-sheet-card.device-android .ios-sheet-field input {
+  font-size: 16px !important; /* Prevent mobile browser auto-zoom */
+}
+
+.ios-sheet-card.device-android {
+  border-radius: 28px 28px 0 0;
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+.ios-sheet-device-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.42rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.ios-device-pill {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.ios-device-pill.pwa {
+  color: #059669;
+}
+
+.ios-sheet-device-hint {
+  margin: -0.25rem 0 0;
+  font-size: 0.76rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
 .ios-sheet-handle {
   width: 42px;
   height: 5px;
