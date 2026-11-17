@@ -303,7 +303,6 @@ export default function FillFormPage() {
   const pages = splitNodesIntoPages(nodes, theme);
   const isMultiPage = pages.length > 1;
   const clampedPageIdx = Math.min(Math.max(0, activePageIdx), pages.length - 1);
-  const currentPage = pages[clampedPageIdx] ?? pages[0];
   const isLastPage = clampedPageIdx >= pages.length - 1;
 
   function validatePageNodes(pageIndexToCheck: number): boolean {
@@ -440,19 +439,12 @@ export default function FillFormPage() {
             <span>Back to {backLabel}</span>
           </Link>
 
-          <div className="row-actions" style={{ gap: "0.4rem" }}>
-            {isMultiPage && (
-              <span className="pixel-tag-pill">
-                Page {currentPage.pageNumber}/{pages.length}
-              </span>
-            )}
-            <span className="pixel-stamp-badge draft">
-              <PixelClockIcon size={11} />
-              <span>
-                Timer: {Math.floor(elapsedSec / 60)}m {elapsedSec % 60}s
-              </span>
+          <span className="pixel-stamp-badge draft">
+            <PixelClockIcon size={11} />
+            <span>
+              Timer: {Math.floor(elapsedSec / 60)}m {elapsedSec % 60}s
             </span>
-          </div>
+          </span>
         </div>
 
         {/* Unified Form Header Card (Banner + Accent Strip + Title) */}

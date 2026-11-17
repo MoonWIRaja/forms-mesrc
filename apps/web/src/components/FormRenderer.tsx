@@ -11,7 +11,6 @@ import {
 import {
   PixelArrowLeftIcon,
   PixelArrowRightIcon,
-  PixelCheckIcon,
   PixelClipIcon,
   PixelImageIcon,
   PixelRefreshIcon,
@@ -78,70 +77,6 @@ export default function FormRenderer({
         gap: compactCards || theme?.density === "compact" ? "0.65rem" : "0.85rem",
       }}
     >
-      {isMultiPage && (
-        <div
-          className="fr-page-stepper-card"
-          style={{ borderLeft: `5px solid ${accent}` }}
-        >
-          <div className="fr-page-stepper-top">
-            <span className="pixel-tag-pill">
-              PAGE {currentPage.pageNumber} OF {pages.length}
-            </span>
-            <span className="fr-page-percent-pill">
-              {Math.round(((currentPageIdx + 1) / pages.length) * 100)}%
-            </span>
-          </div>
-
-          <div className="fr-page-progress-track">
-            <div
-              className="fr-page-progress-fill"
-              style={{
-                width: `${((currentPageIdx + 1) / pages.length) * 100}%`,
-                backgroundColor: accent,
-              }}
-            />
-          </div>
-
-          <div className="fr-page-pills-row" role="tablist" aria-label="Form Pages">
-            {pages.map((p, idx) => {
-              const isCurrent = idx === currentPageIdx;
-              const isCompleted = idx < currentPageIdx;
-              return (
-                <button
-                  key={p.breakNode?.id ?? `page-${idx}`}
-                  type="button"
-                  role="tab"
-                  aria-selected={isCurrent}
-                  className={`fr-page-step-pill ${isCurrent ? "active" : ""} ${
-                    isCompleted ? "done" : ""
-                  }`}
-                  style={
-                    isCurrent
-                      ? { backgroundColor: accent, borderColor: "var(--ink)", color: "#ffffff" }
-                      : undefined
-                  }
-                  onClick={() => handleSelectPage(idx)}
-                >
-                  {isCompleted ? (
-                    <PixelCheckIcon size={10} />
-                  ) : (
-                    <span className="fr-page-step-num">{p.pageNumber}</span>
-                  )}
-                  <span className="fr-page-step-title">{p.title}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="fr-page-active-meta">
-            <strong className="fr-page-active-title">{currentPage.title}</strong>
-            {currentPage.subtitle && (
-              <p className="fr-page-active-sub">{currentPage.subtitle}</p>
-            )}
-          </div>
-        </div>
-      )}
-
       {visibleNodes.map((node) => {
         if (node.type === "heading") {
           return (
