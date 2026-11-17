@@ -183,18 +183,15 @@ export default function ProfileSheetModal({
           <span className={`ios-device-pill ${deviceEnv.isPwa ? "pwa" : ""}`}>
             {deviceEnv.label}
           </span>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
-            {installReady && !deviceEnv.isPwa && (
-              <button
-                type="button"
-                className="ios-install-app-btn"
-                onClick={() => void triggerPwaInstall()}
-              >
-                Install App
-              </button>
-            )}
-            <span className="ios-sheet-suffix">{profile.role.toUpperCase()}</span>
-          </div>
+          {installReady && !deviceEnv.isPwa && (
+            <button
+              type="button"
+              className="ios-install-app-btn"
+              onClick={() => void triggerPwaInstall()}
+            >
+              Install App
+            </button>
+          )}
         </div>
 
         {deviceEnv.hint && (
