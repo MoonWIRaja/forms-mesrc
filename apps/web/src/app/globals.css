@@ -679,17 +679,32 @@ a:hover {
    NATIVE MOBILE APP STYLING (Forms MESRC Mobile App Experience)
    ============================================================================ */
 
+.app-frame:has(.app-home-stage) {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.shell:has(.app-home-stage) {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 .app-home-stage {
   flex: 1;
   width: 100%;
   max-width: 440px;
-  min-height: calc(100dvh - 3rem);
+  height: 100%;
+  min-height: 0;
   margin: auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 1.5rem 0.75rem;
+  padding: 0 0.75rem;
 }
 
 .app-choice-grid {
@@ -875,8 +890,9 @@ a:hover {
 @media (max-width: 920px) {
   .app-home-stage {
     max-width: 440px;
-    min-height: calc(100dvh - 2rem);
-    padding: 1rem 0.5rem !important;
+    height: 100%;
+    min-height: 0;
+    padding: 0 0.5rem !important;
   }
 
   .app-choice-grid {
