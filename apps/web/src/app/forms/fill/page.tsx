@@ -18,6 +18,7 @@ import {
   getFormBackgroundPatternSize,
   getLocalNowParts,
   resolveFormCategory,
+  splitNodesIntoPages,
   type FormFieldNode,
   type FormRow,
   type FormTheme,
@@ -84,6 +85,7 @@ export default function FillFormPage() {
   const [draftId, setDraftId] = useState<string | null>(null);
   const startMsRef = useRef<number>(0);
   const [elapsedSec, setElapsedSec] = useState(0);
+  const [activePageIdx, setActivePageIdx] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -298,6 +300,55 @@ export default function FillFormPage() {
         ? "Staff Complaints"
         : "Company Forms";
   const primaryAccent = theme.primaryColor || "#1d4ed8";
+  const pages = splitNodesIntoPages(nodes, theme);
+  const isMultiPage = pages.length > 1;
+  const clampedPageIdx = Math.min(Math.max(0, activePageIdx), pages.length - 1);
+  const currentPage = pages[clampedPageIdx] ?? pages[0];
+  const isLastPage = clampedPageIdx >= pages.length - 1;
+
+  function validatePageNodes(pageIndexToCheck: number): boolean {
+    const targetPage = pages[pageIndexToCheck];
+    if (!targetPage) return true;
+    for (const { node } of targetPage.items) {
+      if (
+        !node.required ||
+        node.type === "heading" ||
+        node.type === "instructions" ||
+        node.type === "section" ||
+        node.type === "image"
+      ) {
+        continue;
+      }
+      const val = answers[node.id];
+      const isEmpty =
+        val === undefined ||
+        val === null ||
+        (typeof val === "string" && val.trim() === "") ||
+        (Array.isArray(val) && val.length === 0) ||
+        ((node.type === "star_rating" || node.type === "linear_scale") &&
+          (!val || Number(val) <= 0));
+
+      if (isEmpty) {
+        setError(`Please complete required question: "${node.label}" before continuing.`);
+        return false;
+      }
+    }
+    setError(null);
+    return true;
+  }
+
+  function handleNavigatePage(targetIdx: number) {
+    const clamped = Math.min(Math.max(0, targetIdx), pages.length - 1);
+    if (clamped > clampedPageIdx) {
+      for (let i = clampedPageIdx; i < clamped; i++) {
+        if (!validatePageNodes(i)) return;
+      }
+    } else {
+      setError(null);
+    }
+    setActivePageIdx(clamped);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   if (submittedId) {
     return (
@@ -389,12 +440,19 @@ export default function FillFormPage() {
             <span>Back to {backLabel}</span>
           </Link>
 
-          <span className="pixel-stamp-badge draft">
-            <PixelClockIcon size={11} />
-            <span>
-              Timer: {Math.floor(elapsedSec / 60)}m {elapsedSec % 60}s
+          <div className="row-actions" style={{ gap: "0.4rem" }}>
+            {isMultiPage && (
+              <span className="pixel-tag-pill">
+                Page {currentPage.pageNumber}/{pages.length}
+              </span>
+            )}
+            <span className="pixel-stamp-badge draft">
+              <PixelClockIcon size={11} />
+              <span>
+                Timer: {Math.floor(elapsedSec / 60)}m {elapsedSec % 60}s
+              </span>
             </span>
-          </span>
+          </div>
         </div>
 
         {/* Unified Form Header Card (Banner + Accent Strip + Title) */}
@@ -445,6 +503,11 @@ export default function FillFormPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              if (isMultiPage && !isLastPage) {
+                handleNavigatePage(clampedPageIdx + 1);
+                return;
+              }
+              if (!validatePageNodes(clampedPageIdx)) return;
               void handleSaveOrSubmit(false);
             }}
             className="fr-questions-stack"
@@ -453,6 +516,8 @@ export default function FillFormPage() {
               nodes={nodes}
               theme={theme}
               answers={answers}
+              activePageIndex={clampedPageIdx}
+              onPageChange={handleNavigatePage}
               onChange={(fid, val, file) => {
                 setAnswers((prev) => ({ ...prev, [fid]: val }));
                 setPendingFiles((prev) => {
@@ -466,15 +531,44 @@ export default function FillFormPage() {
             />
 
             <div className="fr-submit-bar">
-              <button
-                type="submit"
-                className="pixel-paper-btn primary fr-submit-primary"
-                style={{ backgroundColor: primaryAccent }}
-                disabled={busy}
-              >
-                <span>{busy ? "Submitting..." : "Submit Form"}</span>
-                <PixelArrowRightIcon size={14} />
-              </button>
+              {isMultiPage && clampedPageIdx > 0 && (
+                <button
+                  type="button"
+                  className="pixel-paper-btn fr-submit-secondary"
+                  disabled={busy}
+                  onClick={() => handleNavigatePage(clampedPageIdx - 1)}
+                >
+                  <PixelArrowLeftIcon size={14} />
+                  <span>Previous Page</span>
+                </button>
+              )}
+
+              {isMultiPage && !isLastPage ? (
+                <button
+                  type="button"
+                  className="pixel-paper-btn primary fr-submit-primary"
+                  style={{ backgroundColor: primaryAccent }}
+                  disabled={busy}
+                  onClick={() => handleNavigatePage(clampedPageIdx + 1)}
+                >
+                  <span>
+                    Next: {pages[clampedPageIdx + 1]?.title || `Page ${clampedPageIdx + 2}`} (
+                    {clampedPageIdx + 2}/{pages.length})
+                  </span>
+                  <PixelArrowRightIcon size={14} />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="pixel-paper-btn primary fr-submit-primary"
+                  style={{ backgroundColor: primaryAccent }}
+                  disabled={busy}
+                >
+                  <span>{busy ? "Submitting..." : "Submit Form"}</span>
+                  <PixelArrowRightIcon size={14} />
+                </button>
+              )}
+
               {form.allow_save_draft && (
                 <button
                   type="button"

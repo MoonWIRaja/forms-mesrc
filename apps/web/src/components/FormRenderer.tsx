@@ -4,10 +4,14 @@ import { useState } from "react";
 import {
   getLocalNowParts,
   splitDateTimeValue,
+  splitNodesIntoPages,
   type FormFieldNode,
   type FormTheme,
 } from "@/lib/form-types";
 import {
+  PixelArrowLeftIcon,
+  PixelArrowRightIcon,
+  PixelCheckIcon,
   PixelClipIcon,
   PixelImageIcon,
   PixelRefreshIcon,
@@ -22,6 +26,8 @@ interface FormRendererProps {
   onChange: (fieldId: string, value: unknown, file?: File) => void;
   disabled?: boolean;
   compactCards?: boolean;
+  activePageIndex?: number;
+  onPageChange?: (pageIndex: number) => void;
 }
 
 function resolveAccentColor(color?: string): string {
@@ -36,9 +42,33 @@ export default function FormRenderer({
   onChange,
   disabled = false,
   compactCards = false,
+  activePageIndex,
+  onPageChange,
 }: FormRendererProps) {
   const accent = resolveAccentColor(theme?.primaryColor);
   const [hoveredStar, setHoveredStar] = useState<Record<string, number>>({});
+  const [internalPageIdx, setInternalPageIdx] = useState(0);
+
+  const pages = splitNodesIntoPages(nodes, theme);
+  const isMultiPage = pages.length > 1;
+  const isControlledPage = typeof activePageIndex === "number";
+  const currentPageIdx = Math.min(
+    Math.max(0, isControlledPage ? activePageIndex : internalPageIdx),
+    pages.length - 1,
+  );
+  const currentPage = pages[currentPageIdx] ?? pages[0];
+  const visibleNodes = isMultiPage
+    ? currentPage.items.map((item) => item.node)
+    : nodes;
+
+  function handleSelectPage(targetIdx: number) {
+    const clamped = Math.min(Math.max(0, targetIdx), pages.length - 1);
+    if (onPageChange) {
+      onPageChange(clamped);
+    } else {
+      setInternalPageIdx(clamped);
+    }
+  }
 
   return (
     <div
@@ -48,7 +78,71 @@ export default function FormRenderer({
         gap: compactCards || theme?.density === "compact" ? "0.65rem" : "0.85rem",
       }}
     >
-      {nodes.map((node) => {
+      {isMultiPage && (
+        <div
+          className="fr-page-stepper-card"
+          style={{ borderLeft: `5px solid ${accent}` }}
+        >
+          <div className="fr-page-stepper-top">
+            <span className="pixel-tag-pill">
+              PAGE {currentPage.pageNumber} OF {pages.length}
+            </span>
+            <span className="fr-page-percent-pill">
+              {Math.round(((currentPageIdx + 1) / pages.length) * 100)}%
+            </span>
+          </div>
+
+          <div className="fr-page-progress-track">
+            <div
+              className="fr-page-progress-fill"
+              style={{
+                width: `${((currentPageIdx + 1) / pages.length) * 100}%`,
+                backgroundColor: accent,
+              }}
+            />
+          </div>
+
+          <div className="fr-page-pills-row" role="tablist" aria-label="Form Pages">
+            {pages.map((p, idx) => {
+              const isCurrent = idx === currentPageIdx;
+              const isCompleted = idx < currentPageIdx;
+              return (
+                <button
+                  key={p.breakNode?.id ?? `page-${idx}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={isCurrent}
+                  className={`fr-page-step-pill ${isCurrent ? "active" : ""} ${
+                    isCompleted ? "done" : ""
+                  }`}
+                  style={
+                    isCurrent
+                      ? { backgroundColor: accent, borderColor: "var(--ink)", color: "#ffffff" }
+                      : undefined
+                  }
+                  onClick={() => handleSelectPage(idx)}
+                >
+                  {isCompleted ? (
+                    <PixelCheckIcon size={10} />
+                  ) : (
+                    <span className="fr-page-step-num">{p.pageNumber}</span>
+                  )}
+                  <span className="fr-page-step-title">{p.title}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="fr-page-active-meta">
+            <strong className="fr-page-active-title">{currentPage.title}</strong>
+            {currentPage.subtitle && (
+              <p className="fr-page-active-sub">{currentPage.subtitle}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {visibleNodes.map((node) => {
         if (node.type === "heading") {
           return (
             <div key={node.id} className="fr-section-heading" style={{ borderLeft: `4px solid ${accent}` }}>
@@ -463,6 +557,35 @@ export default function FormRenderer({
           </div>
         );
       })}
+
+      {isMultiPage && !isControlledPage && (
+        <div className="fr-preview-page-nav">
+          <button
+            type="button"
+            className="pixel-paper-btn compact"
+            disabled={currentPageIdx === 0}
+            onClick={() => handleSelectPage(currentPageIdx - 1)}
+          >
+            <PixelArrowLeftIcon size={12} />
+            <span>Previous Page</span>
+          </button>
+
+          <span className="pixel-tag-pill">
+            Page {currentPage.pageNumber} / {pages.length}
+          </span>
+
+          <button
+            type="button"
+            className="pixel-paper-btn compact primary"
+            style={{ backgroundColor: accent }}
+            disabled={currentPageIdx >= pages.length - 1}
+            onClick={() => handleSelectPage(currentPageIdx + 1)}
+          >
+            <span>Next Page</span>
+            <PixelArrowRightIcon size={12} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

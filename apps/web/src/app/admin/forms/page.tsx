@@ -51,6 +51,7 @@ import {
   getFormBackgroundPatternSize,
   getLocalNowParts,
   resolveFormCategory,
+  splitNodesIntoPages,
   type BackgroundPattern,
   type FieldType,
   type FormCategory,
@@ -100,7 +101,7 @@ const FIELD_TYPE_GROUPS: {
       { type: "image", label: "Image / Banner Graphic" },
       { type: "heading", label: "Section Heading" },
       { type: "instructions", label: "Helper / Instructions" },
-      { type: "section", label: "Divider Line" },
+      { type: "section", label: "Page Break (New Page)" },
     ],
   },
 ];
@@ -171,6 +172,7 @@ export default function AdminFormBuilderPage() {
 
   // Navigation & Editor UI State
   const [activeTab, setActiveTab] = useState<"questions" | "preview" | "catalog" | "settings">("questions");
+  const [activeCraftPage, setActiveCraftPage] = useState<number | "all">(0);
   const [previewDevice, setPreviewDevice] = useState<"phone" | "desktop">("phone");
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, unknown>>({});
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>("fld_1");
@@ -557,7 +559,144 @@ export default function AdminFormBuilderPage() {
     setOpenTypeMenuNodeId(null);
   }
 
+  function handleAddPage() {
+    const currentPages = splitNodesIntoPages(nodes, theme);
+    const nextPageNum = currentPages.length + 1;
+    seqRef.current += 1;
+    const stamp = Date.now().toString(36).slice(-3);
+    const breakId = `page_${nextPageNum}_${stamp}`;
+    const qId = `fld_${nodes.length + seqRef.current}_${stamp}`;
+
+    const breakNode: FormFieldNode = {
+      id: breakId,
+      type: "section",
+      label: `Page ${nextPageNum}`,
+      helpText: "",
+      width: "full",
+    };
+
+    const starterQuestion: FormFieldNode = {
+      id: qId,
+      type: "short_text",
+      label: "Untitled Question",
+      required: false,
+      width: "full",
+    };
+
+    setNodes((prev) => [...prev, breakNode, starterQuestion]);
+    setActiveCraftPage(currentPages.length);
+    setSelectedNodeId(qId);
+    setInfo(`Added Page ${nextPageNum}.`);
+  }
+
+  function handleDuplicatePage(sourcePageIdx: number) {
+    const currentPages = splitNodesIntoPages(nodes, theme);
+    const sourcePage = currentPages[sourcePageIdx];
+    if (!sourcePage) return;
+
+    const nextPageNum = currentPages.length + 1;
+    seqRef.current += 1;
+    const stamp = Date.now().toString(36).slice(-3);
+    const breakId = `page_${nextPageNum}_${stamp}`;
+
+    const breakNode: FormFieldNode = {
+      id: breakId,
+      type: "section",
+      label: `Page ${nextPageNum}`,
+      helpText: sourcePage.subtitle || "",
+      width: "full",
+    };
+
+    const clonedItems: FormFieldNode[] = sourcePage.items.map(({ node }, i) => {
+      seqRef.current += 1;
+      return {
+        ...node,
+        id: `fld_${nodes.length + seqRef.current + i}_${stamp}`,
+        options: node.options ? [...node.options] : undefined,
+        ratingLabels: node.ratingLabels ? { ...node.ratingLabels } : undefined,
+      };
+    });
+
+    if (clonedItems.length === 0) {
+      clonedItems.push({
+        id: `fld_${nodes.length + seqRef.current}_empty_${stamp}`,
+        type: "short_text",
+        label: "Untitled Question",
+        required: false,
+        width: "full",
+      });
+    }
+
+    setNodes((prev) => [...prev, breakNode, ...clonedItems]);
+    setActiveCraftPage(currentPages.length);
+    setSelectedNodeId(clonedItems[0]?.id ?? breakId);
+    setInfo(`Duplicated Page ${sourcePage.pageNumber} into Page ${nextPageNum}.`);
+  }
+
+  function handleDeletePage(targetPageIdx: number) {
+    const currentPages = splitNodesIntoPages(nodes, theme);
+    if (currentPages.length <= 1) return;
+    const targetPage = currentPages[targetPageIdx];
+    if (!targetPage) return;
+
+    const removeIndices = new Set<number>(targetPage.items.map((it) => it.flatIndex));
+    if (targetPageIdx === 0) {
+      const secondPage = currentPages[1];
+      if (secondPage?.breakNodeIndex !== null && secondPage?.breakNodeIndex !== undefined) {
+        removeIndices.add(secondPage.breakNodeIndex);
+      }
+      setTheme((prev) => ({
+        ...prev,
+        page1Title: secondPage?.title || "Page 1",
+        page1Subtitle: secondPage?.subtitle || "",
+      }));
+    } else if (targetPage.breakNodeIndex !== null) {
+      removeIndices.add(targetPage.breakNodeIndex);
+    }
+
+    const remaining = nodes.filter((_, idx) => !removeIndices.has(idx));
+    setNodes(
+      remaining.length > 0
+        ? remaining
+        : [
+            {
+              id: `fld_${Date.now().toString(36).slice(-4)}`,
+              type: "short_text",
+              label: "Untitled Question",
+              required: false,
+              width: "full",
+            },
+          ],
+    );
+    setActiveCraftPage(Math.max(0, targetPageIdx - 1));
+    setInfo(`Deleted Page ${targetPage.pageNumber}.`);
+  }
+
+  function handleUpdatePageMeta(pageIdx: number, patch: { title?: string; subtitle?: string }) {
+    const currentPages = splitNodesIntoPages(nodes, theme);
+    const targetPage = currentPages[pageIdx];
+    if (!targetPage) return;
+
+    if (pageIdx === 0) {
+      setTheme((prev) => ({
+        ...prev,
+        page1Title: patch.title !== undefined ? patch.title : prev.page1Title,
+        page1Subtitle: patch.subtitle !== undefined ? patch.subtitle : prev.page1Subtitle,
+      }));
+    } else if (targetPage.breakNode) {
+      updateNode(targetPage.breakNode.id, {
+        label: patch.title !== undefined ? patch.title : targetPage.breakNode.label,
+        helpText: patch.subtitle !== undefined ? patch.subtitle : targetPage.breakNode.helpText,
+      });
+    }
+  }
+
   function handleAddNode(type: FieldType = "short_text") {
+    if (type === "section") {
+      handleAddPage();
+      return;
+    }
+
     seqRef.current += 1;
     const id = `fld_${nodes.length + seqRef.current}_${Date.now().toString(36).slice(-3)}`;
     const defaultOptions =
@@ -573,17 +712,15 @@ export default function AdminFormBuilderPage() {
           ? "New Section Header"
           : type === "instructions"
             ? "Instructions for applicant"
-            : type === "section"
-              ? "Section Break"
-              : type === "date_time"
-                ? "Date & Time"
-                : type === "star_rating"
-                  ? "Rating Criterion"
-                  : type === "linear_scale"
-                    ? "Score Scale (1–10)"
-                    : type === "image"
-                      ? "Form Graphic / Poster"
-                      : "Untitled Question",
+            : type === "date_time"
+              ? "Date & Time"
+              : type === "star_rating"
+                ? "Rating Criterion"
+                : type === "linear_scale"
+                  ? "Score Scale (1–10)"
+                  : type === "image"
+                    ? "Form Graphic / Poster"
+                    : "Untitled Question",
       required: false,
       options: defaultOptions,
       defaultToNow: type === "date_time" || type === "time" ? true : undefined,
@@ -595,6 +732,30 @@ export default function AdminFormBuilderPage() {
           : undefined,
       width: "full",
     };
+
+    const currentPages = splitNodesIntoPages(nodes, theme);
+    if (activeCraftPage !== "all" && currentPages.length > 1) {
+      const pIdx = Math.min(Math.max(0, activeCraftPage), currentPages.length - 1);
+      const activeP = currentPages[pIdx];
+      const selectedInPage = activeP.items.find((it) => it.node.id === selectedNodeId);
+
+      let insertAt = nodes.length;
+      if (selectedInPage) {
+        insertAt = selectedInPage.flatIndex + 1;
+      } else if (activeP.items.length > 0) {
+        insertAt = activeP.items[activeP.items.length - 1].flatIndex + 1;
+      } else if (activeP.breakNodeIndex !== null) {
+        insertAt = activeP.breakNodeIndex + 1;
+      } else {
+        insertAt = 0;
+      }
+
+      const updated = [...nodes];
+      updated.splice(insertAt, 0, newNode);
+      setNodes(updated);
+      setSelectedNodeId(id);
+      return;
+    }
 
     const selectedIdx = nodes.findIndex((n) => n.id === selectedNodeId);
     if (selectedIdx !== -1) {
@@ -877,6 +1038,18 @@ export default function AdminFormBuilderPage() {
   const visibleCatalogForms = forms.filter((f) =>
     catalogShowArchived ? f.state === "archived" : f.state !== "archived",
   );
+
+  const pages = splitNodesIntoPages(nodes, theme);
+  const isMultiPage = pages.length > 1;
+  const safeCraftPageIdx =
+    activeCraftPage === "all"
+      ? 0
+      : Math.min(Math.max(0, activeCraftPage), pages.length - 1);
+  const currentCraftPage = pages[safeCraftPageIdx] ?? pages[0];
+  const visibleStreamItems =
+    activeCraftPage === "all" || !isMultiPage
+      ? nodes.map((node, flatIndex) => ({ node, flatIndex }))
+      : currentCraftPage.items;
 
   return (
     <div className="gf-studio-shell" style={stageBgStyle}>
@@ -1433,11 +1606,151 @@ export default function AdminFormBuilderPage() {
               </div>
             </div>
 
+            {/* 1B. MULTI-PAGE PAPER BOOKLET DECK BAR */}
+            <div className="gf-page-deck-bar">
+              <div className="gf-page-tabs-scroll" role="tablist" aria-label="Form Pages">
+                {pages.map((p, pIdx) => {
+                  const isSelected =
+                    (activeCraftPage === "all" && !isMultiPage && pIdx === 0) ||
+                    activeCraftPage === pIdx;
+                  return (
+                    <button
+                      key={p.breakNode?.id ?? `craft-page-${pIdx}`}
+                      type="button"
+                      role="tab"
+                      aria-selected={isSelected}
+                      className={`gf-page-tab-pill ${isSelected ? "active" : ""}`}
+                      style={
+                        isSelected
+                          ? { backgroundColor: primaryAccent, color: "#ffffff", borderColor: "var(--ink)" }
+                          : undefined
+                      }
+                      onClick={() => setActiveCraftPage(pIdx)}
+                    >
+                      <span className="gf-page-tab-num">P{p.pageNumber}</span>
+                      <span className="gf-page-tab-title">{p.title}</span>
+                      <span className="gf-page-tab-count">{p.items.length}</span>
+                    </button>
+                  );
+                })}
+
+                {isMultiPage && (
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeCraftPage === "all"}
+                    className={`gf-page-tab-pill ${activeCraftPage === "all" ? "active" : ""}`}
+                    onClick={() => setActiveCraftPage("all")}
+                  >
+                    <span>All Pages ({pages.length})</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="gf-page-deck-actions">
+                <button
+                  type="button"
+                  className="pixel-paper-btn compact"
+                  onClick={() => handleDuplicatePage(safeCraftPageIdx)}
+                  title="Clone all questions on this page into a new page (ideal for MCEP participants)"
+                >
+                  <PixelDuplicateIcon size={12} />
+                  <span>Duplicate Page</span>
+                </button>
+                <button
+                  type="button"
+                  className="pixel-paper-btn compact primary"
+                  style={{ backgroundColor: primaryAccent }}
+                  onClick={handleAddPage}
+                  title="Add a new page inside this same form"
+                >
+                  <PixelPlusIcon size={12} />
+                  <span>Add Page</span>
+                </button>
+              </div>
+            </div>
+
+            {/* ACTIVE PAGE SHEET HEADER CARD (WHEN FORM HAS 2+ PAGES) */}
+            {isMultiPage && activeCraftPage !== "all" && (
+              <div
+                className="gf-page-sheet-card"
+                style={{ borderLeft: `6px solid ${primaryAccent}` }}
+              >
+                <div className="row-between" style={{ gap: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+                    <span className="pixel-tag-pill">
+                      PAGE {currentCraftPage.pageNumber} OF {pages.length}
+                    </span>
+                    <span className="notice" style={{ fontSize: "0.76rem" }}>
+                      {currentCraftPage.items.length}{" "}
+                      {currentCraftPage.items.length === 1 ? "question" : "questions"} on this page
+                    </span>
+                  </div>
+
+                  <div className="row-actions" style={{ gap: "0.35rem" }}>
+                    <button
+                      type="button"
+                      className="pixel-paper-btn compact"
+                      onClick={() => handleDuplicatePage(safeCraftPageIdx)}
+                      title="Duplicate this page for next participant / section"
+                    >
+                      <PixelDuplicateIcon size={12} />
+                      <span>Clone Page</span>
+                    </button>
+                    {pages.length > 1 && (
+                      <button
+                        type="button"
+                        className="pixel-paper-btn compact danger"
+                        onClick={() => handleDeletePage(safeCraftPageIdx)}
+                        title="Delete this page and its questions"
+                      >
+                        <PixelTrashIcon size={12} />
+                        <span>Delete Page</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid-2" style={{ gap: "0.65rem", marginTop: "0.55rem" }}>
+                  <div className="field">
+                    <label style={{ fontSize: "0.75rem" }}>
+                      Page {currentCraftPage.pageNumber} Title (e.g. Peserta {currentCraftPage.pageNumber})
+                    </label>
+                    <input
+                      type="text"
+                      value={currentCraftPage.title}
+                      onChange={(e) =>
+                        handleUpdatePageMeta(safeCraftPageIdx, { title: e.target.value })
+                      }
+                      placeholder={`Page ${currentCraftPage.pageNumber} Title...`}
+                      className="gf-mock-input-field"
+                    />
+                  </div>
+                  <div className="field">
+                    <label style={{ fontSize: "0.75rem" }}>Page Subtitle / Instructions (Optional)</label>
+                    <input
+                      type="text"
+                      value={currentCraftPage.subtitle}
+                      onChange={(e) =>
+                        handleUpdatePageMeta(safeCraftPageIdx, { subtitle: e.target.value })
+                      }
+                      placeholder="Short note shown at the top of this page..."
+                      className="gf-mock-input-field"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 2. QUESTION CARDS LIST */}
-            {nodes.length === 0 ? (
+            {visibleStreamItems.length === 0 ? (
               <div className="gf-empty-stream-card">
                 <PixelQuestionsIcon size={32} className="gf-empty-pixel-icon" />
-                <p style={{ margin: 0, fontWeight: 700 }}>This paper sheet has no questions yet.</p>
+                <p style={{ margin: 0, fontWeight: 700 }}>
+                  {isMultiPage
+                    ? `${currentCraftPage.title} has no questions yet.`
+                    : "This paper sheet has no questions yet."}
+                </p>
                 <button
                   type="button"
                   className="pixel-paper-btn primary"
@@ -1445,11 +1758,11 @@ export default function AdminFormBuilderPage() {
                   onClick={() => handleAddNode("short_text")}
                 >
                   <PixelPlusIcon size={14} />
-                  <span>Add First Question</span>
+                  <span>Add Question to {isMultiPage ? currentCraftPage.title : "Form"}</span>
                 </button>
               </div>
             ) : (
-              nodes.map((node, idx) => {
+              visibleStreamItems.map(({ node, flatIndex: idx }) => {
                 const isActive = selectedNodeId === node.id;
                 const isTypeMenuOpen = openTypeMenuNodeId === node.id;
 
@@ -2030,63 +2343,9 @@ export default function AdminFormBuilderPage() {
               })
             )}
 
-            {/* BOTTOM QUICK-ADD PAPERCRAFT DOCK */}
-            <div className="gf-bottom-quick-add">
-              <span className="gf-quick-add-label">Quick Add:</span>
-              <div className="gf-quick-add-pills">
-                <button
-                  type="button"
-                  className="pixel-paper-btn compact"
-                  onClick={() => handleAddNode("short_text")}
-                >
-                  <PixelPlusIcon size={12} />
-                  <span>Question</span>
-                </button>
-                <button
-                  type="button"
-                  className="pixel-paper-btn compact"
-                  onClick={() => handleAddNode("date_time")}
-                >
-                  <PixelDateTimeIcon size={12} />
-                  <span>Date/Time (Auto)</span>
-                </button>
-                <button
-                  type="button"
-                  className="pixel-paper-btn compact"
-                  onClick={() => handleAddNode("star_rating")}
-                >
-                  <PixelStarIcon size={12} />
-                  <span>Star Rating</span>
-                </button>
-                <button
-                  type="button"
-                  className="pixel-paper-btn compact"
-                  onClick={() => handleAddNode("dropdown")}
-                >
-                  <PixelDropdownIcon size={12} />
-                  <span>Dropdown</span>
-                </button>
-                <button
-                  type="button"
-                  className="pixel-paper-btn compact"
-                  onClick={() => handleAddNode("image")}
-                >
-                  <PixelImageIcon size={12} />
-                  <span>Image</span>
-                </button>
-                <button
-                  type="button"
-                  className="pixel-paper-btn compact"
-                  onClick={() => handleAddNode("file_upload")}
-                >
-                  <PixelClipIcon size={12} />
-                  <span>File Upload</span>
-                </button>
-              </div>
-            </div>
           </div>
 
-          {/* 3. FLOATING PAPERCRAFT + PIXEL ART ACTION RAIL */}
+          {/* 3. FIGMA-STYLE BOTTOM-CENTER FLOATING DOCK */}
           <aside className="gf-action-rail" aria-label="Add Element Quick Actions">
             <div className="gf-rail-box">
               <button
@@ -2179,14 +2438,27 @@ export default function AdminFormBuilderPage() {
                 <span className="gf-rail-tooltip">Title / Heading</span>
               </button>
 
+              <span className="gf-rail-divider" aria-hidden="true" />
+
+              <button
+                type="button"
+                className="gf-rail-btn page-add"
+                onClick={handleAddPage}
+                title="Add New Page inside this Form"
+              >
+                <PixelDividerIcon size={16} />
+                <span className="gf-rail-page-tag">+Page</span>
+                <span className="gf-rail-tooltip">Add New Page ({pages.length + 1})</span>
+              </button>
+
               <button
                 type="button"
                 className="gf-rail-btn"
-                onClick={() => handleAddNode("section")}
-                title="Add Section Divider"
+                onClick={() => handleDuplicatePage(safeCraftPageIdx)}
+                title="Duplicate Current Page (Ideal for MCEP Participants)"
               >
-                <PixelDividerIcon size={16} />
-                <span className="gf-rail-tooltip">Section Divider</span>
+                <PixelDuplicateIcon size={16} />
+                <span className="gf-rail-tooltip">Duplicate Page</span>
               </button>
             </div>
           </aside>

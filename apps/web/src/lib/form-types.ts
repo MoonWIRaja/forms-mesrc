@@ -55,6 +55,57 @@ export interface FormTheme {
   /** When true, card remains visible in user catalog but is locked & unclickable */
   submissionsClosed?: boolean;
   closedReason?: string;
+  /** Optional custom title and subtitle for Page 1 in multi-page forms */
+  page1Title?: string;
+  page1Subtitle?: string;
+}
+
+export interface FormPageGroup {
+  pageIndex: number;
+  pageNumber: number;
+  title: string;
+  subtitle: string;
+  /** The `section` node that starts this page (null for Page 1) */
+  breakNode: FormFieldNode | null;
+  breakNodeIndex: number | null;
+  /** The question/content nodes inside this page along with their index in the flat nodes array */
+  items: { node: FormFieldNode; flatIndex: number }[];
+}
+
+export function splitNodesIntoPages(
+  nodes: FormFieldNode[],
+  theme?: FormTheme | null,
+): FormPageGroup[] {
+  const pages: FormPageGroup[] = [
+    {
+      pageIndex: 0,
+      pageNumber: 1,
+      title: theme?.page1Title?.trim() || "Page 1",
+      subtitle: theme?.page1Subtitle?.trim() || "",
+      breakNode: null,
+      breakNodeIndex: null,
+      items: [],
+    },
+  ];
+
+  nodes.forEach((node, flatIndex) => {
+    if (node.type === "section") {
+      const nextNum = pages.length + 1;
+      pages.push({
+        pageIndex: pages.length,
+        pageNumber: nextNum,
+        title: node.label?.trim() || `Page ${nextNum}`,
+        subtitle: node.helpText?.trim() || "",
+        breakNode: node,
+        breakNodeIndex: flatIndex,
+        items: [],
+      });
+    } else {
+      pages[pages.length - 1].items.push({ node, flatIndex });
+    }
+  });
+
+  return pages;
 }
 
 export type FormKind = "general" | "appeal_enabled" | "complaint";
@@ -350,12 +401,12 @@ export const FORM_TEMPLATES: FormTemplate[] = [
   },
   {
     key: "mcep_finalist",
-    name: "Finalis MCEP (Voting)",
+    name: "Finalis MCEP (3 Peserta Multi-Page)",
     category: "voting_evaluation",
     kind: "general",
     title: "Finalis MCEP — Official Judging & Voting",
     slug: "finalis-mcep-voting",
-    description: "Official evaluation scorecard for Finalis MCEP. Rate each presentation criterion carefully using the pixel star rubric.",
+    description: "",
     allowAppeal: false,
     theme: {
       category: "voting_evaluation",
@@ -364,31 +415,14 @@ export const FORM_TEMPLATES: FormTemplate[] = [
       backgroundPattern: "pixel_stars",
       bannerImageUrl: PRESET_BANNERS[0].url,
       bannerHeight: "medium",
+      page1Title: "Peserta 1 — Finalis Pertama",
+      page1Subtitle: "Penilaian untuk pembentangan Peserta 1",
     },
     nodes: [
       {
-        id: "hdr_mcep",
-        type: "heading",
-        label: "Finalis MCEP Judge Scorecard",
-        width: "full",
-      },
-      {
-        id: "f_finalist",
-        type: "dropdown",
-        label: "Select Finalist / Presenter",
-        required: true,
-        options: [
-          "Finalist 01 — Team Alpha",
-          "Finalist 02 — Team Nova",
-          "Finalist 03 — Team Horizon",
-          "Finalist 04 — Team Catalyst",
-        ],
-        width: "full",
-      },
-      {
-        id: "f_star_clarity",
+        id: "p1_star_clarity",
         type: "star_rating",
-        label: "1. Presentation & Delivery Clarity",
+        label: "Peserta 1: Presentation & Delivery Clarity",
         helpText: "Rate slide quality, storytelling, and confidence.",
         required: true,
         maxRating: 5,
@@ -396,9 +430,9 @@ export const FORM_TEMPLATES: FormTemplate[] = [
         width: "full",
       },
       {
-        id: "f_star_innovation",
+        id: "p1_star_innovation",
         type: "star_rating",
-        label: "2. Innovation & Problem Solving",
+        label: "Peserta 1: Innovation & Problem Solving",
         helpText: "Rate originality, creativity, and practical solution design.",
         required: true,
         maxRating: 5,
@@ -406,19 +440,9 @@ export const FORM_TEMPLATES: FormTemplate[] = [
         width: "full",
       },
       {
-        id: "f_star_execution",
-        type: "star_rating",
-        label: "3. Execution & Technical Feasibility",
-        helpText: "Rate readiness, execution detail, and sustainability.",
-        required: true,
-        maxRating: 5,
-        ratingLabels: { low: "Early Concept", high: "Production Ready" },
-        width: "full",
-      },
-      {
-        id: "f_scale_impact",
+        id: "p1_scale_impact",
         type: "linear_scale",
-        label: "4. Overall MCEP Finalist Impact Score (1–10)",
+        label: "Peserta 1: Overall Impact Score (1–10)",
         required: true,
         minRating: 1,
         maxRating: 10,
@@ -426,10 +450,100 @@ export const FORM_TEMPLATES: FormTemplate[] = [
         width: "full",
       },
       {
-        id: "f_judge_notes",
+        id: "p1_notes",
         type: "long_text",
-        label: "Judge Remarks & Recommendations",
-        placeholder: "Optional constructive feedback for this finalist...",
+        label: "Peserta 1: Judge Remarks (Optional)",
+        placeholder: "Constructive feedback for Peserta 1...",
+        required: false,
+        width: "full",
+      },
+      {
+        id: "page_break_2",
+        type: "section",
+        label: "Peserta 2 — Finalis Kedua",
+        helpText: "Penilaian untuk pembentangan Peserta 2",
+        width: "full",
+      },
+      {
+        id: "p2_star_clarity",
+        type: "star_rating",
+        label: "Peserta 2: Presentation & Delivery Clarity",
+        helpText: "Rate slide quality, storytelling, and confidence.",
+        required: true,
+        maxRating: 5,
+        ratingLabels: { low: "Needs Improvement", high: "Outstanding" },
+        width: "full",
+      },
+      {
+        id: "p2_star_innovation",
+        type: "star_rating",
+        label: "Peserta 2: Innovation & Problem Solving",
+        helpText: "Rate originality, creativity, and practical solution design.",
+        required: true,
+        maxRating: 5,
+        ratingLabels: { low: "Conventional", high: "Breakthrough" },
+        width: "full",
+      },
+      {
+        id: "p2_scale_impact",
+        type: "linear_scale",
+        label: "Peserta 2: Overall Impact Score (1–10)",
+        required: true,
+        minRating: 1,
+        maxRating: 10,
+        ratingLabels: { low: "Low Impact", high: "High Impact" },
+        width: "full",
+      },
+      {
+        id: "p2_notes",
+        type: "long_text",
+        label: "Peserta 2: Judge Remarks (Optional)",
+        placeholder: "Constructive feedback for Peserta 2...",
+        required: false,
+        width: "full",
+      },
+      {
+        id: "page_break_3",
+        type: "section",
+        label: "Peserta 3 — Finalis Ketiga",
+        helpText: "Penilaian untuk pembentangan Peserta 3",
+        width: "full",
+      },
+      {
+        id: "p3_star_clarity",
+        type: "star_rating",
+        label: "Peserta 3: Presentation & Delivery Clarity",
+        helpText: "Rate slide quality, storytelling, and confidence.",
+        required: true,
+        maxRating: 5,
+        ratingLabels: { low: "Needs Improvement", high: "Outstanding" },
+        width: "full",
+      },
+      {
+        id: "p3_star_innovation",
+        type: "star_rating",
+        label: "Peserta 3: Innovation & Problem Solving",
+        helpText: "Rate originality, creativity, and practical solution design.",
+        required: true,
+        maxRating: 5,
+        ratingLabels: { low: "Conventional", high: "Breakthrough" },
+        width: "full",
+      },
+      {
+        id: "p3_scale_impact",
+        type: "linear_scale",
+        label: "Peserta 3: Overall Impact Score (1–10)",
+        required: true,
+        minRating: 1,
+        maxRating: 10,
+        ratingLabels: { low: "Low Impact", high: "High Impact" },
+        width: "full",
+      },
+      {
+        id: "p3_notes",
+        type: "long_text",
+        label: "Peserta 3: Judge Remarks (Optional)",
+        placeholder: "Constructive feedback for Peserta 3...",
         required: false,
         width: "full",
       },
