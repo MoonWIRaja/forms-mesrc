@@ -147,7 +147,7 @@ export default function MaintenanceSettingsPage() {
           </p>
         )}
 
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingRight: "0.25rem" }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", paddingRight: "0.25rem" }}>
           {activeTab === "drive" ? (
             <GoogleDriveSetupForm
               initialConfig={status?.google_drive.config_public}
