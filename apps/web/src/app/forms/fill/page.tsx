@@ -8,7 +8,7 @@ import {
   PixelArrowLeftIcon,
   PixelArrowRightIcon,
   PixelCheckIcon,
-  PixelLockIcon,
+  PixelClockIcon,
   PixelPauseIcon,
   PixelSaveIcon,
   PixelShieldAlertIcon,
@@ -83,6 +83,7 @@ export default function FillFormPage() {
   const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const [draftId, setDraftId] = useState<string | null>(null);
   const startMsRef = useRef<number>(0);
+  const [elapsedSec, setElapsedSec] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -93,6 +94,10 @@ export default function FillFormPage() {
 
   useEffect(() => {
     startMsRef.current = Date.now();
+    const timer = setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - startMsRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -377,19 +382,19 @@ export default function FillFormPage() {
       )}
 
       <div className="fill-form-column">
-        {/* Clean Native-App Top Bar */}
-        <div className="fill-top-nav">
+        {/* Sticky Top Navigation & Timer Card */}
+        <div className="fill-top-nav fill-sticky-top-card">
           <Link href={backHref} className="pixel-paper-btn compact">
-            <PixelArrowLeftIcon size={12} />
-            <span>{backLabel}</span>
+            <PixelArrowLeftIcon size={13} />
+            <span>Back to {backLabel}</span>
           </Link>
 
-          {profile && (
-            <span className="fill-account-pill" title={`Submitting as ${profile.email}`}>
-              <PixelLockIcon size={11} />
-              <span>{profile.email}</span>
+          <span className="pixel-stamp-badge draft">
+            <PixelClockIcon size={11} />
+            <span>
+              Timer: {Math.floor(elapsedSec / 60)}m {elapsedSec % 60}s
             </span>
-          )}
+          </span>
         </div>
 
         {/* Unified Form Header Card (Banner + Accent Strip + Title) */}
