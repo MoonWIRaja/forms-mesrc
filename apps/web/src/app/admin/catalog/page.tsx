@@ -237,127 +237,135 @@ export default function AdminFormsListPage() {
           </p>
         )}
 
-        <div
-          className="table-wrap"
-          style={{ flex: 1, minHeight: "calc(100dvh - 8.5rem)", overflowY: "auto" }}
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>Form Title</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Version</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredForms.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="notice" style={{ textAlign: "center", padding: "2rem" }}>
-                    No forms in this filter yet. Click &ldquo;Craft New Form&rdquo; above to create one.
-                  </td>
-                </tr>
-              ) : (
-                filteredForms.map((f) => {
-                  const fTheme = themesMap[f.id];
-                  const fCat = resolveFormCategory(f, fTheme);
-                  const catLabel = FORM_CATEGORIES.find((c) => c.key === fCat)?.label ?? fCat;
-                  const isPaused = f.state === "published" && Boolean(fTheme?.submissionsClosed);
-                  const isBusy = busyId === f.id;
+        <div style={{ flex: 1, minHeight: "calc(100dvh - 8.5rem)", overflowY: "auto" }}>
+          {filteredForms.length === 0 ? (
+            <div className="gf-empty-stream-card">
+              <p className="notice" style={{ margin: 0 }}>
+                No forms in this filter yet.
+              </p>
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
+                gap: "1rem",
+              }}
+            >
+              {filteredForms.map((f) => {
+                const fTheme = themesMap[f.id];
+                const fCat = resolveFormCategory(f, fTheme);
+                const catLabel = FORM_CATEGORIES.find((c) => c.key === fCat)?.label ?? fCat;
+                const isPaused = f.state === "published" && Boolean(fTheme?.submissionsClosed);
+                const isBusy = busyId === f.id;
+                const accent = fTheme?.primaryColor || "#1d4ed8";
 
-                  return (
-                    <tr key={f.id}>
-                      <td>
-                        <strong style={{ color: "var(--ink)" }}>{f.title}</strong>
-                        <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                return (
+                  <div
+                    key={f.id}
+                    className={`card stack catalog-form-card ${isPaused ? "paused" : ""}`}
+                    style={{
+                      margin: 0,
+                      borderTop: `6px solid ${isPaused ? "#94a3b8" : accent}`,
+                      padding: "1rem 1.15rem",
+                    }}
+                  >
+                    {fTheme?.bannerImageUrl && (
+                      <div className="catalog-banner-thumb" style={{ height: "96px" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={fTheme.bannerImageUrl} alt={f.title} />
+                      </div>
+                    )}
+
+                    <div className="row-between" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
+                      <div>
+                        <strong style={{ color: "var(--ink)", fontSize: "1.02rem" }}>{f.title}</strong>
+                        <div style={{ fontSize: "0.74rem", color: "var(--muted)", marginTop: "0.15rem" }}>
                           <code>{f.slug}</code>
                         </div>
-                      </td>
-                      <td>
-                        <span className="pixel-tag-pill">{catLabel}</span>
-                      </td>
-                      <td>
-                        {f.state === "archived" ? (
-                          <span className="pixel-stamp-badge draft">ARCHIVED</span>
-                        ) : isPaused ? (
-                          <span className="pixel-stamp-badge paused">
-                            <PixelPauseIcon size={10} />
-                            <span>PAUSED</span>
-                          </span>
-                        ) : f.state === "published" ? (
-                          <span className="pixel-stamp-badge live">
-                            <PixelSparkleIcon size={10} />
-                            <span>LIVE</span>
-                          </span>
-                        ) : (
-                          <span className="pixel-stamp-badge draft">DRAFT</span>
-                        )}
-                      </td>
-                      <td>
+                      </div>
+                      {f.state === "archived" ? (
+                        <span className="pixel-stamp-badge draft">ARCHIVED</span>
+                      ) : isPaused ? (
+                        <span className="pixel-stamp-badge paused">
+                          <PixelPauseIcon size={10} />
+                          <span>PAUSED</span>
+                        </span>
+                      ) : f.state === "published" ? (
+                        <span className="pixel-stamp-badge live">
+                          <PixelSparkleIcon size={10} />
+                          <span>LIVE</span>
+                        </span>
+                      ) : (
+                        <span className="pixel-stamp-badge draft">DRAFT</span>
+                      )}
+                    </div>
+
+                    <div className="row-between" style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
+                      <span className="pixel-tag-pill">{catLabel}</span>
+                      <span>
                         v{f.latest_version}{" "}
                         {f.current_published_version ? `(Live v${f.current_published_version})` : ""}
-                      </td>
-                      <td>
-                        <div className="row-actions" style={{ gap: "0.4rem", flexWrap: "wrap" }}>
-                          <Link
-                            href={`/admin/forms/?id=${encodeURIComponent(f.id)}`}
-                            className="pixel-paper-btn compact primary"
-                          >
-                            <span>Edit in Craft</span>
-                            <PixelArrowRightIcon size={12} />
-                          </Link>
+                      </span>
+                    </div>
 
-                          {f.state === "published" && !isPaused ? (
-                            <button
-                              type="button"
-                              className="pixel-paper-btn compact warning"
-                              disabled={isBusy}
-                              onClick={() => void handlePublishOrPause(f, true)}
-                            >
-                              <PixelPauseIcon size={12} />
-                              <span>Pause</span>
-                            </button>
-                          ) : f.state !== "archived" ? (
-                            <button
-                              type="button"
-                              className="pixel-paper-btn compact"
-                              disabled={isBusy}
-                              onClick={() => void handlePublishOrPause(f, false)}
-                            >
-                              <PixelPlayIcon size={12} />
-                              <span>Publish</span>
-                            </button>
-                          ) : null}
+                    <div className="row-actions" style={{ gap: "0.4rem", flexWrap: "wrap", marginTop: "auto", paddingTop: "0.35rem" }}>
+                      <Link
+                        href={`/admin/forms/?id=${encodeURIComponent(f.id)}`}
+                        className="pixel-paper-btn compact primary"
+                      >
+                        <span>Edit in Craft</span>
+                        <PixelArrowRightIcon size={12} />
+                      </Link>
 
-                          {f.state !== "archived" ? (
-                            <button
-                              type="button"
-                              className="pixel-paper-btn compact danger"
-                              disabled={isBusy}
-                              onClick={() => void handleDeleteOrRestore(f, false)}
-                            >
-                              <PixelTrashIcon size={12} />
-                              <span>Delete</span>
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className="pixel-paper-btn compact"
-                              disabled={isBusy}
-                              onClick={() => void handleDeleteOrRestore(f, true)}
-                            >
-                              <span>Restore</span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                      {f.state === "published" && !isPaused ? (
+                        <button
+                          type="button"
+                          className="pixel-paper-btn compact warning"
+                          disabled={isBusy}
+                          onClick={() => void handlePublishOrPause(f, true)}
+                        >
+                          <PixelPauseIcon size={12} />
+                          <span>Pause</span>
+                        </button>
+                      ) : f.state !== "archived" ? (
+                        <button
+                          type="button"
+                          className="pixel-paper-btn compact"
+                          disabled={isBusy}
+                          onClick={() => void handlePublishOrPause(f, false)}
+                        >
+                          <PixelPlayIcon size={12} />
+                          <span>Publish</span>
+                        </button>
+                      ) : null}
+
+                      {f.state !== "archived" ? (
+                        <button
+                          type="button"
+                          className="pixel-paper-btn compact danger"
+                          disabled={isBusy}
+                          onClick={() => void handleDeleteOrRestore(f, false)}
+                        >
+                          <PixelTrashIcon size={12} />
+                          <span>Delete</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="pixel-paper-btn compact"
+                          disabled={isBusy}
+                          onClick={() => void handleDeleteOrRestore(f, true)}
+                        >
+                          <span>Restore</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
     </div>

@@ -230,73 +230,83 @@ export default function AdminPage() {
             <h2 style={{ margin: 0 }}>Select a Form ({formsList.length})</h2>
           </div>
 
-          <div
-            className="table-wrap"
-            style={{ flex: 1, minHeight: "calc(100dvh - 8.5rem)", overflowY: "auto" }}
-          >
-            <table>
-              <thead>
-                <tr>
-                  <th>Form Title</th>
-                  <th>Category</th>
-                  <th>Today ({todayKey})</th>
-                  <th>Total Submissions</th>
-                  <th>Inspect</th>
-                </tr>
-              </thead>
-              <tbody>
-                {formsList.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="notice" style={{ textAlign: "center", padding: "2rem" }}>
-                      No forms created yet.
-                    </td>
-                  </tr>
-                ) : (
-                  formsList.map((f) => {
-                    const ver = versionsMap[`${f.id}:${f.latest_version}`];
-                    const fCat = resolveFormCategory(f, ver?.theme_json);
-                    const catLabel = FORM_CATEGORIES.find((c) => c.key === fCat)?.label ?? fCat;
-                    const allCount = submissions.filter((s) => s.form_id === f.id).length;
-                    const todayCount = submissions.filter(
-                      (s) =>
-                        s.form_id === f.id &&
-                        toLocalDateKey(s.submitted_at ?? s.created_at) === todayKey,
-                    ).length;
+          <div style={{ flex: 1, minHeight: "calc(100dvh - 8.5rem)", overflowY: "auto" }}>
+            {formsList.length === 0 ? (
+              <div className="gf-empty-stream-card">
+                <p className="notice" style={{ margin: 0 }}>
+                  No forms created yet.
+                </p>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
+                  gap: "1rem",
+                }}
+              >
+                {formsList.map((f) => {
+                  const ver = versionsMap[`${f.id}:${f.latest_version}`];
+                  const fTheme = ver?.theme_json;
+                  const fCat = resolveFormCategory(f, fTheme);
+                  const catLabel = FORM_CATEGORIES.find((c) => c.key === fCat)?.label ?? fCat;
+                  const allCount = submissions.filter((s) => s.form_id === f.id).length;
+                  const todayCount = submissions.filter(
+                    (s) =>
+                      s.form_id === f.id &&
+                      toLocalDateKey(s.submitted_at ?? s.created_at) === todayKey,
+                  ).length;
+                  const accent = fTheme?.primaryColor || "#1d4ed8";
 
-                    return (
-                      <tr key={f.id}>
-                        <td>
-                          <strong style={{ color: "var(--ink)" }}>{f.title}</strong>
-                        </td>
-                        <td>
-                          <span className="pixel-tag-pill">{catLabel}</span>
-                        </td>
-                        <td>
-                          <span className={`pixel-stamp-badge ${todayCount > 0 ? "live" : "draft"}`}>
-                            {todayCount} TODAY
-                          </span>
-                        </td>
-                        <td>{allCount}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className="pixel-paper-btn compact primary"
-                            onClick={() => {
-                              setSelectedFormId(f.id);
-                              setSelectedDate(todayKey);
-                              setSelectedSub(null);
-                            }}
-                          >
-                            <span>View Submissions</span>
-                            <PixelArrowRightIcon size={12} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                  return (
+                    <div
+                      key={f.id}
+                      className="card stack catalog-form-card"
+                      style={{
+                        margin: 0,
+                        borderTop: `6px solid ${accent}`,
+                        padding: "1rem 1.15rem",
+                      }}
+                    >
+                      {fTheme?.bannerImageUrl && (
+                        <div className="catalog-banner-thumb" style={{ height: "96px" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={fTheme.bannerImageUrl} alt={f.title} />
+                        </div>
+                      )}
+
+                      <div className="row-between" style={{ alignItems: "flex-start", gap: "0.5rem" }}>
+                        <strong style={{ color: "var(--ink)", fontSize: "1.02rem" }}>{f.title}</strong>
+                        <span className={`pixel-stamp-badge ${todayCount > 0 ? "live" : "draft"}`}>
+                          {todayCount} TODAY
+                        </span>
+                      </div>
+
+                      <div className="row-between" style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
+                        <span className="pixel-tag-pill">{catLabel}</span>
+                        <span>{allCount} total submissions</span>
+                      </div>
+
+                      <div className="row-actions" style={{ marginTop: "auto", paddingTop: "0.35rem" }}>
+                        <button
+                          type="button"
+                          className="pixel-paper-btn compact primary"
+                          style={{ backgroundColor: accent }}
+                          onClick={() => {
+                            setSelectedFormId(f.id);
+                            setSelectedDate(todayKey);
+                            setSelectedSub(null);
+                          }}
+                        >
+                          <span>View Submissions</span>
+                          <PixelArrowRightIcon size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       )}
