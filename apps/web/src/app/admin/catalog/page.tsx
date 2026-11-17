@@ -189,7 +189,7 @@ export default function AdminFormsListPage() {
     <div className="stack" style={{ flex: 1 }}>
       <section
         className="card stack admin-full-card"
-        style={{ flex: 1, minHeight: "calc(100dvh - 2.5rem)", margin: 0 }}
+        style={{ flex: 1, height: "calc(100dvh - 2.5rem)", margin: 0, overflow: "hidden" }}
       >
         <div className="row-between" style={{ flexWrap: "wrap", gap: "0.75rem" }}>
           <h2 style={{ margin: 0 }}>All Forms ({filteredForms.length})</h2>
@@ -237,7 +237,7 @@ export default function AdminFormsListPage() {
           </p>
         )}
 
-        <div style={{ flex: 1, minHeight: "calc(100dvh - 8.5rem)", overflowY: "auto" }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "2px 4px" }}>
           {filteredForms.length === 0 ? (
             <div className="gf-empty-stream-card">
               <p className="notice" style={{ margin: 0 }}>

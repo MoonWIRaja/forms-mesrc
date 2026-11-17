@@ -224,13 +224,13 @@ export default function AdminPage() {
       {!selectedFormId && (
         <section
           className="card stack admin-full-card"
-          style={{ flex: 1, minHeight: "calc(100dvh - 2.5rem)", margin: 0 }}
+          style={{ flex: 1, height: "calc(100dvh - 2.5rem)", margin: 0, overflow: "hidden" }}
         >
           <div className="row-between">
             <h2 style={{ margin: 0 }}>Select a Form ({formsList.length})</h2>
           </div>
 
-          <div style={{ flex: 1, minHeight: "calc(100dvh - 8.5rem)", overflowY: "auto" }}>
+          <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "2px 4px" }}>
             {formsList.length === 0 ? (
               <div className="gf-empty-stream-card">
                 <p className="notice" style={{ margin: 0 }}>
