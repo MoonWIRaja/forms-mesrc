@@ -329,14 +329,29 @@ export default function AdminFormBuilderPage() {
         setServices((sRows as ServiceRow[] | null) ?? []);
         await loadCatalogAndThemes();
 
-        // Check if there is a locally auto-saved unsaved draft
-        try {
-          const savedRaw = localStorage.getItem("mesrc_studio_autosave_new");
-          if (savedRaw && active) {
-            setLocalRecoveryBanner(true);
+        const targetId =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("id")
+            : null;
+        if (targetId && active) {
+          const { data: targetForm } = await supabase
+            .from("forms")
+            .select("*")
+            .eq("id", targetId)
+            .maybeSingle();
+          if (targetForm && active) {
+            await applySelectExistingForm(targetForm as FormRow);
           }
-        } catch {
-          // ignore
+        } else {
+          // Check if there is a locally auto-saved unsaved draft
+          try {
+            const savedRaw = localStorage.getItem("mesrc_studio_autosave_new");
+            if (savedRaw && active) {
+              setLocalRecoveryBanner(true);
+            }
+          } catch {
+            // ignore
+          }
         }
       } finally {
         if (active) setLoading(false);

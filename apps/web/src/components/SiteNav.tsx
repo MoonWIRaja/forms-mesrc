@@ -61,6 +61,7 @@ export default function SiteNav() {
 
   const isDashboard = pathname === "/" || pathname === "";
   const isSubmissions = pathname === "/admin" || pathname === "/admin/";
+  const isFormsCatalog = pathname?.startsWith("/admin/catalog");
   const isFormBuilder = pathname?.startsWith("/admin/forms");
   const isUsers = pathname?.startsWith("/users");
   const isSettings = pathname?.startsWith("/maintenance");
@@ -98,6 +99,22 @@ export default function SiteNav() {
           <span className="sidebar-item-text">Submissions</span>
         </Link>
 
+        <Link href="/admin/catalog/" className={`sidebar-item ${isFormsCatalog ? "active" : ""}`}>
+          <svg
+            className="sidebar-item-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+          </svg>
+          <span className="sidebar-item-text">Forms</span>
+        </Link>
+
         <Link href="/admin/forms/" className={`sidebar-item ${isFormBuilder ? "active" : ""}`}>
           <svg
             className="sidebar-item-icon"
@@ -114,7 +131,7 @@ export default function SiteNav() {
             <line x1="12" y1="18" x2="12" y2="12" />
             <line x1="9" y1="15" x2="15" y2="15" />
           </svg>
-          <span className="sidebar-item-text">Forms &amp; Builder</span>
+          <span className="sidebar-item-text">Craft</span>
         </Link>
 
         <Link href="/users/" className={`sidebar-item ${isUsers ? "active" : ""}`}>
