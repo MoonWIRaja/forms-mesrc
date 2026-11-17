@@ -4455,6 +4455,22 @@ textarea:focus {
   color: #059669;
 }
 
+.ios-install-app-btn {
+  border: none;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.24rem 0.65rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.ios-install-app-btn:hover {
+  background: #1d4ed8;
+}
+
 .ios-sheet-device-hint {
   margin: -0.25rem 0 0;
   font-size: 0.76rem;

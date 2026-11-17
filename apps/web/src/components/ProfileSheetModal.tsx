@@ -1,7 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import {
+  canTriggerPwaInstall,
+  subscribePwaInstall,
+  triggerPwaInstall,
+} from "@/lib/pwa-install";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
 type DetectedPlatform = "iphone" | "android" | "desktop";
@@ -89,6 +94,13 @@ export default function ProfileSheetModal({
   const [deviceEnv] = useState<DeviceEnvironment>(() =>
     detectDeviceEnvironment(),
   );
+  const [installReady, setInstallReady] = useState(() => canTriggerPwaInstall());
+
+  useEffect(() => {
+    return subscribePwaInstall(() => {
+      setInstallReady(canTriggerPwaInstall());
+    });
+  }, []);
 
   const initials = (profile.display_name || profile.email || "U")
     .slice(0, 2)
@@ -171,7 +183,18 @@ export default function ProfileSheetModal({
           <span className={`ios-device-pill ${deviceEnv.isPwa ? "pwa" : ""}`}>
             {deviceEnv.label}
           </span>
-          <span className="ios-sheet-suffix">{profile.role.toUpperCase()}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+            {installReady && !deviceEnv.isPwa && (
+              <button
+                type="button"
+                className="ios-install-app-btn"
+                onClick={() => void triggerPwaInstall()}
+              >
+                Install App
+              </button>
+            )}
+            <span className="ios-sheet-suffix">{profile.role.toUpperCase()}</span>
+          </div>
         </div>
 
         {deviceEnv.hint && (
