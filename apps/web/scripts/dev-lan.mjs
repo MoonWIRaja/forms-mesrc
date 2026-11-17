@@ -1,5 +1,9 @@
 import { spawn } from "node:child_process";
+import { createRequire } from "node:module";
 import os from "node:os";
+
+const require = createRequire(import.meta.url);
+const nextBin = require.resolve("next/dist/bin/next");
 
 const port = process.env.PORT || "3000";
 const interfaces = os.networkInterfaces();
@@ -41,9 +45,8 @@ if (lanUrls.length === 0 && virtualUrls.length > 0) {
 console.log("  Public (GitHub Pages): https://moonwiraja.github.io/forms-mesrc/");
 console.log("========================================================\n");
 
-const child = spawn("npx", ["next", "dev", "-H", "0.0.0.0", "-p", port], {
+const child = spawn(process.execPath, [nextBin, "dev", "-H", "0.0.0.0", "-p", port], {
   stdio: "inherit",
-  shell: true,
 });
 
 child.on("exit", (code) => {
