@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import ChunkLoader from "@/components/ChunkLoader";
 import {
   PixelArrowRightIcon,
+  PixelLockIcon,
   PixelPauseIcon,
   PixelPlayIcon,
   PixelSparkleIcon,
@@ -270,7 +271,7 @@ export default function AdminFormsListPage() {
                 const catLabel = FORM_CATEGORIES.find((c) => c.key === fCat)?.label ?? fCat;
                 const isPaused = f.state === "published" && Boolean(fTheme?.submissionsClosed);
                 const isBusy = busyId === f.id;
-                const accent = fTheme?.primaryColor || "#1d4ed8";
+                const accent = fTheme?.primaryColor || "#0f5132";
 
                 return (
                   <div
@@ -293,6 +294,12 @@ export default function AdminFormsListPage() {
                         </div>
                       </div>
                       <span className="pixel-tag-pill">{catLabel}</span>
+                      {f.restrict_admin_access && (
+                        <span className="pixel-stamp-badge paused">
+                          <PixelLockIcon size={10} />
+                          <span>RESTRICTED</span>
+                        </span>
+                      )}
                       {f.state === "archived" ? (
                         <span className="pixel-stamp-badge draft">ARCHIVED</span>
                       ) : isPaused ? (

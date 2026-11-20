@@ -15,10 +15,13 @@ export type FieldType =
   | "dropdown"
   | "star_rating"
   | "linear_scale"
+  | "score_wheel"
+  | "score_total"
   | "file_upload";
 
 export type FormCategory = "company_forms" | "staff_complaints" | "voting_evaluation";
 export type BackgroundPattern = "matboard_dots" | "grid_paper" | "pixel_stars" | "diagonal_craft" | "solid";
+export type ProfileAutoFillKey = "display_name" | "phone" | "email";
 
 export interface FormFieldNode {
   id: string;
@@ -35,9 +38,41 @@ export interface FormFieldNode {
   minRating?: number;
   maxRating?: number;
   ratingLabels?: { low?: string; high?: string };
+  /** For score_wheel: configurable maximum marks (e.g. 25, 20, 15, 40, 30) */
+  maxMarks?: number;
+  /** For score_total: allow judge to manually override the auto-calculated total */
+  allowManualOverride?: boolean;
+  /** Auto-populate from signed-in user's profile */
+  autoFillProfile?: ProfileAutoFillKey;
+  /** Pre-filled default static value (e.g. participant name per page) */
+  defaultValue?: string;
+  /** Lock input as read-only (e.g. fixed company email or participant name) */
+  readOnly?: boolean;
+  /** Sync value across all pages sharing the same syncKey (e.g. judge_name) */
+  syncKey?: string;
   /** For image block */
   imageUrl?: string;
   caption?: string;
+}
+
+export interface AdminPermissionsRow {
+  profile_id: string;
+  can_manage_company_forms: boolean;
+  can_view_company_reports: boolean;
+  can_manage_complaints: boolean;
+  can_view_complaints: boolean;
+  receive_complaint_emails: boolean;
+  can_manage_voting: boolean;
+  can_view_voting_reports: boolean;
+  can_manage_users: boolean;
+}
+
+export interface FormAdminAccessRow {
+  form_id: string;
+  admin_id: string;
+  can_edit: boolean;
+  can_view_reports: boolean;
+  notify_on_submit: boolean;
 }
 
 export interface FormTheme {
@@ -129,8 +164,68 @@ export interface FormRow {
   allow_appeal: boolean;
   current_published_version: number | null;
   latest_version: number;
+  created_by?: string;
+  restrict_admin_access?: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface PageScoreSummary {
+  total: number;
+  maxTotal: number;
+  scoredCount: number;
+  totalScorable: number;
+  pendingCount: number;
+}
+
+export function getFieldMaxMarks(node: FormFieldNode): number {
+  if (node.type === "score_wheel") return Math.max(1, node.maxMarks ?? 25);
+  if (node.type === "star_rating") return Math.max(1, node.maxRating ?? 5);
+  if (node.type === "linear_scale") return Math.max(1, node.maxRating ?? 10);
+  return 0;
+}
+
+export function isScorableField(node: FormFieldNode): boolean {
+  return (
+    node.type === "score_wheel" ||
+    node.type === "star_rating" ||
+    node.type === "linear_scale"
+  );
+}
+
+export function computePageScoreSummary(
+  pageNodes: FormFieldNode[],
+  answers: Record<string, unknown>,
+): PageScoreSummary {
+  let total = 0;
+  let maxTotal = 0;
+  let scoredCount = 0;
+  let totalScorable = 0;
+
+  for (const n of pageNodes) {
+    if (!isScorableField(n)) continue;
+    totalScorable += 1;
+    maxTotal += getFieldMaxMarks(n);
+    const raw = answers[n.id];
+    const hasVal =
+      raw !== undefined &&
+      raw !== null &&
+      raw !== "" &&
+      !Number.isNaN(Number(raw)) &&
+      (n.type === "score_wheel" ? Number(raw) >= 0 : Number(raw) > 0);
+    if (hasVal) {
+      scoredCount += 1;
+      total += Number(raw);
+    }
+  }
+
+  return {
+    total,
+    maxTotal,
+    scoredCount,
+    totalScorable,
+    pendingCount: Math.max(0, totalScorable - scoredCount),
+  };
 }
 
 export interface FormTemplate {
@@ -158,21 +253,21 @@ export const FORM_CATEGORIES: {
     label: "Company Forms",
     subtitle: "Check-in logs, service requests, HR & official records",
     defaultDbKind: "general",
-    accent: "#1d4ed8",
+    accent: "#0f5132",
   },
   {
     key: "staff_complaints",
     label: "Staff Complaints",
-    subtitle: "Trackable reports, misconduct & formal ticket appeals",
+    subtitle: "Confidential reports, harassment, misconduct & ticket appeals",
     defaultDbKind: "complaint",
-    accent: "#b45309",
+    accent: "#991b1b",
   },
   {
     key: "voting_evaluation",
     label: "Voting & Evaluation",
-    subtitle: "Finalis MCEP judging, star ratings, scoring & polls",
+    subtitle: "Competition judging, Speaker & MC scoring, and rankings",
     defaultDbKind: "general",
-    accent: "#0f766e",
+    accent: "#a77922",
   },
 ];
 
@@ -329,6 +424,108 @@ export const PRESET_BANNERS: { id: string; name: string; tag: string; url: strin
   },
 ];
 
+function buildSpeakerPageNodes(
+  prefix: string,
+  participantName: string,
+  includePageBreak: boolean,
+): FormFieldNode[] {
+  const nodes: FormFieldNode[] = [];
+  if (includePageBreak) {
+    nodes.push({
+      id: `${prefix}_page_break`,
+      type: "section",
+      label: participantName,
+      helpText: "Speaker — Digital Judges' Scoring Form",
+      width: "full",
+    });
+  }
+  nodes.push(
+    {
+      id: `${prefix}_participant`,
+      type: "short_text",
+      label: "Participant / Team Name",
+      defaultValue: participantName,
+      readOnly: true,
+      required: true,
+      width: "full",
+    },
+    {
+      id: `${prefix}_judge_name`,
+      type: "short_text",
+      label: "Judge's Name",
+      placeholder: "Enter judge's full name...",
+      helpText: "Auto-filled from your Profile (editable & synced across pages).",
+      autoFillProfile: "display_name",
+      syncKey: "judge_name",
+      required: true,
+      width: "full",
+    },
+    {
+      id: `${prefix}_c1_content`,
+      type: "score_wheel",
+      label: "1. Content Quality & Relevance",
+      helpText: "Accuracy, relevance, organisation and depth of information.",
+      maxMarks: 25,
+      required: true,
+      width: "full",
+    },
+    {
+      id: `${prefix}_c2_visual`,
+      type: "score_wheel",
+      label: "2. Visual Presentation & Slide Design",
+      helpText: "Slide layout, readability, visual appeal and effective use of graphics.",
+      maxMarks: 20,
+      required: true,
+      width: "full",
+    },
+    {
+      id: `${prefix}_c3_verbal`,
+      type: "score_wheel",
+      label: "3. Verbal Communication & Delivery Skills",
+      helpText: "Voice projection, intonation, pronunciation, fluency and confidence.",
+      maxMarks: 25,
+      required: true,
+      width: "full",
+    },
+    {
+      id: `${prefix}_c4_engagement`,
+      type: "score_wheel",
+      label: "4. Audience Engagement & Interaction",
+      helpText: "Eye contact, audience involvement and ability to sustain attention.",
+      maxMarks: 15,
+      required: true,
+      width: "full",
+    },
+    {
+      id: `${prefix}_c5_qa`,
+      type: "score_wheel",
+      label: "5. Subject Knowledge & Responsiveness (Q&A)",
+      helpText: "Understanding of topic, accuracy of responses and ability to handle questions.",
+      maxMarks: 15,
+      required: true,
+      width: "full",
+    },
+    {
+      id: `${prefix}_final_score`,
+      type: "score_total",
+      label: "Final Score — Total Marks Obtained",
+      helpText: "Automatically calculated from the criteria above.",
+      allowManualOverride: false,
+      required: false,
+      width: "full",
+    },
+    {
+      id: `${prefix}_comments`,
+      type: "long_text",
+      label: "Judge's Comments / Recommendations",
+      placeholder: `Enter comments or recommendations for ${participantName}...`,
+      required: false,
+      width: "full",
+    },
+  );
+  return nodes;
+}
+
 export const FORM_TEMPLATES: FormTemplate[] = [
   {
     key: "check_in_out",
@@ -401,176 +598,214 @@ export const FORM_TEMPLATES: FormTemplate[] = [
   },
   {
     key: "mcep_finalist",
-    name: "Finalis MCEP (3 Peserta Multi-Page)",
+    name: "Competition Evaluation — Speaker & MC (5 Pages)",
     category: "voting_evaluation",
     kind: "general",
-    title: "Finalis MCEP — Official Judging & Voting",
-    slug: "finalis-mcep-voting",
-    description: "",
+    title: "Competition Evaluation — Speaker & Master of Ceremony",
+    slug: "competition-evaluation-speaker-mc",
+    description: "Digital Judges' Scoring Form (Exclusive) — 4 Speakers + Master of Ceremony.",
     allowAppeal: false,
     theme: {
       category: "voting_evaluation",
-      primaryColor: "#7c3aed",
-      backgroundColor: "#e6e0ee",
-      backgroundPattern: "pixel_stars",
+      primaryColor: "#0f5132",
+      backgroundColor: "#f3efe4",
+      backgroundPattern: "matboard_dots",
       bannerImageUrl: PRESET_BANNERS[0].url,
       bannerHeight: "medium",
-      page1Title: "Peserta 1 — Finalis Pertama",
-      page1Subtitle: "Penilaian untuk pembentangan Peserta 1",
+      page1Title: "Asmira Ashiqin",
+      page1Subtitle: "Speaker — Digital Judges' Scoring Form",
     },
     nodes: [
+      ...buildSpeakerPageNodes("p1", "Asmira Ashiqin", false),
+      ...buildSpeakerPageNodes("p2", "Nur Ainun", true),
+      ...buildSpeakerPageNodes("p3", "Nur Aimi Nadirah", true),
+      ...buildSpeakerPageNodes("p4", "Nurul Ainnajwa", true),
       {
-        id: "p1_star_clarity",
-        type: "star_rating",
-        label: "Peserta 1: Presentation & Delivery Clarity",
-        helpText: "Rate slide quality, storytelling, and confidence.",
-        required: true,
-        maxRating: 5,
-        ratingLabels: { low: "Needs Improvement", high: "Outstanding" },
+        id: "p5_page_break",
+        type: "section",
+        label: "Master of Ceremony (MC)",
+        helpText: "Master of Ceremony — Digital Judges' Scoring Form",
         width: "full",
       },
       {
-        id: "p1_star_innovation",
-        type: "star_rating",
-        label: "Peserta 1: Innovation & Problem Solving",
-        helpText: "Rate originality, creativity, and practical solution design.",
+        id: "p5_participant",
+        type: "short_text",
+        label: "MC Participant Name",
+        placeholder: "Enter Master of Ceremony participant name...",
+        defaultValue: "Master of Ceremony (MC)",
         required: true,
-        maxRating: 5,
-        ratingLabels: { low: "Conventional", high: "Breakthrough" },
         width: "full",
       },
       {
-        id: "p1_scale_impact",
-        type: "linear_scale",
-        label: "Peserta 1: Overall Impact Score (1–10)",
+        id: "p5_judge_name",
+        type: "short_text",
+        label: "Judge's Name",
+        placeholder: "Enter judge's full name...",
+        helpText: "Auto-filled from your Profile (editable & synced across pages).",
+        autoFillProfile: "display_name",
+        syncKey: "judge_name",
         required: true,
-        minRating: 1,
-        maxRating: 10,
-        ratingLabels: { low: "Low Impact", high: "High Impact" },
         width: "full",
       },
       {
-        id: "p1_notes",
-        type: "long_text",
-        label: "Peserta 1: Judge Remarks (Optional)",
-        placeholder: "Constructive feedback for Peserta 1...",
+        id: "p5_mc_verbal",
+        type: "score_wheel",
+        label: "1. Verbal Communication & Delivery Skills",
+        helpText: "Voice projection, intonation, pronunciation, fluency and stage presence.",
+        maxMarks: 40,
+        required: true,
+        width: "full",
+      },
+      {
+        id: "p5_mc_creativity",
+        type: "score_wheel",
+        label: "2. Creativity",
+        helpText: "Originality, transitions, crowd energy and creative hosting style.",
+        maxMarks: 30,
+        required: true,
+        width: "full",
+      },
+      {
+        id: "p5_mc_sop",
+        type: "score_wheel",
+        label: "3. SOP & Protocol Compliance",
+        helpText: "Adherence to event flow, official titles, timing and company SOP.",
+        maxMarks: 30,
+        required: true,
+        width: "full",
+      },
+      {
+        id: "p5_final_score",
+        type: "score_total",
+        label: "Final Score — Total Marks Obtained",
+        helpText: "Automatically calculated from the MC criteria above.",
+        allowManualOverride: false,
         required: false,
         width: "full",
       },
       {
-        id: "page_break_2",
-        type: "section",
-        label: "Peserta 2 — Finalis Kedua",
-        helpText: "Penilaian untuk pembentangan Peserta 2",
-        width: "full",
-      },
-      {
-        id: "p2_star_clarity",
-        type: "star_rating",
-        label: "Peserta 2: Presentation & Delivery Clarity",
-        helpText: "Rate slide quality, storytelling, and confidence.",
-        required: true,
-        maxRating: 5,
-        ratingLabels: { low: "Needs Improvement", high: "Outstanding" },
-        width: "full",
-      },
-      {
-        id: "p2_star_innovation",
-        type: "star_rating",
-        label: "Peserta 2: Innovation & Problem Solving",
-        helpText: "Rate originality, creativity, and practical solution design.",
-        required: true,
-        maxRating: 5,
-        ratingLabels: { low: "Conventional", high: "Breakthrough" },
-        width: "full",
-      },
-      {
-        id: "p2_scale_impact",
-        type: "linear_scale",
-        label: "Peserta 2: Overall Impact Score (1–10)",
-        required: true,
-        minRating: 1,
-        maxRating: 10,
-        ratingLabels: { low: "Low Impact", high: "High Impact" },
-        width: "full",
-      },
-      {
-        id: "p2_notes",
+        id: "p5_comments",
         type: "long_text",
-        label: "Peserta 2: Judge Remarks (Optional)",
-        placeholder: "Constructive feedback for Peserta 2...",
-        required: false,
-        width: "full",
-      },
-      {
-        id: "page_break_3",
-        type: "section",
-        label: "Peserta 3 — Finalis Ketiga",
-        helpText: "Penilaian untuk pembentangan Peserta 3",
-        width: "full",
-      },
-      {
-        id: "p3_star_clarity",
-        type: "star_rating",
-        label: "Peserta 3: Presentation & Delivery Clarity",
-        helpText: "Rate slide quality, storytelling, and confidence.",
-        required: true,
-        maxRating: 5,
-        ratingLabels: { low: "Needs Improvement", high: "Outstanding" },
-        width: "full",
-      },
-      {
-        id: "p3_star_innovation",
-        type: "star_rating",
-        label: "Peserta 3: Innovation & Problem Solving",
-        helpText: "Rate originality, creativity, and practical solution design.",
-        required: true,
-        maxRating: 5,
-        ratingLabels: { low: "Conventional", high: "Breakthrough" },
-        width: "full",
-      },
-      {
-        id: "p3_scale_impact",
-        type: "linear_scale",
-        label: "Peserta 3: Overall Impact Score (1–10)",
-        required: true,
-        minRating: 1,
-        maxRating: 10,
-        ratingLabels: { low: "Low Impact", high: "High Impact" },
-        width: "full",
-      },
-      {
-        id: "p3_notes",
-        type: "long_text",
-        label: "Peserta 3: Judge Remarks (Optional)",
-        placeholder: "Constructive feedback for Peserta 3...",
+        label: "Judge's Comments / Recommendations",
+        placeholder: "Enter comments or recommendations for Master of Ceremony...",
         required: false,
         width: "full",
       },
     ],
   },
   {
+    key: "competition_ranking_general",
+    name: "Competition Ranking — General (4 Participants)",
+    category: "voting_evaluation",
+    kind: "general",
+    title: "Competition Ranking — General",
+    slug: "competition-ranking-general",
+    description: "General staff scoring & ranking for the 4 competition finalists.",
+    allowAppeal: false,
+    theme: {
+      category: "voting_evaluation",
+      primaryColor: "#a77922",
+      backgroundColor: "#f3efe4",
+      backgroundPattern: "matboard_dots",
+      bannerImageUrl: PRESET_BANNERS[0].url,
+      bannerHeight: "compact",
+      page1Title: "General Competition Ranking",
+      page1Subtitle: "Score each finalist from 1 to 10",
+    },
+    nodes: [
+      {
+        id: "gen_voter_name",
+        type: "short_text",
+        label: "Voter's Name",
+        autoFillProfile: "display_name",
+        placeholder: "Auto-filled from profile (editable)",
+        required: true,
+        width: "full",
+      },
+      {
+        id: "gen_asmira",
+        type: "score_wheel",
+        label: "Asmira Ashiqin",
+        helpText: "Select general ranking score (out of 10).",
+        maxMarks: 10,
+        required: true,
+        width: "full",
+      },
+      {
+        id: "gen_ainun",
+        type: "score_wheel",
+        label: "Nur Ainun",
+        helpText: "Select general ranking score (out of 10).",
+        maxMarks: 10,
+        required: true,
+        width: "full",
+      },
+      {
+        id: "gen_aimi",
+        type: "score_wheel",
+        label: "Nur Aimi Nadirah",
+        helpText: "Select general ranking score (out of 10).",
+        maxMarks: 10,
+        required: true,
+        width: "full",
+      },
+      {
+        id: "gen_ainnajwa",
+        type: "score_wheel",
+        label: "Nurul Ainnajwa",
+        helpText: "Select general ranking score (out of 10).",
+        maxMarks: 10,
+        required: true,
+        width: "full",
+      },
+    ],
+  },
+  {
     key: "complaint_ticket",
-    name: "Staff Complaint",
+    name: "Staff Complaint & Harassment Report (All-in-One)",
     category: "staff_complaints",
     kind: "complaint",
-    title: "Staff Complaint & Status Report",
-    slug: "service-operations-complaint",
-    description: "Submit a confidential report or operational complaint. Your logged-in email is linked automatically so you can track live ticket status.",
+    title: "Staff Complaint & Confidential Report",
+    slug: "staff-complaint-report",
+    description: "Submit a confidential report (including Sexual Harassment, Misconduct, Safety, or HR issues). Only authorized Admins can view and receive email alerts.",
     allowAppeal: true,
     theme: {
       category: "staff_complaints",
-      primaryColor: "#be123c",
-      backgroundColor: "#efece6",
+      primaryColor: "#991b1b",
+      backgroundColor: "#f3efe4",
       backgroundPattern: "grid_paper",
       bannerImageUrl: PRESET_BANNERS[3].url,
       bannerHeight: "compact",
     },
     nodes: [
       {
-        id: "ins_complaint",
-        type: "instructions",
-        label: "Your signed-in company email is attached automatically for status updates. No separate email field is needed.",
+        id: "f_reporter_name",
+        type: "short_text",
+        label: "Full Name",
+        placeholder: "Your full name",
+        helpText: "Auto-filled from your Profile (you may edit if needed).",
+        autoFillProfile: "display_name",
+        required: true,
+        width: "full",
+      },
+      {
+        id: "f_reporter_phone",
+        type: "short_text",
+        label: "Phone Number",
+        placeholder: "e.g. +60 12-345 6789",
+        helpText: "Auto-filled from your Profile (you may edit if needed).",
+        autoFillProfile: "phone",
+        required: true,
+        width: "full",
+      },
+      {
+        id: "f_reporter_email",
+        type: "email",
+        label: "Company Email (Fixed)",
+        helpText: "Automatically linked to your verified account and cannot be changed.",
+        autoFillProfile: "email",
+        readOnly: true,
+        required: true,
         width: "full",
       },
       {
@@ -578,8 +813,15 @@ export const FORM_TEMPLATES: FormTemplate[] = [
         type: "dropdown",
         label: "Complaint Category",
         required: true,
-        options: ["Service Delay", "Facility / Equipment", "Conduct & Welfare", "Safety", "Other"],
-        width: "half",
+        options: [
+          "Sexual Harassment",
+          "Workplace Misconduct / Bullying",
+          "Safety / Clinical Facility Issue",
+          "HR / Staff Welfare",
+          "Service / Operations Delay",
+          "Other Confidential Matter",
+        ],
+        width: "full",
       },
       {
         id: "f_incident_dt",
@@ -587,7 +829,7 @@ export const FORM_TEMPLATES: FormTemplate[] = [
         label: "Incident Date & Time",
         defaultToNow: true,
         required: true,
-        width: "half",
+        width: "full",
       },
       {
         id: "f_subject",
@@ -600,8 +842,8 @@ export const FORM_TEMPLATES: FormTemplate[] = [
       {
         id: "f_description",
         type: "long_text",
-        label: "Detailed Description",
-        placeholder: "Explain what happened, location, and any immediate action needed...",
+        label: "Detailed Complaint Report",
+        placeholder: "Describe what happened, persons involved, location, and support needed...",
         required: true,
         width: "full",
       },
@@ -625,8 +867,8 @@ export const FORM_TEMPLATES: FormTemplate[] = [
     allowAppeal: false,
     theme: {
       category: "company_forms",
-      primaryColor: "#1d4ed8",
-      backgroundColor: "#efece6",
+      primaryColor: "#0f5132",
+      backgroundColor: "#f3efe4",
       backgroundPattern: "matboard_dots",
     },
     nodes: [

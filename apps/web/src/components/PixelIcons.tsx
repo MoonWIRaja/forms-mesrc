@@ -718,6 +718,10 @@ export function PixelFieldTypeIcon({
       return <PixelStarIcon size={size} className={className} />;
     case "linear_scale":
       return <PixelScaleIcon size={size} className={className} />;
+    case "score_wheel":
+      return <PixelScaleIcon size={size} className={className} />;
+    case "score_total":
+      return <PixelCheckIcon size={size} className={className} />;
     case "image":
       return <PixelImageIcon size={size} className={className} />;
     case "email":

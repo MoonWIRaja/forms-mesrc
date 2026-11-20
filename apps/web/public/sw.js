@@ -1,7 +1,7 @@
-// Forms MESRC service worker - SAFE POLICY.
+// Kayangan Bumi Medical PWA service worker - SAFE POLICY.
 // Caches ONLY versioned public static assets (/_next/static/ and /icons/).
 // Never caches HTML navigations, API/Supabase responses, form answers, tickets or files.
-const CACHE = "forms-mesrc-static-v1";
+const CACHE = "kbm-forms-static-v2";
 const scopePath = new URL(self.registration.scope).pathname;
 
 self.addEventListener("install", () => self.skipWaiting());

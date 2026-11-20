@@ -5,4 +5,5 @@ export const SUPABASE_URL =
 export const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_tOTyPAnkxDdNP9UDOBIbWA_JzoPEL3t";
-export const APP_NAME = "Forms MESRC";
+export const APP_NAME = "Kayangan Bumi Medical";
+export const APP_SHORT_NAME = "KBM Forms";

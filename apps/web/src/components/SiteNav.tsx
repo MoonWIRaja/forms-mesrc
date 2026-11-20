@@ -11,6 +11,7 @@ export default function SiteNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [canManageUsers, setCanManageUsers] = useState<boolean>(true);
   const [needsSetup, setNeedsSetup] = useState<boolean>(false);
 
   useEffect(() => {
@@ -26,10 +27,31 @@ export default function SiteNav() {
       const uid = sessionData.session?.user?.id;
       if (!uid) {
         setProfile(null);
+        setCanManageUsers(true);
         return;
       }
       const { data } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
-      setProfile((data as UserProfile | null) ?? null);
+      const loadedProf = (data as UserProfile | null) ?? null;
+      setProfile(loadedProf);
+
+      if (loadedProf?.role === "admin") {
+        try {
+          const { data: permRow, error: permErr } = await supabase
+            .from("admin_permissions")
+            .select("can_manage_users")
+            .eq("profile_id", uid)
+            .maybeSingle();
+          if (!permErr && permRow && typeof (permRow as { can_manage_users?: boolean }).can_manage_users === "boolean") {
+            setCanManageUsers(Boolean((permRow as { can_manage_users: boolean }).can_manage_users));
+          } else {
+            setCanManageUsers(true);
+          }
+        } catch {
+          setCanManageUsers(true);
+        }
+      } else {
+        setCanManageUsers(true);
+      }
     }
     void load();
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
@@ -92,7 +114,7 @@ export default function SiteNav() {
     // MODE 2: ADMIN PANEL DEDICATED SIDEBAR
     <>
       <div className="sidebar-brand">
-        <Link href="/admin/" className="sidebar-brand-link" aria-label="Forms MESRC Admin Panel">
+        <Link href="/admin/" className="sidebar-brand-link" aria-label="Kayangan Bumi Medical Admin Panel">
           <BrandLogo size="md" subtitle="Admin Panel" />
         </Link>
       </div>
@@ -152,24 +174,26 @@ export default function SiteNav() {
           <span className="sidebar-item-text">Craft</span>
         </Link>
 
-        <Link href="/users/" className={`sidebar-item ${isUsers ? "active" : ""}`}>
-          <svg
-            className="sidebar-item-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
-          <span className="sidebar-item-text">Users &amp; Invites</span>
-        </Link>
+        {(profile?.role === "maintenance" || canManageUsers) && (
+          <Link href="/users/" className={`sidebar-item ${isUsers ? "active" : ""}`}>
+            <svg
+              className="sidebar-item-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            <span className="sidebar-item-text">Users &amp; Invites</span>
+          </Link>
+        )}
 
         {profile?.role === "maintenance" && (
           <>
@@ -216,7 +240,7 @@ export default function SiteNav() {
     // Ultra-clean on the side — Forms & Tickets removed because they are in the center of Home!
     <>
       <div className="sidebar-brand">
-        <Link href="/" className="sidebar-brand-link" aria-label="Forms MESRC Home">
+        <Link href="/" className="sidebar-brand-link" aria-label="Kayangan Bumi Medical Home">
           <BrandLogo size="md" subtitle="Workspace" />
         </Link>
       </div>

@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import AdminPermissionsModal from "@/components/AdminPermissionsModal";
 import ChunkLoader from "@/components/ChunkLoader";
 import InvitationManager from "@/components/InvitationManager";
+import type { AdminPermissionsRow } from "@/lib/form-types";
 import { getSupabase, type AppRole, type UserProfile } from "@/lib/supabase";
 
 interface MemberProfile {
@@ -16,9 +18,25 @@ interface MemberProfile {
   created_at: string;
 }
 
+function defaultAdminPermissions(profileId: string): AdminPermissionsRow {
+  return {
+    profile_id: profileId,
+    can_manage_company_forms: true,
+    can_view_company_reports: true,
+    can_manage_complaints: false,
+    can_view_complaints: false,
+    receive_complaint_emails: false,
+    can_manage_voting: false,
+    can_view_voting_reports: false,
+    can_manage_users: false,
+  };
+}
+
 export default function UsersDirectoryPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [users, setUsers] = useState<MemberProfile[]>([]);
+  const [permsMap, setPermsMap] = useState<Record<string, AdminPermissionsRow>>({});
+  const [editingPermUser, setEditingPermUser] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"members" | "invites">("members");
   const [search, setSearch] = useState("");
@@ -34,13 +52,21 @@ export default function UsersDirectoryPage() {
       const uid = sess.session?.user?.id;
       if (!uid) return;
 
-      const [{ data: myProf }, { data: allUsers }] = await Promise.all([
+      const [{ data: myProf }, { data: allUsers }, permsRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+        supabase.from("admin_permissions").select("*"),
       ]);
 
       setProfile((myProf as UserProfile | null) ?? null);
       setUsers((allUsers as MemberProfile[] | null) ?? []);
+      if (!permsRes.error && permsRes.data) {
+        const map: Record<string, AdminPermissionsRow> = {};
+        for (const row of permsRes.data as AdminPermissionsRow[]) {
+          map[row.profile_id] = row;
+        }
+        setPermsMap(map);
+      }
     } finally {
       setLoading(false);
     }
@@ -266,25 +292,35 @@ export default function UsersDirectoryPage() {
                             {new Date(u.created_at).toLocaleDateString()}
                           </td>
                           <td>
-                            {isSelf ? (
-                              <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Current</span>
-                            ) : canManage ? (
-                              <button
-                                type="button"
-                                className={`btn ${u.is_active ? "btn-secondary" : "btn-primary"}`}
-                                style={{ fontSize: "0.78rem", padding: "0.26rem 0.65rem" }}
-                                disabled={busyId === u.id}
-                                onClick={() => handleToggleActive(u)}
-                              >
-                                {busyId === u.id
-                                  ? "Updating..."
-                                  : u.is_active
-                                  ? "Deactivate"
-                                  : "Reactivate"}
-                              </button>
-                            ) : (
-                              <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>—</span>
-                            )}
+                            <div className="row-actions" style={{ gap: "0.4rem" }}>
+                              {profile.role === "maintenance" && u.role === "admin" && (
+                                <button
+                                  type="button"
+                                  className="pixel-paper-btn compact"
+                                  onClick={() => setEditingPermUser(u)}
+                                >
+                                  Permissions
+                                </button>
+                              )}
+                              {isSelf ? (
+                                <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Current</span>
+                              ) : canManage ? (
+                                <button
+                                  type="button"
+                                  className={`pixel-paper-btn compact ${u.is_active ? "" : "primary"}`}
+                                  disabled={busyId === u.id}
+                                  onClick={() => handleToggleActive(u)}
+                                >
+                                  {busyId === u.id
+                                    ? "Updating..."
+                                    : u.is_active
+                                    ? "Deactivate"
+                                    : "Reactivate"}
+                                </button>
+                              ) : (
+                                <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>—</span>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -298,6 +334,21 @@ export default function UsersDirectoryPage() {
           )}
         </div>
       </section>
+
+      {editingPermUser && (
+        <AdminPermissionsModal
+          adminId={editingPermUser.id}
+          adminEmail={editingPermUser.email}
+          initialPermissions={
+            permsMap[editingPermUser.id] ?? defaultAdminPermissions(editingPermUser.id)
+          }
+          onClose={() => setEditingPermUser(null)}
+          onSaved={(next) => {
+            setPermsMap((prev) => ({ ...prev, [next.profile_id]: next }));
+            setActionSuccess(`Permissions updated for ${editingPermUser.email}.`);
+          }}
+        />
+      )}
     </div>
   );
 }

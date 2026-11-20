@@ -3,31 +3,31 @@
 import { useState } from "react";
 import InfoPopover from "./InfoPopover";
 
-export const OTP_EMAIL_SUBJECT = "Forms MESRC Verification Code: {{ slice .Token 0 4 }}";
+export const OTP_EMAIL_SUBJECT = "Kayangan Bumi Medical Verification Code: {{ slice .Token 0 4 }}";
 
 export const OTP_EMAIL_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Forms MESRC Verification Code</title>
+  <title>Kayangan Bumi Medical Verification Code</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f3efe6; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1c1917;">
-  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f3efe6; padding: 40px 14px;">
+<body style="margin: 0; padding: 0; background-color: #f3efe4; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #12231a;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f3efe4; padding: 40px 14px;">
     <tr>
       <td align="center">
-        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 500px; background-color: #faf8f5; border: 2px solid #1c1917; border-radius: 6px; box-shadow: 5px 5px 0px #1c1917; overflow: hidden;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 500px; background-color: #fbf9f2; border: 2px solid #0f5132; border-radius: 8px; box-shadow: 5px 5px 0px #0f5132; overflow: hidden;">
           <tr>
-            <td style="background-color: #efeae0; border-bottom: 2px solid #1c1917; padding: 16px 28px;">
+            <td style="background-color: #0f5132; border-bottom: 3px solid #c59333; padding: 16px 28px;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td>
-                    <strong style="font-size: 16px; font-weight: 800; letter-spacing: -0.3px; color: #1c1917;">
-                      Forms MESRC
+                    <strong style="font-size: 16px; font-weight: 800; letter-spacing: -0.3px; color: #ffffff;">
+                      Kayangan Bumi Medical
                     </strong>
                   </td>
                   <td align="right">
-                    <span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border: 1.5px solid #1c1917; border-radius: 4px; background-color: #fef3c7; color: #1c1917;">
+                    <span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border: 1.5px solid #c59333; border-radius: 4px; background-color: #fbf5e6; color: #0f5132;">
                       4-DIGIT OTP
                     </span>
                   </td>
@@ -37,31 +37,31 @@ export const OTP_EMAIL_HTML = `<!DOCTYPE html>
           </tr>
           <tr>
             <td style="padding: 28px;">
-              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #1c1917; letter-spacing: -0.4px;">
+              <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 800; color: #0f5132; letter-spacing: -0.4px;">
                 Verification Passcode
               </h1>
-              <p style="margin: 0 0 22px 0; font-size: 15px; line-height: 1.6; color: #57534e;">
-                Enter the 4-digit verification code below in Forms MESRC to verify your email address:
+              <p style="margin: 0 0 22px 0; font-size: 15px; line-height: 1.6; color: #475a50;">
+                Enter the 4-digit verification code below in Kayangan Bumi Medical Forms to verify your email address:
               </p>
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; border: 2px solid #1c1917; border-radius: 4px; box-shadow: 3px 3px 0px #1c1917; margin: 0 0 22px 0;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; border: 2px solid #0f5132; border-radius: 6px; box-shadow: 3px 3px 0px #c59333; margin: 0 0 22px 0;">
                 <tr>
                   <td style="padding: 22px; text-align: center;">
-                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #57534e; margin-bottom: 8px;">
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #475a50; margin-bottom: 8px;">
                       4-Digit Passcode
                     </div>
-                    <div style="display: inline-block; max-width: 4ch; overflow: hidden; white-space: nowrap; font-family: 'Courier New', Courier, monospace; font-size: 40px; font-weight: 800; letter-spacing: 6px; color: #1c1917; line-height: 1.1;">{{ slice .Token 0 4 }}</div>
+                    <div style="display: inline-block; max-width: 4ch; overflow: hidden; white-space: nowrap; font-family: 'Courier New', Courier, monospace; font-size: 40px; font-weight: 800; letter-spacing: 6px; color: #0f5132; line-height: 1.1;">{{ slice .Token 0 4 }}</div>
                   </td>
                 </tr>
               </table>
-              <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #57534e;">
+              <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #475a50;">
                 This 4-digit code expires in 10 minutes and can only be used once. Sent by <strong>support@mesrc.com.my</strong>.
               </p>
             </td>
           </tr>
           <tr>
-            <td style="padding: 14px 28px; background-color: #efeae0; border-top: 2px solid #1c1917; text-align: center;">
-              <p style="margin: 0; font-size: 12px; color: #57534e;">
-                Forms MESRC &bull; Invite-Only Workspace
+            <td style="padding: 14px 28px; background-color: #eae3d2; border-top: 2px solid #0f5132; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #475a50;">
+                Kayangan Bumi Medical &bull; Official Forms Portal
               </p>
             </td>
           </tr>
@@ -89,26 +89,42 @@ export default function SmtpOtpGuideCard() {
     <div className="stack">
       <div className="row-between">
         <div>
-          <h2 style={{ marginBottom: "0.25rem" }}>Google SMTP &amp; Custom OTP Email Setup</h2>
+          <h2 style={{ marginBottom: "0.25rem" }}>
+            Email Delivery, SMTP &amp; Complaint Alert Setup
+          </h2>
           <p className="notice">
-            Replace the default Supabase sender and template so all OTP codes come from{" "}
-            <strong>support@mesrc.com.my</strong> with the clean Forms MESRC paper journal layout.
+            Configure both Supabase Auth OTP emails and automated Staff Complaint alert delivery
+            for <strong>Kayangan Bumi Medical</strong>.
           </p>
         </div>
         <InfoPopover title="Why configure this in Supabase Dashboard?">
           <p style={{ margin: "0 0 0.5rem 0" }}>
-            Supabase Auth sends the initial sign-in and setup OTP emails directly from its backend
-            auth server. Setting Custom SMTP &amp; Email Templates in your Supabase project ensures:
+            Supabase Auth sends login OTP emails directly from its auth server, while Staff
+            Complaint notifications are dispatched to authorized Admins via the{" "}
+            <code>send-outbox-emails</code> Supabase Edge Function.
           </p>
           <ol style={{ margin: 0, paddingLeft: "1.25rem" }}>
-            <li>Emails are sent from <strong>support@mesrc.com.my</strong> via Google SMTP instead of noreply@mail.app.supabase.io.</li>
-            <li>Recipients see a <strong>4-digit OTP code box</strong> (<code>&#123;&#123; slice .Token 0 4 &#125;&#125;</code>) instead of a default magic link.</li>
+            <li>
+              Auth OTP emails come from <strong>support@mesrc.com.my</strong> via Google SMTP.
+            </li>
+            <li>
+              Targeted complaint alerts go only to Admins enabled in Form Access &amp; Admin
+              Permissions.
+            </li>
           </ol>
         </InfoPopover>
       </div>
 
       <div className="grid-2">
-        <div className="stack" style={{ padding: "1rem", border: "1px solid var(--border)", borderRadius: "var(--radius)", background: "var(--surface-muted)" }}>
+        <div
+          className="stack"
+          style={{
+            padding: "1rem",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius)",
+            background: "var(--surface-muted)",
+          }}
+        >
           <strong>1. Custom SMTP (Google Workspace / Gmail)</strong>
           <p className="notice" style={{ fontSize: "0.86rem" }}>
             Open{" "}
@@ -122,16 +138,36 @@ export default function SmtpOtpGuideCard() {
             and enable <strong>Custom SMTP</strong> with:
           </p>
           <div style={{ fontSize: "0.88rem", display: "grid", gap: "0.35rem" }}>
-            <div><strong>Sender email:</strong> <code>support@mesrc.com.my</code></div>
-            <div><strong>Sender name:</strong> <code>Forms MESRC</code></div>
-            <div><strong>Host:</strong> <code>smtp.gmail.com</code></div>
-            <div><strong>Port:</strong> <code>587</code> (STARTTLS — <em>do not use 465</em>)</div>
-            <div><strong>Username:</strong> <code>support@mesrc.com.my</code></div>
-            <div><strong>Password:</strong> <em>16-char Google App Password (no spaces)</em></div>
+            <div>
+              <strong>Sender email:</strong> <code>support@mesrc.com.my</code>
+            </div>
+            <div>
+              <strong>Sender name:</strong> <code>Kayangan Bumi Medical</code>
+            </div>
+            <div>
+              <strong>Host:</strong> <code>smtp.gmail.com</code>
+            </div>
+            <div>
+              <strong>Port:</strong> <code>587</code> (STARTTLS — <em>do not use 465</em>)
+            </div>
+            <div>
+              <strong>Username:</strong> <code>support@mesrc.com.my</code>
+            </div>
+            <div>
+              <strong>Password:</strong> <em>16-char Google App Password (no spaces)</em>
+            </div>
           </div>
         </div>
 
-        <div className="stack" style={{ padding: "1rem", border: "1px solid var(--border)", borderRadius: "var(--radius)", background: "var(--surface-muted)" }}>
+        <div
+          className="stack"
+          style={{
+            padding: "1rem",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius)",
+            background: "var(--surface-muted)",
+          }}
+        >
           <strong>2. Clean OTP Email Template (Sign Up &amp; Magic Link)</strong>
           <p className="notice" style={{ fontSize: "0.86rem" }}>
             Open{" "}
@@ -142,7 +178,8 @@ export default function SmtpOtpGuideCard() {
             >
               Supabase &rarr; Auth &rarr; Email Templates
             </a>
-            . Paste into <strong>BOTH</strong> <em>Confirm sign up</em> and <em>Magic Link</em> tabs:
+            . Paste into <strong>BOTH</strong> <em>Confirm sign up</em> and <em>Magic Link</em>{" "}
+            tabs:
           </p>
           <div className="row-actions">
             <button
@@ -159,6 +196,36 @@ export default function SmtpOtpGuideCard() {
             >
               {copiedKey === "html" ? "Copied HTML Template!" : "Copy HTML Body"}
             </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="stack"
+        style={{
+          padding: "1rem",
+          border: "1.5px solid var(--border-strong)",
+          borderRadius: "var(--radius)",
+          background: "var(--surface-tint)",
+        }}
+      >
+        <strong>3. Targeted Staff Complaint Email Delivery (Edge Function)</strong>
+        <p className="notice" style={{ fontSize: "0.86rem", margin: 0 }}>
+          When a staff member submits a Staff Complaint, the database queues alerts exclusively to
+          Admins granted <strong>Email Alerts</strong> (in Form Settings or Admin Permissions), and
+          the <code>send-outbox-emails</code> Edge Function delivers them via Resend.
+        </p>
+        <div style={{ fontSize: "0.84rem", display: "grid", gap: "0.3rem" }}>
+          <div>
+            <strong>SQL Migration:</strong> Run{" "}
+            <code>supabase/migrations/20261120000000_phase7_permissions_and_notifications.sql</code>{" "}
+            in Supabase SQL Editor.
+          </div>
+          <div>
+            <strong>Edge Function:</strong> Deploy{" "}
+            <code>supabase/functions/send-outbox-emails/index.ts</code> and set Edge Secrets{" "}
+            <code>RESEND_API_KEY</code> and{" "}
+            <code>EMAIL_FROM=&quot;Kayangan Bumi Medical &lt;support@mesrc.com.my&gt;&quot;</code>.
           </div>
         </div>
       </div>

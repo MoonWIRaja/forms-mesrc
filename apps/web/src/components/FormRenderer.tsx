@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  computePageScoreSummary,
   getLocalNowParts,
   splitDateTimeValue,
   splitNodesIntoPages,
@@ -13,10 +14,12 @@ import {
   PixelArrowRightIcon,
   PixelClipIcon,
   PixelImageIcon,
+  PixelLockIcon,
   PixelRefreshIcon,
   PixelStarIcon,
   PixelStarOutlineIcon,
 } from "./PixelIcons";
+import ScoreWheelPicker from "./ScoreWheelPicker";
 
 interface FormRendererProps {
   nodes: FormFieldNode[];
@@ -31,7 +34,7 @@ interface FormRendererProps {
 
 function resolveAccentColor(color?: string): string {
   if (color && /^#[0-9a-fA-F]{6}$/.test(color)) return color;
-  return "#1d4ed8";
+  return "#0f5132";
 }
 
 export default function FormRenderer({
@@ -148,6 +151,82 @@ export default function FormRenderer({
         const isDateTimeType =
           node.type === "date" || node.type === "time" || node.type === "date_time";
 
+        if (node.type === "score_total") {
+          const summary = computePageScoreSummary(visibleNodes, answers);
+          const hasManualOverride =
+            Boolean(node.allowManualOverride) &&
+            val !== undefined &&
+            val !== null &&
+            val !== "" &&
+            !Number.isNaN(Number(val));
+          const displayTotal = hasManualOverride ? Number(val) : summary.total;
+          const pct =
+            summary.maxTotal > 0
+              ? Math.min(100, Math.round((displayTotal / summary.maxTotal) * 100))
+              : 0;
+
+          return (
+            <div
+              key={node.id}
+              className="fr-question-card fr-total-score-card"
+              style={{ borderLeft: `6px solid ${accent}` }}
+            >
+              <div className="fr-question-top">
+                <span className="fr-question-label">{node.label}</span>
+                <span className="pixel-stamp-badge live">
+                  {hasManualOverride ? "MANUAL" : "AUTO"}
+                </span>
+              </div>
+              {node.helpText && <span className="fr-help-text">{node.helpText}</span>}
+
+              <div className="fr-total-score-hero">
+                <span className="fr-total-score-num" style={{ color: accent }}>
+                  {displayTotal}
+                </span>
+                <span className="fr-total-score-den">/ {summary.maxTotal || 100}</span>
+              </div>
+
+              <div className="fr-page-progress-track">
+                <div
+                  className="fr-page-progress-fill"
+                  style={{ width: `${pct}%`, backgroundColor: accent }}
+                />
+              </div>
+
+              <div className="row-between" style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
+                <span>
+                  {summary.pendingCount > 0
+                    ? `Pending scores: ${summary.pendingCount}`
+                    : `All ${summary.totalScorable} criteria scored`}
+                </span>
+                <strong>{pct}%</strong>
+              </div>
+
+              {node.allowManualOverride && !disabled && (
+                <div className="fr-manual-override-row">
+                  <label htmlFor={`fld-${node.id}`} className="fr-mini-label">
+                    Manual Override (Leave empty for Auto)
+                  </label>
+                  <input
+                    id={`fld-${node.id}`}
+                    type="number"
+                    min={0}
+                    max={summary.maxTotal || 100}
+                    placeholder={`Auto (${summary.total})`}
+                    value={hasManualOverride ? String(val) : ""}
+                    onChange={(e) =>
+                      onChange(
+                        node.id,
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          );
+        }
+
         return (
           <div key={node.id} className="fr-question-card field">
             <div className="fr-question-top">
@@ -157,6 +236,17 @@ export default function FormRenderer({
                   {node.required && <span className="fr-req-mark"> *</span>}
                 </span>
               </label>
+
+              {node.type === "score_wheel" && (
+                <span className="pixel-tag-pill">Max. {node.maxMarks ?? 25}</span>
+              )}
+
+              {node.readOnly && (
+                <span className="pixel-tag-pill" title="Verified / Fixed Field">
+                  <PixelLockIcon size={10} />
+                  <span>Fixed</span>
+                </span>
+              )}
 
               {isDateTimeType && !disabled && (
                 <button
@@ -185,15 +275,38 @@ export default function FormRenderer({
               <span className="fr-help-text">{node.helpText}</span>
             )}
 
+            {node.type === "score_wheel" && (
+              <ScoreWheelPicker
+                id={`fld-${node.id}`}
+                value={
+                  val === undefined || val === null || val === ""
+                    ? null
+                    : Number(val)
+                }
+                maxMarks={node.maxMarks ?? 25}
+                accentColor={accent}
+                disabled={disabled}
+                onChange={(nextScore) => onChange(node.id, nextScore)}
+              />
+            )}
+
             {node.type === "short_text" && (
               <input
                 id={`fld-${node.id}`}
                 type="text"
                 required={node.required}
                 disabled={disabled}
+                readOnly={Boolean(node.readOnly)}
+                style={
+                  node.readOnly
+                    ? { background: "var(--surface-muted)", color: "var(--ink-secondary)", fontWeight: 700 }
+                    : undefined
+                }
                 placeholder={node.placeholder ?? "Your answer"}
                 value={strVal}
-                onChange={(e) => onChange(node.id, e.target.value)}
+                onChange={(e) => {
+                  if (!node.readOnly) onChange(node.id, e.target.value);
+                }}
               />
             )}
 
@@ -203,9 +316,17 @@ export default function FormRenderer({
                 type="email"
                 required={node.required}
                 disabled={disabled}
+                readOnly={Boolean(node.readOnly)}
+                style={
+                  node.readOnly
+                    ? { background: "var(--surface-muted)", color: "var(--ink-secondary)", fontWeight: 700 }
+                    : undefined
+                }
                 placeholder={node.placeholder ?? "name@company.com"}
                 value={strVal}
-                onChange={(e) => onChange(node.id, e.target.value)}
+                onChange={(e) => {
+                  if (!node.readOnly) onChange(node.id, e.target.value);
+                }}
               />
             )}
 

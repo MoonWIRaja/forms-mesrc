@@ -14,6 +14,7 @@ import {
   PixelShieldAlertIcon,
 } from "@/components/PixelIcons";
 import {
+  computePageScoreSummary,
   getFormBackgroundPatternCss,
   getFormBackgroundPatternSize,
   getLocalNowParts,
@@ -27,19 +28,27 @@ import { getSupabase, type UserProfile } from "@/lib/supabase";
 
 function buildDefaultAnswers(
   fieldNodes: FormFieldNode[],
-  userEmail?: string,
+  userProf?: UserProfile | null,
 ): Record<string, unknown> {
   const nowParts = getLocalNowParts();
   const initial: Record<string, unknown> = {};
   for (const n of fieldNodes) {
-    if (n.type === "date_time" && n.defaultToNow !== false) {
+    if (n.defaultValue !== undefined && n.defaultValue !== "") {
+      initial[n.id] = n.defaultValue;
+    } else if (n.autoFillProfile === "display_name" && userProf?.display_name) {
+      initial[n.id] = userProf.display_name;
+    } else if (n.autoFillProfile === "phone" && userProf?.phone) {
+      initial[n.id] = userProf.phone;
+    } else if (n.autoFillProfile === "email" && userProf?.email) {
+      initial[n.id] = userProf.email;
+    } else if (n.type === "date_time" && n.defaultToNow !== false) {
       initial[n.id] = nowParts.dateTime;
     } else if (n.type === "time" && n.defaultToNow !== false) {
       initial[n.id] = nowParts.time;
     } else if (n.type === "date" && n.defaultToNow) {
       initial[n.id] = nowParts.date;
-    } else if (n.type === "email" && userEmail) {
-      initial[n.id] = userEmail;
+    } else if (n.type === "email" && userProf?.email) {
+      initial[n.id] = userProf.email;
     }
   }
   return initial;
@@ -152,7 +161,7 @@ export default function FillFormPage() {
         setNodes(parsedNodes);
         setTheme(parsedTheme);
 
-        const initialDefaults = buildDefaultAnswers(parsedNodes, userProf?.email);
+        const initialDefaults = buildDefaultAnswers(parsedNodes, userProf);
 
         if (existingDraft) {
           const { data: dRow } = await supabase
@@ -195,9 +204,32 @@ export default function FillFormPage() {
     try {
       const supabase = getSupabase();
       const duration = Math.floor((Date.now() - startMsRef.current) / 1000);
+
+      // Bake auto-calculated page score_total values into payload before saving
+      const preparedAnswers: Record<string, unknown> = { ...answers };
+      const allPages = splitNodesIntoPages(nodes, theme);
+      for (const pg of allPages) {
+        const pgNodes = pg.items.map((it) => it.node);
+        const summary = computePageScoreSummary(pgNodes, preparedAnswers);
+        for (const n of pgNodes) {
+          if (n.type === "score_total") {
+            const existing = preparedAnswers[n.id];
+            const hasManual =
+              Boolean(n.allowManualOverride) &&
+              existing !== undefined &&
+              existing !== null &&
+              existing !== "" &&
+              !Number.isNaN(Number(existing));
+            if (!hasManual) {
+              preparedAnswers[n.id] = summary.total;
+            }
+          }
+        }
+      }
+
       const { data, error: rpcErr } = await supabase.rpc("submit_form_response", {
         p_form_id: form.id,
-        p_answers: answers,
+        p_answers: preparedAnswers,
         p_service_id: null,
         p_duration_seconds: duration,
         p_as_draft: asDraft,
@@ -253,6 +285,10 @@ export default function FillFormPage() {
             if (tData && (tData as { ticket_id?: string }).ticket_id) {
               setCreatedTicketId((tData as { ticket_id: string }).ticket_id);
             }
+            // Trigger Edge Function to deliver queued complaint emails to authorized admins
+            supabase.functions.invoke("send-outbox-emails").catch(() => {
+              /* Edge Function optional until deployed */
+            });
           } catch (ticketErr) {
             console.warn("Ticket auto-link warning:", ticketErr);
           }
@@ -299,7 +335,7 @@ export default function FillFormPage() {
       : category === "staff_complaints"
         ? "Staff Complaints"
         : "Company Forms";
-  const primaryAccent = theme.primaryColor || "#1d4ed8";
+  const primaryAccent = theme.primaryColor || "#0f5132";
   const pages = splitNodesIntoPages(nodes, theme);
   const isMultiPage = pages.length > 1;
   const clampedPageIdx = Math.min(Math.max(0, activePageIdx), pages.length - 1);
@@ -314,7 +350,8 @@ export default function FillFormPage() {
         node.type === "heading" ||
         node.type === "instructions" ||
         node.type === "section" ||
-        node.type === "image"
+        node.type === "image" ||
+        node.type === "score_total"
       ) {
         continue;
       }
@@ -511,7 +548,18 @@ export default function FillFormPage() {
               activePageIndex={clampedPageIdx}
               onPageChange={handleNavigatePage}
               onChange={(fid, val, file) => {
-                setAnswers((prev) => ({ ...prev, [fid]: val }));
+                setAnswers((prev) => {
+                  const next = { ...prev, [fid]: val };
+                  const changedNode = nodes.find((n) => n.id === fid);
+                  if (changedNode?.syncKey) {
+                    for (const peer of nodes) {
+                      if (peer.syncKey === changedNode.syncKey && peer.id !== fid) {
+                        next[peer.id] = val;
+                      }
+                    }
+                  }
+                  return next;
+                });
                 setPendingFiles((prev) => {
                   const next = { ...prev };
                   if (file) next[fid] = file;

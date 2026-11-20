@@ -9,46 +9,51 @@
    ============================================================================ */
 
 :root {
-  /* Layer 0: Studio Matboard Canvas */
-  --bg: #efece6;
-  --bg-accent: #e5e0d6;
+  /* Layer 0: Kayangan Bumi Medical — Warm Cream Cardstock Canvas */
+  --bg: #f3efe4;
+  --bg-accent: #e8e1d1;
 
   /* Layer 1, 2, 3 Cardstock Surfaces */
-  --paper-back: #e2ddd4;
-  --paper-back-edge: #c9c2b6;
-  --surface: #fdfcfa;
-  --surface-muted: #f5f2ec;
+  --paper-back: #e4dccb;
+  --paper-back-edge: #c9beaa;
+  --surface: #fdfcf8;
+  --surface-muted: #f5f1e6;
   --surface-elevated: #ffffff;
-  --surface-hover: #efeae1;
+  --surface-hover: #efe9db;
 
-  /* Architectural Ink & Cut Edges */
-  --ink: #18181b;
-  --ink-secondary: #3f3f46;
-  --muted: #68645e;
-  --border: #d6d0c4;
-  --border-subtle: #e8e3d9;
-  --border-strong: #b8b0a2;
+  /* Architectural Forest-Charcoal Ink & Cut Edges */
+  --ink: #12231a;
+  --ink-secondary: #2e4337;
+  --muted: #5d6e63;
+  --border: #d5ccb8;
+  --border-subtle: #e7e1d3;
+  --border-strong: #b6aa92;
 
-  /* Tactile Paper Accents */
-  --primary: #18181b;
-  --primary-hover: #27272a;
-  --primary-contrast: #fdfcfa;
+  /* Kayangan Bumi Medical Official Logo Accents (Deep Forest Green & Metallic Gold) */
+  --primary: #0f5132;
+  --primary-hover: #0a3b24;
+  --primary-contrast: #fdfcf8;
 
-  --accent: #1d4ed8;
-  --accent-hover: #1e40af;
-  --accent-soft: #e8f0fe;
-  --accent-back: #c7d9fc;
-  --accent-border: #93b4f8;
+  --accent: #0f5132;
+  --accent-hover: #0a3b24;
+  --accent-soft: #e6f4ec;
+  --accent-back: #bfe2ce;
+  --accent-border: #7fc09b;
 
-  --amber: #b45309;
-  --amber-soft: #fef3c7;
-  --amber-back: #fde08d;
-  --amber-border: #f59e0b;
+  --gold: #c59333;
+  --gold-hover: #a77922;
+  --gold-soft: #fbf4e2;
+  --gold-border: #e2c074;
+
+  --amber: #a77922;
+  --amber-soft: #fbf4e2;
+  --amber-back: #f5dfb0;
+  --amber-border: #c59333;
 
   /* Semantic Status Cardstock */
-  --ok-bg: #ecfdf5;
-  --ok-text: #065f46;
-  --ok-border: #6ee7b7;
+  --ok-bg: #e8f5ee;
+  --ok-text: #0f5132;
+  --ok-border: #7fc09b;
   --err-bg: #fef2f2;
   --err-text: #991b1b;
   --err-border: #fca5a5;
@@ -63,21 +68,21 @@
   --shadow-cut-sm:
     0 1px 0 #ffffff inset,
     0 2px 0 var(--paper-back-edge),
-    0 4px 10px rgba(24, 24, 27, 0.06);
+    0 4px 10px rgba(18, 35, 26, 0.06);
 
   --shadow-paper-stack:
     0 1px 0 #ffffff inset,
-    0 1px 2px rgba(24, 24, 27, 0.05),
+    0 1px 2px rgba(18, 35, 26, 0.05),
     4px 4px 0 var(--paper-back),
     4px 4px 0 1px var(--paper-back-edge),
-    0 12px 24px -6px rgba(24, 24, 27, 0.08);
+    0 12px 24px -6px rgba(18, 35, 26, 0.08);
 
   --shadow-paper-stack-hover:
     0 1px 0 #ffffff inset,
-    0 4px 8px rgba(24, 24, 27, 0.06),
+    0 4px 8px rgba(18, 35, 26, 0.06),
     7px 7px 0 var(--paper-back),
     7px 7px 0 1px var(--paper-back-edge),
-    0 20px 32px -8px rgba(24, 24, 27, 0.12);
+    0 20px 32px -8px rgba(18, 35, 26, 0.12);
 }
 
 * {
@@ -761,21 +766,21 @@ a:hover {
 }
 
 .forms-icon-box {
-  background: #eff6ff;
-  color: #2563eb;
-  border-color: #bfdbfe;
+  background: #e6f4ec;
+  color: #0f5132;
+  border-color: #95c9ad;
 }
 
 .complaints-icon-box {
-  background: #fffbeb;
-  color: #d97706;
-  border-color: #fde68a;
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fca5a5;
 }
 
 .voting-icon-box {
-  background: #ecfdf5;
-  color: #059669;
-  border-color: #a7f3d0;
+  background: #fbf4e2;
+  color: #a77922;
+  border-color: #e2c074;
 }
 
 .app-choice-info {
@@ -998,7 +1003,15 @@ a:hover {
 
 .brand-mark-icon {
   flex-shrink: 0;
-  border-radius: 9px;
+  border-radius: 10px;
+}
+
+.kbm-logo-frame {
+  background: #ffffff;
+  border: 1.5px solid var(--gold-border);
+  padding: 3px;
+  box-shadow: 0 2px 0 var(--paper-back-edge);
+  overflow: hidden;
 }
 
 .brand-mark-text {
@@ -1259,13 +1272,13 @@ tbody tr:hover {
   background: var(--accent);
   color: #ffffff;
   border-color: var(--accent-hover);
-  box-shadow: 0 2.5px 0 #172554, 0 4px 10px rgba(29, 78, 216, 0.18);
+  box-shadow: 0 2.5px 0 #093520, 0 4px 10px rgba(15, 81, 50, 0.2);
 }
 
 .btn-accent:hover:not(:disabled) {
   background: var(--accent-hover);
   color: #ffffff;
-  box-shadow: 0 3.5px 0 #172554, 0 6px 14px rgba(29, 78, 216, 0.24);
+  box-shadow: 0 3.5px 0 #093520, 0 6px 14px rgba(15, 81, 50, 0.26);
 }
 
 .btn-secondary {
@@ -1343,7 +1356,7 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.14);
+  box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.14);
 }
 
 /* ============================================================================
@@ -1992,8 +2005,8 @@ textarea:focus {
 
 .canvas-node-card.selected {
   border-color: var(--accent);
-  background: #fcfdfe;
-  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.18), 0 4px 12px rgba(29, 78, 216, 0.08);
+  background: #fbfaf5;
+  box-shadow: 0 0 0 2px rgba(15, 81, 50, 0.2), 0 4px 12px rgba(15, 81, 50, 0.09);
 }
 
 .node-selection-badge {
@@ -4456,19 +4469,19 @@ textarea:focus {
 }
 
 .ios-install-app-btn {
-  border: none;
+  border: 1.5px solid var(--ink);
   border-radius: 999px;
-  background: #2563eb;
+  background: var(--primary);
   color: #ffffff;
   font-size: 0.72rem;
   font-weight: 700;
-  padding: 0.24rem 0.65rem;
+  padding: 0.24rem 0.68rem;
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
 
 .ios-install-app-btn:hover {
-  background: #1d4ed8;
+  background: var(--primary-hover);
 }
 
 .ios-sheet-device-hint {
@@ -4548,8 +4561,8 @@ textarea:focus {
 }
 
 .ios-sheet-field:focus-within {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.14);
 }
 
 .ios-sheet-field.readonly {
@@ -4613,26 +4626,26 @@ textarea:focus {
 }
 
 .ios-sheet-btn.cancel {
-  background: #ffffff;
-  border: 1.5px solid #cbd5e1;
-  color: #2563eb;
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  color: var(--primary);
 }
 
 .ios-sheet-btn.cancel:hover:not(:disabled) {
-  background: #f8fafc;
-  border-color: #94a3b8;
+  background: var(--surface-muted);
+  border-color: var(--primary);
 }
 
 .ios-sheet-btn.primary {
-  background: #2563eb;
-  border: 1.5px solid #2563eb;
+  background: var(--primary);
+  border: 1.5px solid var(--ink);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 3px 0 var(--ink), 0 6px 14px rgba(15, 81, 50, 0.24);
 }
 
 .ios-sheet-btn.primary:hover:not(:disabled) {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
+  background: var(--primary-hover);
+  border-color: var(--ink);
 }
 
 .pixel-media-grid {
@@ -5376,5 +5389,302 @@ textarea:focus {
   gap: 0.5rem;
   padding-top: 0.35rem;
 }
+
+/* ==========================================================================
+   SCORE WHEEL PICKER (COMPACT 3-ROW MOBILE SCROLL DRUM + STEPPERS)
+   ========================================================================== */
+.sw-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.sw-trigger-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.sw-display-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.9rem;
+  background: var(--surface-elevated);
+  border: 2px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 2px 2px 0 var(--paper-back-edge);
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease, transform 0.12s ease;
+}
+
+.sw-display-btn:hover:not(:disabled) {
+  border-color: var(--ink);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--paper-back-edge);
+}
+
+.sw-display-btn.scored {
+  background: #fbfaf5;
+}
+
+.sw-display-left {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.sw-value-big {
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.sw-max-slash {
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.sw-action-hint {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--ink-secondary);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-strong);
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+}
+
+.sw-stepper-group {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.sw-step-btn {
+  width: 42px;
+  min-width: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-elevated);
+  border: 2px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 2px 2px 0 var(--paper-back-edge);
+  color: var(--ink);
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.sw-step-btn:hover:not(:disabled) {
+  border-color: var(--ink);
+  background: var(--surface-tint);
+  transform: translate(-1px, -1px);
+}
+
+.sw-step-btn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
+.sw-step-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+/* Compact 3-Row Scroll Drum (126px tall, center 42px band) */
+.sw-drum-drawer {
+  position: relative;
+  height: 126px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--surface-elevated);
+  box-shadow: 3px 3px 0 var(--paper-back-edge);
+  overflow: hidden;
+  animation: paperFrontLayerIn 0.16s ease both;
+}
+
+.sw-drum-scroller {
+  height: 126px;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  position: relative;
+  z-index: 2;
+}
+
+.sw-drum-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.sw-drum-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 42px;
+  scroll-snap-align: center;
+  background: transparent;
+  border: none;
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: font-size 0.12s ease, color 0.12s ease, font-weight 0.12s ease;
+}
+
+.sw-drum-item.selected {
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.sw-drum-center-band {
+  position: absolute;
+  top: 42px;
+  left: 0;
+  right: 0;
+  height: 42px;
+  border-top: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  background: rgba(15, 81, 50, 0.08);
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 1rem;
+}
+
+.sw-drum-unit {
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.sw-drum-fade-top,
+.sw-drum-fade-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 38px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.sw-drum-fade-top {
+  top: 0;
+  background: linear-gradient(to bottom, var(--surface-elevated) 10%, rgba(251, 249, 242, 0) 100%);
+}
+
+.sw-drum-fade-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--surface-elevated) 10%, rgba(251, 249, 242, 0) 100%);
+}
+
+/* ==========================================================================
+   AUTO FINAL SCORE CARD (SCORE_TOTAL)
+   ========================================================================== */
+.fr-total-score-card {
+  border: 2px solid var(--ink);
+  border-left-width: 6px;
+  background: linear-gradient(180deg, #fcfaf3 0%, #f5efe1 100%);
+  gap: 0.65rem;
+}
+
+.fr-total-score-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.25rem 0;
+}
+
+.fr-total-score-num {
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  font-size: 2.35rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.fr-total-score-den {
+  font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.fr-manual-override-row {
+  border-top: 1.5px dashed var(--border-strong);
+  padding-top: 0.65rem;
+  margin-top: 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.fr-mini-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--ink-secondary);
+}
+
+/* ==========================================================================
+   ADMIN PERMISSIONS MODAL & REPORT BREAKDOWN CARDS
+   ========================================================================== */
+.perm-group-card {
+  background: var(--surface-muted);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.perm-group-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.perm-check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.perm-check-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 0.12rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.admin-page-group-card {
+  background: var(--surface-elevated);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  box-shadow: 2px 2px 0 var(--paper-back-edge);
+}
+
 
 

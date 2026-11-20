@@ -61,7 +61,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="center-stage">
-        <ChunkLoader title="Forms MESRC" subtitle="Assembling papercraft workspace..." />
+        <ChunkLoader title="Kayangan Bumi Medical" subtitle="Assembling papercraft workspace..." />
       </div>
     );
   }
@@ -173,7 +173,7 @@ export default function HomePage() {
           <div className="app-choice-info">
             <h2 className="app-choice-title">Voting &amp; Evaluation</h2>
             <p className="app-choice-desc">
-              Finalis MCEP judging, presentation star ratings &amp; polls
+              Competition judging, speaker &amp; MC scoring, and evaluations
             </p>
           </div>
           <div className="app-choice-chevron" aria-hidden="true">

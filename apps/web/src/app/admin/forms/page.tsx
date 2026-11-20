@@ -54,6 +54,7 @@ import {
   splitNodesIntoPages,
   type BackgroundPattern,
   type FieldType,
+  type FormAdminAccessRow,
   type FormCategory,
   type FormFieldNode,
   type FormKind,
@@ -87,6 +88,8 @@ const FIELD_TYPE_GROUPS: {
   {
     group: "Choices & Judging",
     items: [
+      { type: "score_wheel", label: "Score Wheel (/Max Marks)" },
+      { type: "score_total", label: "Final Score (Auto Total)" },
       { type: "dropdown", label: "Dropdown Select" },
       { type: "single_choice", label: "Multiple Choice (Radio)" },
       { type: "multiple_choice", label: "Checkboxes" },
@@ -111,16 +114,19 @@ const FLAT_FIELD_LABELS: Record<FieldType, string> = Object.fromEntries(
 ) as Record<FieldType, string>;
 
 const THEME_ACCENTS = [
-  { name: "Royal Blue", hex: "#1d4ed8" },
+  { name: "KBM Emerald", hex: "#0f5132" },
+  { name: "KBM Gold", hex: "#c59333" },
   { name: "Teal Emerald", hex: "#0f766e" },
-  { name: "Deep Violet", hex: "#7c3aed" },
+  { name: "Royal Blue", hex: "#1d4ed8" },
   { name: "Warm Amber", hex: "#b45309" },
   { name: "Rose Crimson", hex: "#be123c" },
-  { name: "Sienna Brown", hex: "#7c2d12" },
-  { name: "Obsidian Slate", hex: "#18181b" },
+  { name: "Forest Charcoal", hex: "#12231a" },
 ];
 
-function computeDefaultAnswers(fieldNodes: FormFieldNode[]): Record<string, unknown> {
+function computeDefaultAnswers(
+  fieldNodes: FormFieldNode[],
+  prof?: UserProfile | null,
+): Record<string, unknown> {
   const nowParts = getLocalNowParts();
   const initial: Record<string, unknown> = {};
   for (const n of fieldNodes) {
@@ -130,6 +136,16 @@ function computeDefaultAnswers(fieldNodes: FormFieldNode[]): Record<string, unkn
       initial[n.id] = nowParts.date;
     } else if (n.type === "time" && n.defaultToNow !== false) {
       initial[n.id] = nowParts.time;
+    } else if (n.defaultValue) {
+      initial[n.id] = n.defaultValue;
+    } else if (n.autoFillProfile && prof) {
+      if (n.autoFillProfile === "display_name" && prof.display_name) {
+        initial[n.id] = prof.display_name;
+      } else if (n.autoFillProfile === "phone" && prof.phone) {
+        initial[n.id] = prof.phone;
+      } else if (n.autoFillProfile === "email" && prof.email) {
+        initial[n.id] = prof.email;
+      }
     }
   }
   return initial;
@@ -165,10 +181,23 @@ export default function AdminFormBuilderPage() {
   ]);
   const [theme, setTheme] = useState<FormTheme>({
     category: "company_forms",
-    primaryColor: "#1d4ed8",
-    backgroundColor: "#efece6",
+    primaryColor: "#0f5132",
+    backgroundColor: "#f3efe4",
     backgroundPattern: "matboard_dots",
   });
+
+  // Per-Form Admin Access & Email Notification State
+  const [adminAccounts, setAdminAccounts] = useState<
+    { id: string; email: string; display_name: string | null }[]
+  >([]);
+  const [restrictAdminAccess, setRestrictAdminAccess] = useState(false);
+  const [formAccessMap, setFormAccessMap] = useState<
+    Record<
+      string,
+      { can_edit: boolean; can_view_reports: boolean; notify_on_submit: boolean }
+    >
+  >({});
+  const [accessBusy, setAccessBusy] = useState(false);
 
   // Navigation & Editor UI State
   const [activeTab, setActiveTab] = useState<"questions" | "preview" | "catalog" | "settings">("questions");
@@ -324,13 +353,24 @@ export default function AdminFormBuilderPage() {
         const { data: sess } = await supabase.auth.getSession();
         const uid = sess.session?.user?.id;
         if (!uid) return;
-        const [{ data: prof }, { data: sRows }] = await Promise.all([
+        const [{ data: prof }, { data: sRows }, { data: adminRows }] = await Promise.all([
           supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
           supabase.from("services").select("*").order("sort_order", { ascending: true }),
+          supabase
+            .from("profiles")
+            .select("id,email,display_name")
+            .eq("role", "admin")
+            .eq("is_active", true)
+            .order("email", { ascending: true }),
         ]);
         if (!active) return;
-        setProfile((prof as UserProfile | null) ?? null);
+        const loadedProfile = (prof as UserProfile | null) ?? null;
+        setProfile(loadedProfile);
         setServices((sRows as ServiceRow[] | null) ?? []);
+        setAdminAccounts(
+          (adminRows as { id: string; email: string; display_name: string | null }[] | null) ??
+            [],
+        );
         await loadCatalogAndThemes();
 
         const targetId =
@@ -344,7 +384,7 @@ export default function AdminFormBuilderPage() {
             .eq("id", targetId)
             .maybeSingle();
           if (targetForm && active) {
-            await applySelectExistingForm(targetForm as FormRow);
+            await applySelectExistingForm(targetForm as FormRow, loadedProfile);
           }
         } else {
           // Check if there is a locally auto-saved unsaved draft
@@ -364,6 +404,7 @@ export default function AdminFormBuilderPage() {
     return () => {
       active = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function restoreLocalAutosave(targetFormId: string | null) {
@@ -437,7 +478,7 @@ export default function AdminFormBuilderPage() {
     }
   }
 
-  async function applySelectExistingForm(f: FormRow) {
+  async function applySelectExistingForm(f: FormRow, profOverride?: UserProfile | null) {
     setBusy(true);
     setError(null);
     setInfo(null);
@@ -454,6 +495,29 @@ export default function AdminFormBuilderPage() {
         supabase.from("form_email_allowlist").select("email").eq("form_id", f.id),
       ]);
 
+      // Load per-form admin ACL gracefully (in case Phase 7 SQL migration isn't applied yet)
+      const nextAccessMap: Record<
+        string,
+        { can_edit: boolean; can_view_reports: boolean; notify_on_submit: boolean }
+      > = {};
+      try {
+        const { data: accessRows, error: accErr } = await supabase
+          .from("form_admin_access")
+          .select("*")
+          .eq("form_id", f.id);
+        if (!accErr && accessRows) {
+          for (const row of accessRows as FormAdminAccessRow[]) {
+            nextAccessMap[row.admin_id] = {
+              can_edit: Boolean(row.can_edit),
+              can_view_reports: Boolean(row.can_view_reports),
+              notify_on_submit: Boolean(row.notify_on_submit),
+            };
+          }
+        }
+      } catch {
+        // Ignore if table not created yet
+      }
+
       skipNextDirtyRef.current = true;
       setSelectedFormId(f.id);
       setTitle(f.title);
@@ -462,6 +526,8 @@ export default function AdminFormBuilderPage() {
       setKind(f.kind);
       setAllowSaveDraft(f.allow_save_draft);
       setAllowAppeal(f.allow_appeal);
+      setRestrictAdminAccess(Boolean(f.restrict_admin_access));
+      setFormAccessMap(nextAccessMap);
       setSelectedServices(
         ((fSvcs as { service_id: string }[] | null) ?? []).map((x) => x.service_id),
       );
@@ -473,15 +539,15 @@ export default function AdminFormBuilderPage() {
       const resolvedCat = resolveFormCategory(f, loadedTheme);
       setCategory(resolvedCat);
       setTheme({
-        primaryColor: "#1d4ed8",
-        backgroundColor: "#efece6",
+        primaryColor: "#0f5132",
+        backgroundColor: "#f3efe4",
         backgroundPattern: "matboard_dots",
         ...loadedTheme,
         category: resolvedCat,
       });
       setNodes(loadedNodes);
       setSelectedNodeId(loadedNodes[0]?.id ?? null);
-      setPreviewAnswers(computeDefaultAnswers(loadedNodes));
+      setPreviewAnswers(computeDefaultAnswers(loadedNodes, profOverride ?? profile));
       setIsDirty(false);
       setActiveTab("questions");
       setInfo(`Loaded "${f.title}" in Studio.`);
@@ -492,11 +558,68 @@ export default function AdminFormBuilderPage() {
     }
   }
 
+  async function handleSaveFormAccess() {
+    if (!selectedFormId) {
+      setError("Save this form as a Draft first before assigning per-form Admin access rules.");
+      return;
+    }
+    setAccessBusy(true);
+    setError(null);
+    setInfo(null);
+    try {
+      const supabase = getSupabase();
+      const entries = Object.entries(formAccessMap)
+        .filter(
+          ([, v]) => v.can_edit || v.can_view_reports || v.notify_on_submit,
+        )
+        .map(([adminId, v]) => ({
+          admin_id: adminId,
+          can_edit: v.can_edit,
+          can_view_reports: v.can_view_reports,
+          notify_on_submit: v.notify_on_submit,
+        }));
+
+      const { error: rpcErr } = await supabase.rpc("set_form_admin_access", {
+        p_form_id: selectedFormId,
+        p_restrict_admin_access: restrictAdminAccess,
+        p_entries: entries,
+      });
+      if (rpcErr) throw rpcErr;
+      setInfo("Saved per-form Admin access & email alert routing rules.");
+      await loadCatalogAndThemes();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `${err.message} (Ensure Phase 7 SQL migration has been run in Supabase.)`
+          : "Failed to save form admin access rules.",
+      );
+    } finally {
+      setAccessBusy(false);
+    }
+  }
+
+  function handlePreviewAnswerChange(fid: string, val: unknown) {
+    const changedNode = nodes.find((n) => n.id === fid);
+    setPreviewAnswers((prev) => {
+      const next: Record<string, unknown> = { ...prev, [fid]: val };
+      if (changedNode?.syncKey) {
+        for (const n of nodes) {
+          if (n.syncKey === changedNode.syncKey && n.id !== fid) {
+            next[n.id] = val;
+          }
+        }
+      }
+      return next;
+    });
+  }
+
   function applyLoadTemplate(tplKey: string) {
     const tpl = FORM_TEMPLATES.find((t) => t.key === tplKey);
     if (!tpl) return;
     skipNextDirtyRef.current = true;
     setSelectedFormId(null);
+    setRestrictAdminAccess(false);
+    setFormAccessMap({});
     setTitle(tpl.title);
     seqRef.current += 1;
     setSlug(`${tpl.slug}-${forms.length + seqRef.current}`);
@@ -510,8 +633,8 @@ export default function AdminFormBuilderPage() {
       ratingLabels: n.ratingLabels ? { ...n.ratingLabels } : undefined,
     }));
     const nextTheme: FormTheme = {
-      primaryColor: "#1d4ed8",
-      backgroundColor: "#efece6",
+      primaryColor: "#0f5132",
+      backgroundColor: "#f3efe4",
       backgroundPattern: "matboard_dots",
       submissionsClosed: false,
       ...(tpl.theme ?? {}),
@@ -520,7 +643,7 @@ export default function AdminFormBuilderPage() {
     setTheme(nextTheme);
     setNodes(cloned);
     setSelectedNodeId(cloned[0]?.id ?? null);
-    setPreviewAnswers(computeDefaultAnswers(cloned));
+    setPreviewAnswers(computeDefaultAnswers(cloned, profile));
     setIsDirty(true);
     setActiveTab("questions");
     setInfo(`Loaded template: ${tpl.name}`);
@@ -554,6 +677,12 @@ export default function AdminFormBuilderPage() {
       patch.minRating = node.minRating ?? 1;
       patch.maxRating = node.maxRating ?? 10;
       patch.ratingLabels = node.ratingLabels ?? { low: "Low", high: "High" };
+    }
+    if (newType === "score_wheel") {
+      patch.maxMarks = node.maxMarks ?? 25;
+    }
+    if (newType === "score_total") {
+      patch.allowManualOverride = node.allowManualOverride ?? false;
     }
     updateNode(node.id, patch);
     setOpenTypeMenuNodeId(null);
@@ -714,16 +843,22 @@ export default function AdminFormBuilderPage() {
             ? "Instructions for applicant"
             : type === "date_time"
               ? "Date & Time"
-              : type === "star_rating"
-                ? "Rating Criterion"
-                : type === "linear_scale"
-                  ? "Score Scale (1–10)"
-                  : type === "image"
-                    ? "Form Graphic / Poster"
-                    : "Untitled Question",
-      required: false,
+              : type === "score_wheel"
+                ? "Scoring Criterion"
+                : type === "score_total"
+                  ? "Final Score — Total Marks Obtained"
+                  : type === "star_rating"
+                    ? "Rating Criterion"
+                    : type === "linear_scale"
+                      ? "Score Scale (1–10)"
+                      : type === "image"
+                        ? "Form Graphic / Poster"
+                        : "Untitled Question",
+      required: type === "score_wheel",
       options: defaultOptions,
       defaultToNow: type === "date_time" || type === "time" ? true : undefined,
+      maxMarks: type === "score_wheel" ? 25 : undefined,
+      allowManualOverride: type === "score_total" ? false : undefined,
       maxRating: type === "star_rating" ? 5 : type === "linear_scale" ? 10 : undefined,
       minRating: type === "linear_scale" ? 1 : undefined,
       ratingLabels:
@@ -1023,14 +1158,14 @@ export default function AdminFormBuilderPage() {
   }
 
   const currentFormRecord = forms.find((f) => f.id === selectedFormId);
-  const primaryAccent = theme.primaryColor || "#1d4ed8";
+  const primaryAccent = theme.primaryColor || "#0f5132";
   const isPublishedOpen =
     currentFormRecord?.state === "published" && !theme.submissionsClosed;
   const isPublishedPaused =
     currentFormRecord?.state === "published" && Boolean(theme.submissionsClosed);
 
   const stageBgStyle: React.CSSProperties = {
-    backgroundColor: theme.backgroundColor || "#efece6",
+    backgroundColor: theme.backgroundColor || "#f3efe4",
     backgroundImage: getFormBackgroundPatternCss(theme.backgroundPattern),
     backgroundSize: getFormBackgroundPatternSize(theme.backgroundPattern),
   };
@@ -1091,7 +1226,7 @@ export default function AdminFormBuilderPage() {
             <span>Exit</span>
           </button>
 
-          <div className="gf-brand-badge" title="Forms MESRC Paper Studio">
+          <div className="gf-brand-badge" title="Kayangan Bumi Medical Form Studio">
             <BrandLogo size="sm" />
           </div>
 
@@ -1155,7 +1290,7 @@ export default function AdminFormBuilderPage() {
               className={`gf-tab-btn ${activeTab === "preview" ? "active" : ""}`}
               onClick={() => {
                 setPreviewAnswers((prev) => ({
-                  ...computeDefaultAnswers(nodes),
+                  ...computeDefaultAnswers(nodes, profile),
                   ...prev,
                 }));
                 setActiveTab("preview");
@@ -1848,7 +1983,7 @@ export default function AdminFormBuilderPage() {
                         />
 
                         {(node.type === "short_text" || node.type === "email" || node.type === "number") && (
-                          <div className="gf-inline-mock-input stack" style={{ gap: "0.4rem" }}>
+                          <div className="gf-inline-mock-input stack" style={{ gap: "0.55rem" }}>
                             <input
                               type="text"
                               value={node.placeholder ?? ""}
@@ -1856,11 +1991,151 @@ export default function AdminFormBuilderPage() {
                               placeholder={`Placeholder hint (e.g. Enter ${node.label.toLowerCase()})...`}
                               className="gf-mock-input-field"
                             />
-                            {node.type === "email" && (
-                              <span className="notice" style={{ fontSize: "0.75rem" }}>
-                                Tip: Logged-in user email is already auto-recorded on submission. Only keep this field if requesting a secondary contact email.
-                              </span>
+
+                            {(node.type === "short_text" || node.type === "email") && (
+                              <div className="gf-rating-editor-box stack" style={{ gap: "0.55rem" }}>
+                                <div className="grid-2" style={{ gap: "0.5rem" }}>
+                                  <div className="stack" style={{ gap: "0.25rem" }}>
+                                    <span className="gf-theme-label" style={{ fontSize: "0.72rem" }}>
+                                      Auto-Fill From User Profile
+                                    </span>
+                                    <select
+                                      value={node.autoFillProfile ?? ""}
+                                      onChange={(e) =>
+                                        updateNode(node.id, {
+                                          autoFillProfile: (e.target.value || undefined) as
+                                            | "display_name"
+                                            | "phone"
+                                            | "email"
+                                            | undefined,
+                                        })
+                                      }
+                                      className="gf-select-compact"
+                                    >
+                                      <option value="">None (Blank)</option>
+                                      <option value="display_name">Profile Full Name</option>
+                                      <option value="phone">Profile Phone Number</option>
+                                      <option value="email">Profile Company Email</option>
+                                    </select>
+                                  </div>
+                                  <div className="stack" style={{ gap: "0.25rem" }}>
+                                    <span className="gf-theme-label" style={{ fontSize: "0.72rem" }}>
+                                      Fixed / Default Value (Optional)
+                                    </span>
+                                    <input
+                                      type="text"
+                                      value={node.defaultValue ?? ""}
+                                      onChange={(e) =>
+                                        updateNode(node.id, {
+                                          defaultValue: e.target.value || undefined,
+                                        })
+                                      }
+                                      placeholder="e.g. ASMIRA ASHIQIN"
+                                      className="gf-mock-input-field"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div
+                                  className="row-actions"
+                                  style={{ gap: "1rem", flexWrap: "wrap", alignItems: "center" }}
+                                >
+                                  <label className="gf-inline-check-toggle">
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean(node.readOnly)}
+                                      onChange={(e) =>
+                                        updateNode(node.id, { readOnly: e.target.checked })
+                                      }
+                                    />
+                                    <span>Locked (Read-Only)</span>
+                                  </label>
+
+                                  <label className="gf-inline-check-toggle">
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean(node.syncKey)}
+                                      onChange={(e) =>
+                                        updateNode(node.id, {
+                                          syncKey: e.target.checked ? "judge_name" : undefined,
+                                        })
+                                      }
+                                    />
+                                    <span>Auto-sync across all pages (e.g. Judge&apos;s Name)</span>
+                                  </label>
+                                </div>
+                              </div>
                             )}
+                          </div>
+                        )}
+
+                        {node.type === "score_wheel" && (
+                          <div className="gf-rating-editor-box stack" style={{ gap: "0.65rem" }}>
+                            <div
+                              className="row-actions"
+                              style={{ alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}
+                            >
+                              <span className="gf-theme-label">Maximum Marks:</span>
+                              <input
+                                type="number"
+                                min={1}
+                                max={200}
+                                value={node.maxMarks ?? 25}
+                                onChange={(e) => {
+                                  const parsed = Math.max(
+                                    1,
+                                    Math.min(200, Number(e.target.value) || 25),
+                                  );
+                                  updateNode(node.id, { maxMarks: parsed });
+                                }}
+                                className="gf-select-compact"
+                                style={{ width: "90px" }}
+                              />
+                              <div className="row-actions" style={{ gap: "0.3rem" }}>
+                                {[15, 20, 25, 30, 40, 100].map((preset) => (
+                                  <button
+                                    key={preset}
+                                    type="button"
+                                    className={`pixel-paper-btn compact ${
+                                      (node.maxMarks ?? 25) === preset ? "primary" : ""
+                                    }`}
+                                    style={{ padding: "0.2rem 0.5rem", fontSize: "0.72rem" }}
+                                    onClick={() => updateNode(node.id, { maxMarks: preset })}
+                                  >
+                                    /{preset}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <span className="notice" style={{ fontSize: "0.76rem", margin: 0 }}>
+                              Judges scroll a compact 3-row mobile wheel (0 to {node.maxMarks ?? 25}) or tap &minus;/&plus; to award marks. Automatically counted by any Final Score block on the same page.
+                            </span>
+                          </div>
+                        )}
+
+                        {node.type === "score_total" && (
+                          <div className="gf-rating-editor-box stack" style={{ gap: "0.6rem" }}>
+                            <div className="row-between" style={{ alignItems: "center" }}>
+                              <strong style={{ fontSize: "0.86rem", color: primaryAccent }}>
+                                Automatic Page Total Calculator
+                              </strong>
+                              <span className="pixel-tag-pill">Auto Sum / Page Max</span>
+                            </div>
+                            <span className="notice" style={{ fontSize: "0.76rem", margin: 0 }}>
+                              Sums all Score Wheel, Star Rating, and Rubric Scale fields on this page in real time and displays Pending Scores count.
+                            </span>
+                            <label className="gf-inline-check-toggle">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(node.allowManualOverride)}
+                                onChange={(e) =>
+                                  updateNode(node.id, { allowManualOverride: e.target.checked })
+                                }
+                              />
+                              <span>
+                                Allow Judge to manually override the auto-calculated final score
+                              </span>
+                            </label>
                           </div>
                         )}
 
@@ -2248,6 +2523,25 @@ export default function AdminFormBuilderPage() {
                                 <span>Click to pick or upload banner photo</span>
                               </div>
                             )
+                          ) : node.type === "score_wheel" ? (
+                            <div className="gf-idle-mock-input row-between">
+                              <span className="gf-idle-placeholder">
+                                Scroll Wheel Picker: 0 &ndash; {node.maxMarks ?? 25}
+                              </span>
+                              <span className="pixel-tag-pill">Max. {node.maxMarks ?? 25}</span>
+                            </div>
+                          ) : node.type === "score_total" ? (
+                            <div
+                              className="gf-idle-mock-input row-between"
+                              style={{ borderColor: primaryAccent }}
+                            >
+                              <strong style={{ color: primaryAccent, fontSize: "0.86rem" }}>
+                                Auto Final Score (0 / 100)
+                              </strong>
+                              <span className="pixel-tag-pill">
+                                {node.allowManualOverride ? "Auto + Override" : "Auto Calculated"}
+                              </span>
+                            </div>
                           ) : node.type === "star_rating" ? (
                             <div className="fr-stars-row">
                               {Array.from({ length: node.maxRating ?? 5 }, (_, i) => i + 1).map((n) => (
@@ -2329,10 +2623,19 @@ export default function AdminFormBuilderPage() {
                               <span>Choose file (Google Drive up to 1 GiB)</span>
                             </div>
                           ) : (
-                            <div className="gf-idle-mock-input">
+                            <div className="gf-idle-mock-input row-between" style={{ gap: "0.5rem" }}>
                               <span className="gf-idle-placeholder">
-                                {node.placeholder || "Short answer text..."}
+                                {node.defaultValue
+                                  ? `Preset: ${node.defaultValue}`
+                                  : node.autoFillProfile
+                                    ? `Auto-fill: Profile ${node.autoFillProfile.replace("_", " ")}`
+                                    : node.placeholder || "Short answer text..."}
                               </span>
+                              {(node.readOnly || node.syncKey) && (
+                                <span className="pixel-tag-pill" style={{ fontSize: "0.68rem" }}>
+                                  {node.readOnly ? "Locked" : "Synced"}
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
@@ -2366,6 +2669,26 @@ export default function AdminFormBuilderPage() {
               >
                 <PixelDateTimeIcon size={16} />
                 <span className="gf-rail-tooltip">Real-Time Date &amp; Time</span>
+              </button>
+
+              <button
+                type="button"
+                className="gf-rail-btn"
+                onClick={() => handleAddNode("score_wheel")}
+                title="Add Scroll-Wheel Score Picker (/Max Marks)"
+              >
+                <PixelFieldTypeIcon type="score_wheel" size={16} />
+                <span className="gf-rail-tooltip">Score Wheel (/Max)</span>
+              </button>
+
+              <button
+                type="button"
+                className="gf-rail-btn"
+                onClick={() => handleAddNode("score_total")}
+                title="Add Automatic Final Score Calculator"
+              >
+                <PixelFieldTypeIcon type="score_total" size={16} />
+                <span className="gf-rail-tooltip">Auto Final Score</span>
               </button>
 
               <button
@@ -2538,9 +2861,7 @@ export default function AdminFormBuilderPage() {
                       theme={theme}
                       answers={previewAnswers}
                       compactCards
-                      onChange={(fid, val) =>
-                        setPreviewAnswers((prev) => ({ ...prev, [fid]: val }))
-                      }
+                      onChange={handlePreviewAnswerChange}
                     />
                     <div className="gf-preview-submit-wrap">
                       <button
@@ -2575,7 +2896,7 @@ export default function AdminFormBuilderPage() {
                 </div>
                 <div className="gf-browser-url-pill">
                   <PixelLockIcon size={12} />
-                  <span>forms.mesrc.com.my/forms/{slug || "new-form"}</span>
+                  <span>kbm.forms/forms/{slug || "new-form"}</span>
                 </div>
                 <div style={{ width: 44 }} />
               </div>
@@ -2621,9 +2942,7 @@ export default function AdminFormBuilderPage() {
                       nodes={nodes}
                       theme={theme}
                       answers={previewAnswers}
-                      onChange={(fid, val) =>
-                        setPreviewAnswers((prev) => ({ ...prev, [fid]: val }))
-                      }
+                      onChange={handlePreviewAnswerChange}
                     />
                     <div className="row-actions" style={{ marginTop: "0.5rem", gap: "0.75rem" }}>
                       <button
@@ -2987,6 +3306,160 @@ export default function AdminFormBuilderPage() {
                 />
                 Enable formal appeal / complaint tracking on responses
               </label>
+            </div>
+
+            <div className="profile-dropdown-divider" />
+
+            {/* PER-FORM ADMIN ACCESS & EMAIL NOTIFICATION ROUTING */}
+            <div className="stack" style={{ gap: "0.75rem" }}>
+              <div className="row-between" style={{ alignItems: "flex-start", flexWrap: "wrap", gap: "0.75rem" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "1rem" }}>
+                    Admin Access Control &amp; Email Alerts
+                  </h3>
+                  <p className="notice" style={{ margin: "0.2rem 0 0", fontSize: "0.82rem" }}>
+                    Restrict who can edit this form or inspect its reports, and select exactly which Admins receive email notifications on new submissions.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="pixel-paper-btn compact primary"
+                  style={{ backgroundColor: primaryAccent }}
+                  disabled={accessBusy || !selectedFormId}
+                  onClick={() => void handleSaveFormAccess()}
+                >
+                  <PixelSaveIcon size={13} />
+                  <span>{accessBusy ? "Saving..." : "Save Access & Alerts"}</span>
+                </button>
+              </div>
+
+              {!selectedFormId && (
+                <div className="banner banner-info" style={{ fontSize: "0.82rem" }}>
+                  Save this form as a Draft first to configure per-form Admin restrictions and email alert recipients.
+                </div>
+              )}
+
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "0.55rem",
+                  fontSize: "0.86rem",
+                  fontWeight: 600,
+                  background: "var(--surface-tint)",
+                  padding: "0.65rem 0.85rem",
+                  borderRadius: "10px",
+                  border: "1.5px solid var(--border-strong)",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={restrictAdminAccess}
+                  onChange={(e) => setRestrictAdminAccess(e.target.checked)}
+                  style={{ marginTop: "0.2rem" }}
+                />
+                <span>
+                  Restrict editing &amp; reports to Form Owner, Maintenance &amp; Selected Admins below only
+                  <span
+                    className="notice"
+                    style={{ display: "block", fontWeight: 400, fontSize: "0.78rem", marginTop: "0.15rem" }}
+                  >
+                    When enabled, other Admin accounts cannot edit this form or see its submissions in Admin Reports.
+                  </span>
+                </span>
+              </label>
+
+              {adminAccounts.length === 0 ? (
+                <p className="notice" style={{ fontSize: "0.82rem", margin: 0 }}>
+                  No additional Admin accounts found yet. Invite or promote Admins under Users &amp; Invites.
+                </p>
+              ) : (
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Admin Account</th>
+                        <th style={{ textAlign: "center" }}>Can Edit Form</th>
+                        <th style={{ textAlign: "center" }}>View Reports</th>
+                        <th style={{ textAlign: "center" }}>Email Alerts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminAccounts.map((adm) => {
+                        const row = formAccessMap[adm.id] ?? {
+                          can_edit: false,
+                          can_view_reports: false,
+                          notify_on_submit: false,
+                        };
+                        const isOwner = currentFormRecord?.created_by === adm.id;
+                        return (
+                          <tr key={adm.id}>
+                            <td>
+                              <strong style={{ fontSize: "0.85rem" }}>
+                                {adm.display_name || adm.email}
+                              </strong>
+                              {adm.display_name && (
+                                <div style={{ fontSize: "0.74rem", color: "var(--muted)" }}>
+                                  {adm.email}
+                                </div>
+                              )}
+                              {isOwner && (
+                                <span
+                                  className="pixel-tag-pill"
+                                  style={{ marginTop: "0.2rem", display: "inline-block" }}
+                                >
+                                  Form Owner
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ textAlign: "center" }}>
+                              <input
+                                type="checkbox"
+                                checked={isOwner || row.can_edit}
+                                disabled={isOwner}
+                                onChange={(e) =>
+                                  setFormAccessMap((prev) => ({
+                                    ...prev,
+                                    [adm.id]: { ...row, can_edit: e.target.checked },
+                                  }))
+                                }
+                              />
+                            </td>
+                            <td style={{ textAlign: "center" }}>
+                              <input
+                                type="checkbox"
+                                checked={isOwner || row.can_view_reports}
+                                disabled={isOwner}
+                                onChange={(e) =>
+                                  setFormAccessMap((prev) => ({
+                                    ...prev,
+                                    [adm.id]: { ...row, can_view_reports: e.target.checked },
+                                  }))
+                                }
+                              />
+                            </td>
+                            <td style={{ textAlign: "center" }}>
+                              <input
+                                type="checkbox"
+                                checked={row.notify_on_submit}
+                                onChange={(e) =>
+                                  setFormAccessMap((prev) => ({
+                                    ...prev,
+                                    [adm.id]: {
+                                      ...row,
+                                      notify_on_submit: e.target.checked,
+                                    },
+                                  }))
+                                }
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </section>
         </main>
