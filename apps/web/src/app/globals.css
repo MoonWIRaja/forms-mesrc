@@ -94,7 +94,7 @@ html {
   overscroll-behavior: none;
   overscroll-behavior-x: none;
   overscroll-behavior-y: none;
-  overflow-x: hidden;
+  overflow-x: clip;
   touch-action: pan-y;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -118,7 +118,7 @@ body {
   overscroll-behavior: none;
   overscroll-behavior-x: none;
   overscroll-behavior-y: none;
-  overflow-x: hidden;
+  overflow-x: clip;
   touch-action: pan-y;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -222,7 +222,7 @@ a:hover {
   }
   100% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: none;
   }
 }
 
@@ -233,7 +233,7 @@ a:hover {
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 }
 
@@ -244,7 +244,7 @@ a:hover {
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
 }
 
@@ -327,6 +327,7 @@ a:hover {
 .floating-sidebar {
   position: sticky;
   top: 1.35rem;
+  align-self: flex-start;
   height: calc(100dvh - 2.7rem);
   width: 268px;
   min-width: 268px;
@@ -4793,11 +4794,34 @@ textarea:focus {
   min-height: calc(100dvh - 2.5rem);
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   border: 1.5px solid var(--border-strong);
   border-radius: var(--radius-lg);
   padding: 1.5rem 1.5rem 3.5rem;
   box-shadow: var(--shadow-paper-stack);
+}
+
+@media (min-width: 921px) {
+  .app-frame:has(.fill-themed-stage) {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .shell:has(.fill-themed-stage) {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .fill-themed-stage {
+    height: calc(100dvh - 2.5rem);
+    max-height: calc(100dvh - 2.5rem);
+    overflow-y: auto;
+    overflow-x: clip;
+    overscroll-behavior: contain;
+    padding-top: 1rem;
+  }
 }
 
 .fill-form-column {

@@ -386,6 +386,7 @@ export default function FillFormPage() {
       setError(null);
     }
     setActivePageIdx(clamped);
+    document.querySelector(".fill-themed-stage")?.scrollTo({ top: 0, behavior: "smooth" });
     document.querySelector(".app-frame")?.scrollTo({ top: 0, behavior: "smooth" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
