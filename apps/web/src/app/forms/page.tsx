@@ -13,6 +13,7 @@ import {
   FORM_CATEGORIES,
   resolveFormCategory,
   resolveKbmAccent,
+  resolveKbmBanner,
   type FormCategory,
   type FormRow,
   type FormTheme,
@@ -148,6 +149,7 @@ export default function FormsCatalogPage() {
           {filteredForms.map((f) => {
             const fTheme = themesMap[f.id];
             const accent = resolveKbmAccent(fTheme?.primaryColor, "company_forms");
+            const bannerUrl = resolveKbmBanner(fTheme?.bannerImageUrl, "company_forms");
             const isPaused = Boolean(fTheme?.submissionsClosed);
 
             if (isPaused) {
@@ -160,10 +162,10 @@ export default function FormsCatalogPage() {
                     borderTop: "6px solid #94a3b8",
                   }}
                 >
-                  {fTheme?.bannerImageUrl && (
+                  {bannerUrl && (
                     <div className="catalog-banner-thumb">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={fTheme.bannerImageUrl} alt={f.title} />
+                      <img src={bannerUrl} alt={f.title} />
                     </div>
                   )}
 
@@ -198,10 +200,10 @@ export default function FormsCatalogPage() {
                   cursor: "pointer",
                 }}
               >
-                {fTheme?.bannerImageUrl && (
+                {bannerUrl && (
                   <div className="catalog-banner-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={fTheme.bannerImageUrl} alt={f.title} />
+                    <img src={bannerUrl} alt={f.title} />
                   </div>
                 )}
 

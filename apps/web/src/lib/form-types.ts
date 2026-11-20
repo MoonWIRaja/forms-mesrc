@@ -465,6 +465,26 @@ export const PRESET_BANNERS: { id: string; name: string; tag: string; url: strin
   },
 ];
 
+/** Auto-upgrades legacy crimson/blue/purple preset SVG banners to the official KBM Emerald & Gold banners while preserving uploaded photos. */
+export function resolveKbmBanner(
+  url?: string | null,
+  category?: FormCategory,
+): string | undefined {
+  if (!url) return undefined;
+  const decoded = url.startsWith("data:image/svg+xml") ? decodeURIComponent(url) : "";
+  const isLegacyPreset =
+    decoded.includes("#881337") ||
+    decoded.includes("#be123c") ||
+    decoded.includes("#9f1239") ||
+    decoded.includes("#1e1b4b") ||
+    decoded.includes("#1d4ed8") ||
+    decoded.includes("#312e81");
+  if (!isLegacyPreset) return url;
+  if (category === "staff_complaints") return PRESET_BANNERS[3].url;
+  if (category === "voting_evaluation") return PRESET_BANNERS[0].url;
+  return PRESET_BANNERS[1].url;
+}
+
 function buildSpeakerPageNodes(
   prefix: string,
   participantName: string,

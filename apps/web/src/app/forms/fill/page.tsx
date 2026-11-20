@@ -20,6 +20,7 @@ import {
   getLocalNowParts,
   resolveFormCategory,
   resolveKbmAccent,
+  resolveKbmBanner,
   resolveKbmBg,
   splitNodesIntoPages,
   type FormFieldNode,
@@ -363,6 +364,7 @@ export default function FillFormPage() {
         : "Company Forms";
   const primaryAccent = resolveKbmAccent(theme.primaryColor, category);
   const stageBgColor = resolveKbmBg(theme.backgroundColor);
+  const resolvedBannerUrl = resolveKbmBanner(theme.bannerImageUrl, category);
   const pages = splitNodesIntoPages(nodes, theme);
   const isMultiPage = pages.length > 1;
   const clampedPageIdx = Math.min(Math.max(0, activePageIdx), pages.length - 1);
@@ -520,10 +522,10 @@ export default function FillFormPage() {
 
         {/* Unified Form Header Card (Banner + Accent Strip + Title) */}
         <section className="fill-header-card">
-          {theme.bannerImageUrl && (
+          {resolvedBannerUrl && (
             <div className={`fill-header-banner height-${theme.bannerHeight ?? "medium"}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={theme.bannerImageUrl} alt={form.title} className="gf-banner-img" />
+              <img src={resolvedBannerUrl} alt={form.title} className="gf-banner-img" />
             </div>
           )}
 

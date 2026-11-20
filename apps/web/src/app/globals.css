@@ -5902,5 +5902,156 @@ textarea:focus {
   box-shadow: 2px 2px 0 var(--paper-back-edge);
 }
 
+/* ==========================================================================
+   PROFILE SHEET SEGMENTED TABS & MY TICKETS LIST
+   ========================================================================== */
+.ios-sheet-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+  padding: 0.22rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 0.85rem;
+}
+
+.ios-sheet-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.48rem 0.65rem;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.ios-sheet-tab.active {
+  background: var(--surface-elevated);
+  color: var(--accent);
+  box-shadow: 0 1px 3px rgba(18, 35, 26, 0.1);
+}
+
+.ios-sheet-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.ios-ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-height: 310px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+
+.ios-ticket-empty {
+  text-align: center;
+  padding: 1.5rem 0.75rem;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.ios-ticket-item {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--accent);
+  background: var(--surface-elevated);
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.14s ease, transform 0.12s ease, background-color 0.14s ease;
+}
+
+.ios-ticket-item:hover {
+  border-color: var(--accent);
+  background: #fbfaf5;
+}
+
+.ios-ticket-item:active {
+  transform: scale(0.99);
+}
+
+.ios-ticket-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ios-ticket-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ios-ticket-badge {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.ios-ticket-badge.emerald {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border: 1px solid var(--ok-border);
+}
+
+.ios-ticket-badge.gold {
+  background: var(--gold-soft);
+  color: var(--amber);
+  border: 1px solid var(--gold-border);
+}
+
+.ios-ticket-sub {
+  font-size: 0.78rem;
+  color: var(--ink-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ios-ticket-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+}
+
+
 
 

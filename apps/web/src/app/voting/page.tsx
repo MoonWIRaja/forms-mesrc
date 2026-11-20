@@ -12,6 +12,7 @@ import {
 import {
   resolveFormCategory,
   resolveKbmAccent,
+  resolveKbmBanner,
   type FormRow,
   type FormTheme,
 } from "@/lib/form-types";
@@ -135,6 +136,7 @@ export default function VotingPage() {
           {votingForms.map((f) => {
             const fTheme = themesMap[f.id];
             const accent = resolveKbmAccent(fTheme?.primaryColor, "voting_evaluation");
+            const bannerUrl = resolveKbmBanner(fTheme?.bannerImageUrl, "voting_evaluation");
             const isPaused = Boolean(fTheme?.submissionsClosed);
 
             if (isPaused) {
@@ -147,10 +149,10 @@ export default function VotingPage() {
                     borderTop: "6px solid #94a3b8",
                   }}
                 >
-                  {fTheme?.bannerImageUrl && (
+                  {bannerUrl && (
                     <div className="catalog-banner-thumb">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={fTheme.bannerImageUrl} alt={f.title} />
+                      <img src={bannerUrl} alt={f.title} />
                     </div>
                   )}
 
@@ -185,10 +187,10 @@ export default function VotingPage() {
                   cursor: "pointer",
                 }}
               >
-                {fTheme?.bannerImageUrl && (
+                {bannerUrl && (
                   <div className="catalog-banner-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={fTheme.bannerImageUrl} alt={f.title} />
+                    <img src={bannerUrl} alt={f.title} />
                   </div>
                 )}
 
