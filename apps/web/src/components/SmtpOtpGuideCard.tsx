@@ -209,23 +209,28 @@ export default function SmtpOtpGuideCard() {
           background: "var(--surface-tint)",
         }}
       >
-        <strong>3. Targeted Staff Complaint Email Delivery (Edge Function)</strong>
+        <strong>3. Automatic Invitation &amp; Staff Complaint Emails (Edge Function)</strong>
         <p className="notice" style={{ fontSize: "0.86rem", margin: 0 }}>
-          When a staff member submits a Staff Complaint, the database queues alerts exclusively to
-          Admins granted <strong>Email Alerts</strong> (in Form Settings or Admin Permissions), and
-          the <code>send-outbox-emails</code> Edge Function delivers them via Resend.
+          Both <strong>Send Invitation</strong> emails and <strong>Staff Complaint</strong> alerts
+          are delivered automatically via the <code>send-outbox-emails</code> Supabase Edge
+          Function using your <strong>existing Google Workspace SMTP</strong> (<code>support@mesrc.com.my</code>) — no extra paid service required.
         </p>
-        <div style={{ fontSize: "0.84rem", display: "grid", gap: "0.3rem" }}>
+        <div style={{ fontSize: "0.84rem", display: "grid", gap: "0.35rem" }}>
           <div>
-            <strong>SQL Migration:</strong> Run{" "}
-            <code>supabase/migrations/20261120000000_phase7_permissions_and_notifications.sql</code>{" "}
-            in Supabase SQL Editor.
+            <strong>1. Deploy Edge Function:</strong> Open Supabase Dashboard &rarr;{" "}
+            <strong>Edge Functions</strong> &rarr; create function named{" "}
+            <code>send-outbox-emails</code> and paste{" "}
+            <code>supabase/functions/send-outbox-emails/index.ts</code> (disable Verify JWT if prompted).
           </div>
           <div>
-            <strong>Edge Function:</strong> Deploy{" "}
-            <code>supabase/functions/send-outbox-emails/index.ts</code> and set Edge Secrets{" "}
-            <code>RESEND_API_KEY</code> and{" "}
-            <code>EMAIL_FROM=&quot;Kayangan Bumi Medical &lt;support@mesrc.com.my&gt;&quot;</code>.
+            <strong>2. Add Edge Function Secrets (Reuse your Gmail App Password):</strong>
+            <br />
+            <code>SMTP_USER</code> = <code>support@mesrc.com.my</code>
+            <br />
+            <code>SMTP_PASS</code> = <em>your 16-char Google App Password (no spaces)</em>
+            <br />
+            <code>EMAIL_FROM</code> ={" "}
+            <code>Kayangan Bumi Medical &lt;support@mesrc.com.my&gt;</code>
           </div>
         </div>
       </div>

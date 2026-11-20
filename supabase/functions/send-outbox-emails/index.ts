@@ -1,16 +1,22 @@
 // Supabase Edge Function: send-outbox-emails
-// Drains pending rows in public.email_outbox and delivers transactional emails via Resend API.
+// Drains pending rows in public.email_outbox and sends real emails (Invitations + Staff Complaint Alerts).
 //
-// Required Supabase Edge Function Secrets:
-//   RESEND_API_KEY   = re_xxxxxxxxxxxx (from https://resend.com)
-//   EMAIL_FROM       = "Kayangan Bumi Medical <support@mesrc.com.my>"
-//   SUPABASE_URL     = (auto-injected by Supabase)
-//   SUPABASE_SERVICE_ROLE_KEY = (auto-injected by Supabase)
+// Supports TWO providers automatically (configure whichever you prefer in Edge Function Secrets):
+//   Option A — Google Workspace / Gmail SMTP (RECOMMENDED — uses your existing support@mesrc.com.my App Password!):
+//     SMTP_USER  = support@mesrc.com.my
+//     SMTP_PASS  = <16-char Google App Password without spaces>
+//     SMTP_HOST  = smtp.gmail.com   (optional, default smtp.gmail.com)
+//     SMTP_PORT  = 587              (optional, default 587)
+//     EMAIL_FROM = Kayangan Bumi Medical <support@mesrc.com.my>  (optional)
 //
-// Deploy command:
-//   supabase functions deploy send-outbox-emails --no-verify-jwt
+//   Option B — Resend API:
+//     RESEND_API_KEY = re_xxxxxxxxxxxx
+//     EMAIL_FROM     = Kayangan Bumi Medical <support@mesrc.com.my>
+//
+// Deploy in Supabase Dashboard -> Edge Functions -> Deploy a new function -> name: send-outbox-emails
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import nodemailer from "npm:nodemailer@6.9.15";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,6 +32,85 @@ interface OutboxRow {
   max_attempts: number;
 }
 
+function escapeHtml(raw: string): string {
+  return raw
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buildBrandedHtml(subject: string, body: string): string {
+  const inviteUrlMatch = body.match(/https?:\/\/[^\s]+\/invite\/accept\/\?token=[A-Za-z0-9_%-]+/);
+  const inviteUrl = inviteUrlMatch?.[0] ?? null;
+  const isInvite = Boolean(inviteUrl) || subject.toLowerCase().includes("invitation");
+  const headerTag = isInvite ? "WORKSPACE INVITATION" : "CONFIDENTIAL ALERT";
+
+  const safeBody = escapeHtml(body).replace(/\n/g, "<br/>");
+  const ctaBlock = inviteUrl
+    ? `
+      <div style="margin: 24px 0 8px; text-align: center;">
+        <a
+          href="${escapeHtml(inviteUrl)}"
+          style="display: inline-block; background-color: #0f5132; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 15px; padding: 13px 26px; border-radius: 8px; border: 2px solid #12231a; box-shadow: 3px 3px 0px #c59333;"
+        >
+          Accept Invitation &rarr;
+        </a>
+      </div>
+    `
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f2ea;font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12231a;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f2ea;padding:32px 14px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:560px;background-color:#fbfaf6;border:2px solid #0f5132;border-radius:10px;box-shadow:5px 5px 0px #0f5132;overflow:hidden;">
+          <tr>
+            <td style="background-color:#0f5132;border-bottom:3px solid #c59333;padding:16px 24px;">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td>
+                    <strong style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:-0.2px;">
+                      Kayangan Bumi Medical
+                    </strong>
+                  </td>
+                  <td align="right">
+                    <span style="font-size:10px;font-weight:800;padding:3px 8px;border:1.5px solid #c59333;border-radius:4px;background-color:#fbf4e2;color:#0f5132;letter-spacing:0.6px;">
+                      ${headerTag}
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:26px 24px;font-size:14px;line-height:1.65;color:#12231a;">
+              ${safeBody}
+              ${ctaBlock}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:13px 24px;background-color:#ebe6d8;border-top:2px solid #0f5132;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#475a50;">
+                Kayangan Bumi Medical &bull; Official Forms Portal
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -33,9 +118,15 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+
+  const smtpUser = Deno.env.get("SMTP_USER")?.trim() || "";
+  const smtpPass = Deno.env.get("SMTP_PASS")?.replace(/\s+/g, "") || "";
+  const smtpHost = Deno.env.get("SMTP_HOST")?.trim() || "smtp.gmail.com";
+  const smtpPort = Number(Deno.env.get("SMTP_PORT") || "587");
+  const resendApiKey = Deno.env.get("RESEND_API_KEY")?.trim() || "";
   const emailFrom =
-    Deno.env.get("EMAIL_FROM") || "Kayangan Bumi Medical <support@mesrc.com.my>";
+    Deno.env.get("EMAIL_FROM")?.trim() ||
+    `Kayangan Bumi Medical <${smtpUser || "support@mesrc.com.my"}>`;
 
   if (!supabaseUrl || !serviceRoleKey) {
     return new Response(
@@ -44,11 +135,15 @@ Deno.serve(async (req) => {
     );
   }
 
-  if (!resendApiKey) {
+  const useSmtp = Boolean(smtpUser && smtpPass);
+  const useResend = !useSmtp && Boolean(resendApiKey);
+
+  if (!useSmtp && !useResend) {
     return new Response(
       JSON.stringify({
         ok: false,
-        error: "RESEND_API_KEY secret is not configured in Supabase Edge Functions.",
+        error:
+          "Email secrets missing. Set SMTP_USER + SMTP_PASS (Gmail App Password) or RESEND_API_KEY in Supabase Edge Function Secrets.",
       }),
       { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
@@ -70,46 +165,62 @@ Deno.serve(async (req) => {
     );
   }
 
+  const rows = (pendingRows as OutboxRow[] | null) ?? [];
+  if (rows.length === 0) {
+    return new Response(
+      JSON.stringify({ ok: true, sent: 0, failed: 0, provider: useSmtp ? "smtp" : "resend" }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  const transporter = useSmtp
+    ? nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      })
+    : null;
+
   let sentCount = 0;
   let failedCount = 0;
+  const errors: string[] = [];
 
-  for (const row of (pendingRows as OutboxRow[] | null) ?? []) {
+  for (const row of rows) {
     const nextAttempts = (row.attempts ?? 0) + 1;
     try {
-      const htmlBody = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f3efe4; padding:24px;">
-          <div style="max-width:560px; margin:0 auto; background:#ffffff; border:2px solid #12231a; border-radius:10px; overflow:hidden;">
-            <div style="background:#0f5132; color:#ffffff; padding:16px 22px; font-weight:800; font-size:15px;">
-              Kayangan Bumi Medical &bull; Confidential Alert
-            </div>
-            <div style="padding:22px; color:#12231a; font-size:14px; line-height:1.6; white-space:pre-wrap;">
-              ${row.body.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}
-            </div>
-            <div style="padding:12px 22px; background:#f5f1e6; border-top:1px solid #d5ccb8; font-size:12px; color:#5d6e63;">
-              Sent automatically to authorized administrators only.
-            </div>
-          </div>
-        </div>
-      `;
+      const htmlBody = buildBrandedHtml(row.subject, row.body);
 
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      if (transporter) {
+        await transporter.sendMail({
           from: emailFrom,
-          to: [row.to_email],
+          to: row.to_email,
           subject: row.subject,
           text: row.body,
           html: htmlBody,
-        }),
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Resend HTTP ${res.status}: ${errText}`);
+        });
+      } else {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: emailFrom,
+            to: [row.to_email],
+            subject: row.subject,
+            text: row.body,
+            html: htmlBody,
+          }),
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Resend HTTP ${res.status}: ${errText}`);
+        }
       }
 
       await adminClient
@@ -124,6 +235,7 @@ Deno.serve(async (req) => {
       sentCount += 1;
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : "Delivery failed";
+      errors.push(`${row.to_email}: ${errMsg}`);
       await adminClient
         .from("email_outbox")
         .update({
@@ -137,7 +249,13 @@ Deno.serve(async (req) => {
   }
 
   return new Response(
-    JSON.stringify({ ok: true, sent: sentCount, failed: failedCount }),
+    JSON.stringify({
+      ok: sentCount > 0 || failedCount === 0,
+      sent: sentCount,
+      failed: failedCount,
+      provider: useSmtp ? "smtp" : "resend",
+      errors: errors.length > 0 ? errors : undefined,
+    }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
   );
 });

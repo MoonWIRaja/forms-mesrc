@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { BASE_PATH } from "@/lib/config";
+import { APP_NAME, BASE_PATH } from "@/lib/config";
 import { getSupabase, type AppRole } from "@/lib/supabase";
 
 interface InviteRow {
@@ -14,14 +15,24 @@ interface InviteRow {
   created_at: string;
 }
 
+interface LastInviteFeedback {
+  email: string;
+  role: AppRole;
+  link: string;
+  emailSent: boolean;
+  note: string;
+}
+
 export default function InvitationManager({ callerRole }: { callerRole: AppRole }) {
   const [invites, setInvites] = useState<InviteRow[]>([]);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<AppRole>("user");
   const [expiresDays, setExpiresDays] = useState(7);
   const [busy, setBusy] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [lastLink, setLastLink] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<LastInviteFeedback | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const loadInvites = useCallback(async () => {
     const supabase = getSupabase();
@@ -49,31 +60,130 @@ export default function InvitationManager({ callerRole }: { callerRole: AppRole 
     };
   }, []);
 
+  async function issueAndDispatchInvite(targetEmail: string, targetRole: AppRole, days: number) {
+    const supabase = getSupabase();
+    const cleanEmail = targetEmail.trim().toLowerCase();
+    const effectiveRole: AppRole = callerRole === "admin" ? "user" : targetRole;
+
+    const { data, error: rpcErr } = await supabase.rpc("create_invitation", {
+      p_email: cleanEmail,
+      p_role: effectiveRole,
+      p_expires_days: days,
+    });
+    if (rpcErr) throw rpcErr;
+
+    const res = data as {
+      id: string;
+      invite_token: string;
+      email: string;
+      role: AppRole;
+      expires_at: string;
+    };
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const inviteLink = `${origin}${BASE_PATH}/invite/accept/?token=${encodeURIComponent(res.invite_token)}`;
+    const expiryDate = new Date(res.expires_at).toLocaleDateString();
+
+    const roleLabel =
+      effectiveRole === "maintenance"
+        ? "Maintenance Administrator"
+        : effectiveRole === "admin"
+          ? "Administrator"
+          : "Staff Member";
+
+    const subject = `You are invited to ${APP_NAME} (${roleLabel})`;
+    const body = [
+      `Hello,`,
+      ``,
+      `You have been invited to join the ${APP_NAME} official workspace as a ${roleLabel}.`,
+      ``,
+      `Click the Accept Invitation button below (or open this one-time link) to verify your email with a 4-digit OTP code and activate your account:`,
+      `${inviteLink}`,
+      ``,
+      `This invitation expires on ${expiryDate}.`,
+    ].join("\n");
+
+    // 1. Queue invitation email into public.email_outbox
+    let outboxQueued = false;
+    try {
+      const { error: outboxErr } = await supabase.from("email_outbox").insert({
+        to_email: res.email,
+        subject,
+        body,
+        idempotency_key: `invite:${res.id}`,
+        status: "pending",
+      });
+      if (!outboxErr) outboxQueued = true;
+    } catch {
+      outboxQueued = false;
+    }
+
+    // 2. Immediately trigger the send-outbox-emails Edge Function to deliver the email right away
+    let emailSent = false;
+    let note = "";
+
+    if (outboxQueued) {
+      try {
+        const { data: fnData, error: fnErr } = await supabase.functions.invoke(
+          "send-outbox-emails",
+          { body: { trigger: "invite", invite_id: res.id } },
+        );
+        const payload = fnData as { ok?: boolean; sent?: number; failed?: number; error?: string } | null;
+        if (!fnErr && payload?.ok && (payload.sent ?? 0) > 0) {
+          emailSent = true;
+          note = `Invitation email was automatically sent to ${res.email}.`;
+        } else if (payload?.error) {
+          note = `Invitation queued, but auto-email returned: ${payload.error}`;
+        } else if (fnErr) {
+          note =
+            "Invitation saved & queued. Deploy the 'send-outbox-emails' Edge Function with your Gmail SMTP secrets in Supabase to send automatically.";
+        } else {
+          note =
+            "Invitation saved & queued, but no email was delivered yet. Check your Supabase Edge Function secrets (SMTP_USER & SMTP_PASS).";
+        }
+      } catch {
+        note =
+          "Invitation saved & queued. Deploy the 'send-outbox-emails' Edge Function in Supabase to deliver emails automatically.";
+      }
+    } else {
+      note = "Invitation created, but email outbox queue could not be written.";
+    }
+
+    setFeedback({
+      email: res.email,
+      role: effectiveRole,
+      link: inviteLink,
+      emailSent,
+      note,
+    });
+    setCopiedLink(false);
+    await loadInvites();
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    setLastLink(null);
+    setFeedback(null);
     try {
-      const supabase = getSupabase();
-      const targetRole: AppRole = callerRole === "admin" ? "user" : role;
-      const { data, error: rpcErr } = await supabase.rpc("create_invitation", {
-        p_email: email.trim().toLowerCase(),
-        p_role: targetRole,
-        p_expires_days: expiresDays,
-      });
-      if (rpcErr) throw rpcErr;
-      const res = data as { invite_token: string; email: string };
-      const origin = typeof window !== "undefined" ? window.location.origin : "";
-      setLastLink(
-        `${origin}${BASE_PATH}/invite/accept/?token=${encodeURIComponent(res.invite_token)}`,
-      );
+      await issueAndDispatchInvite(email, role, expiresDays);
       setEmail("");
-      await loadInvites();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create invitation.");
+      setError(err instanceof Error ? err.message : "Failed to send invitation.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleResend(inv: InviteRow) {
+    setResendingId(inv.id);
+    setError(null);
+    setFeedback(null);
+    try {
+      await issueAndDispatchInvite(inv.email, inv.role, expiresDays);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to resend invitation.");
+    } finally {
+      setResendingId(null);
     }
   }
 
@@ -95,13 +205,23 @@ export default function InvitationManager({ callerRole }: { callerRole: AppRole 
     }
   }
 
+  async function copyLink(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedLink(true);
+      window.setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      // Ignore clipboard failure
+    }
+  }
+
   return (
     <div className="stack">
       <h2>Invite Accounts</h2>
       <p className="notice">
         {callerRole === "maintenance"
-          ? "As Maintenance, you can invite equivalent Maintenance peers, Admins, and Users."
-          : "As Admin, you can invite Users."}
+          ? "As Maintenance, you can invite Maintenance peers, Admins, and Users. Invitation emails are sent automatically."
+          : "As Admin, you can invite Users. Invitation emails are sent automatically."}
       </p>
 
       {error && (
@@ -109,10 +229,52 @@ export default function InvitationManager({ callerRole }: { callerRole: AppRole 
           {error}
         </p>
       )}
-      {lastLink && (
-        <div className="alert alert-ok stack">
-          <strong>Invitation created. Share this one-time link with the invitee:</strong>
-          <code>{lastLink}</code>
+
+      {feedback && (
+        <div
+          className={`alert ${feedback.emailSent ? "alert-ok" : "banner-info"} stack`}
+          style={{ gap: "0.55rem" }}
+          role="status"
+        >
+          <div className="row-between" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+            <strong>
+              {feedback.emailSent
+                ? `Invitation Email Sent to ${feedback.email}`
+                : `Invitation Created for ${feedback.email} (Pending Auto-Email Setup)`}
+            </strong>
+            <div className="row-actions" style={{ gap: "0.4rem" }}>
+              <button
+                type="button"
+                className="pixel-paper-btn compact"
+                onClick={() => void copyLink(feedback.link)}
+              >
+                {copiedLink ? "Copied Link!" : "Copy Backup Link"}
+              </button>
+              {!feedback.emailSent && (
+                <a
+                  href={`mailto:${encodeURIComponent(feedback.email)}?subject=${encodeURIComponent(
+                    `Invitation to ${APP_NAME}`,
+                  )}&body=${encodeURIComponent(
+                    `Hello,\n\nYou have been invited to join ${APP_NAME}.\n\nOpen this one-time link to activate your account:\n${feedback.link}\n`,
+                  )}`}
+                  className="pixel-paper-btn compact primary"
+                >
+                  Open Mail App
+                </a>
+              )}
+            </div>
+          </div>
+
+          <p style={{ margin: 0, fontSize: "0.84rem" }}>{feedback.note}</p>
+
+          {!feedback.emailSent && callerRole === "maintenance" && (
+            <div style={{ fontSize: "0.82rem" }}>
+              Need automatic sending active?{" "}
+              <Link href="/maintenance/settings/" style={{ textDecoration: "underline" }}>
+                Open Settings &amp; Storage &rarr; Email &amp; OTP Guide
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
@@ -161,7 +323,7 @@ export default function InvitationManager({ callerRole }: { callerRole: AppRole 
 
         <div className="field" style={{ justifyContent: "flex-end" }}>
           <button type="submit" className="btn btn-primary" disabled={busy}>
-            {busy ? "Creating..." : "Create Invitation"}
+            {busy ? "Sending Invitation..." : "Send Invitation"}
           </button>
         </div>
       </form>
@@ -193,6 +355,7 @@ export default function InvitationManager({ callerRole }: { callerRole: AppRole 
                     : new Date(inv.expires_at) < new Date()
                       ? "Expired"
                       : "Pending";
+                const isResending = resendingId === inv.id;
                 return (
                   <tr key={inv.id}>
                     <td>{inv.email}</td>
@@ -203,14 +366,25 @@ export default function InvitationManager({ callerRole }: { callerRole: AppRole 
                     <td>{new Date(inv.expires_at).toLocaleDateString()}</td>
                     <td>
                       {status === "Pending" && (
-                        <button
-                          type="button"
-                          className="btn-link"
-                          disabled={busy}
-                          onClick={() => handleRevoke(inv.id)}
-                        >
-                          Revoke
-                        </button>
+                        <div className="row-actions" style={{ gap: "0.75rem" }}>
+                          <button
+                            type="button"
+                            className="btn-link"
+                            disabled={busy || isResending}
+                            onClick={() => void handleResend(inv)}
+                          >
+                            {isResending ? "Sending..." : "Resend Email"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-link"
+                            style={{ color: "var(--err-text)" }}
+                            disabled={busy || isResending}
+                            onClick={() => void handleRevoke(inv.id)}
+                          >
+                            Revoke
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>

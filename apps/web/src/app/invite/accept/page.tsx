@@ -151,7 +151,7 @@ export default function InviteAcceptPage() {
       {details && step === "inspect" && (
         <div className="stack">
           <p>
-            You have been invited to join <strong>Forms MESRC</strong> as{" "}
+            You have been invited to join <strong>Kayangan Bumi Medical</strong> as{" "}
             <code>{details.role}</code> using <strong>{details.email}</strong>.
           </p>
           <p className="notice">
