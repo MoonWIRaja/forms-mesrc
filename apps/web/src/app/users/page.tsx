@@ -529,7 +529,7 @@ export default function UsersDirectoryPage() {
                               p.can_manage_voting || p.can_view_voting_reports ? "live" : "draft"
                             }`}
                           >
-                            Voting:{" "}
+                            Education:{" "}
                             {p.can_manage_voting
                               ? "Edit + View"
                               : p.can_view_voting_reports

@@ -150,7 +150,7 @@ export default function AdminPermissionsModal({
           </div>
 
           <div className="perm-group-card">
-            <strong className="perm-group-title">Voting &amp; Evaluation (Competitions)</strong>
+            <strong className="perm-group-title">Education (Evaluations &amp; Competition Rankings)</strong>
             <label className="perm-check-row">
               <input
                 type="checkbox"
@@ -159,7 +159,7 @@ export default function AdminPermissionsModal({
                   setPerms((p) => ({ ...p, can_manage_voting: e.target.checked }))
                 }
               />
-              <span>Create &amp; edit Voting / Competition Scoring forms</span>
+              <span>Create &amp; edit Education / Competition Scoring forms</span>
             </label>
             <label className="perm-check-row">
               <input
@@ -169,7 +169,7 @@ export default function AdminPermissionsModal({
                   setPerms((p) => ({ ...p, can_view_voting_reports: e.target.checked }))
                 }
               />
-              <span>View competition scoreboards, judge marks &amp; rankings</span>
+              <span>View education scoreboards, judge marks &amp; rankings</span>
             </label>
           </div>
 

@@ -97,7 +97,7 @@ export default function VotingPage() {
   }, []);
 
   if (loading) {
-    return <ChunkLoader title="Voting & Evaluation" subtitle="Loading forms..." />;
+    return <ChunkLoader title="Education" subtitle="Loading forms..." />;
   }
 
   if (!profile) {
@@ -123,7 +123,7 @@ export default function VotingPage() {
           <PixelArrowLeftIcon size={13} />
           <span>Main Menu</span>
         </Link>
-        <span className="app-mobile-nav-title">Voting &amp; Evaluation</span>
+        <span className="app-mobile-nav-title">Education</span>
         <div style={{ width: 40 }} />
       </div>
 

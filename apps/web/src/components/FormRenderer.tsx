@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   computePageScoreSummary,
   getLocalNowParts,
+  normalizeFormNodes,
   resolveKbmAccent,
   splitDateTimeValue,
   splitNodesIntoPages,
@@ -47,7 +48,8 @@ export default function FormRenderer({
   const [hoveredStar, setHoveredStar] = useState<Record<string, number>>({});
   const [internalPageIdx, setInternalPageIdx] = useState(0);
 
-  const pages = splitNodesIntoPages(nodes, theme);
+  const normalizedNodes = normalizeFormNodes(nodes);
+  const pages = splitNodesIntoPages(normalizedNodes, theme);
   const isMultiPage = pages.length > 1;
   const isControlledPage = typeof activePageIndex === "number";
   const currentPageIdx = Math.min(
@@ -57,7 +59,8 @@ export default function FormRenderer({
   const currentPage = pages[currentPageIdx] ?? pages[0];
   const visibleNodes = isMultiPage
     ? currentPage.items.map((item) => item.node)
-    : nodes;
+    : normalizedNodes;
+  const rankNodesOnPage = visibleNodes.filter((n) => n.type === "rank_select");
 
   function handleSelectPage(targetIdx: number) {
     const clamped = Math.min(Math.max(0, targetIdx), pages.length - 1);
@@ -237,6 +240,24 @@ export default function FormRenderer({
                 <span className="pixel-tag-pill">Max. {node.maxMarks ?? 25}</span>
               )}
 
+              {node.type === "rank_select" && (
+                <div className="row-actions" style={{ gap: "0.35rem" }}>
+                  <span className="pixel-tag-pill">
+                    Rank 1&ndash;{Math.max(2, node.maxMarks ?? (rankNodesOnPage.length || 4))}
+                  </span>
+                  {numVal > 0 && !disabled && (
+                    <button
+                      type="button"
+                      className="fr-now-pill"
+                      onClick={() => onChange(node.id, null)}
+                      title="Clear selected rank to reassign"
+                    >
+                      <span>Clear</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
               {node.readOnly && (
                 <span className="pixel-tag-pill" title="Verified / Fixed Field">
                   <PixelLockIcon size={10} />
@@ -285,6 +306,69 @@ export default function FormRenderer({
                 onChange={(nextScore) => onChange(node.id, nextScore)}
               />
             )}
+
+            {node.type === "rank_select" && (() => {
+              const maxRank = Math.max(
+                2,
+                node.maxMarks ?? (rankNodesOnPage.length >= 2 ? rankNodesOnPage.length : 4),
+              );
+              const takenByOther: Record<number, string> = {};
+              for (const peer of rankNodesOnPage) {
+                if (peer.id === node.id) continue;
+                const peerVal = Number(answers[peer.id]);
+                if (!Number.isNaN(peerVal) && peerVal >= 1 && peerVal <= maxRank) {
+                  takenByOther[peerVal] = peer.label;
+                }
+              }
+
+              const ordinalLabel = (r: number) =>
+                r === 1 ? "1st Place" : r === 2 ? "2nd Place" : r === 3 ? "3rd Place" : `${r}th Place`;
+
+              return (
+                <div className="fr-rank-grid" role="radiogroup" aria-label={`Rank for ${node.label}`}>
+                  {Array.from({ length: maxRank }, (_, i) => i + 1).map((rankNum) => {
+                    const isSelected = numVal === rankNum;
+                    const holder = takenByOther[rankNum];
+                    const isLocked = Boolean(holder) && !isSelected;
+
+                    return (
+                      <button
+                        key={rankNum}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        disabled={disabled || isLocked}
+                        className={`fr-rank-tile ${isSelected ? "selected" : ""} ${
+                          isLocked ? "locked" : ""
+                        }`}
+                        style={
+                          isSelected
+                            ? {
+                                backgroundColor: accent,
+                                borderColor: "var(--ink)",
+                                color: "#ffffff",
+                              }
+                            : undefined
+                        }
+                        onClick={() => {
+                          if (isLocked) return;
+                          onChange(node.id, isSelected ? null : rankNum);
+                        }}
+                      >
+                        <span className="fr-rank-num">#{rankNum}</span>
+                        <span className="fr-rank-sub">
+                          {isSelected
+                            ? `${ordinalLabel(rankNum)} ✓`
+                            : isLocked
+                              ? `Taken: ${holder}`
+                              : ordinalLabel(rankNum)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {node.type === "short_text" && (
               <input

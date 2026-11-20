@@ -18,6 +18,7 @@ import {
   getFormBackgroundPatternCss,
   getFormBackgroundPatternSize,
   getLocalNowParts,
+  normalizeFormNodes,
   resolveFormCategory,
   resolveKbmAccent,
   resolveKbmBanner,
@@ -157,8 +158,9 @@ export default function FillFormPage() {
           .maybeSingle();
 
         if (!active) return;
-        const parsedNodes =
+        const rawNodes =
           ((verRow as { schema_json: FormFieldNode[] } | null)?.schema_json ?? []) as FormFieldNode[];
+        const parsedNodes = normalizeFormNodes(rawNodes, typedForm);
         const parsedTheme =
           ((verRow as { theme_json: FormTheme } | null)?.theme_json ?? {}) as FormTheme;
 
@@ -358,7 +360,7 @@ export default function FillFormPage() {
         : "/forms/";
   const backLabel =
     category === "voting_evaluation"
-      ? "Voting & Evaluation"
+      ? "Education"
       : category === "staff_complaints"
         ? "Staff Complaints"
         : "Company Forms";
@@ -373,6 +375,7 @@ export default function FillFormPage() {
   function validatePageNodes(pageIndexToCheck: number): boolean {
     const targetPage = pages[pageIndexToCheck];
     if (!targetPage) return true;
+    const seenRanks = new Map<number, string>();
     for (const { node } of targetPage.items) {
       if (
         !node.required ||
@@ -390,12 +393,26 @@ export default function FillFormPage() {
         val === null ||
         (typeof val === "string" && val.trim() === "") ||
         (Array.isArray(val) && val.length === 0) ||
-        ((node.type === "star_rating" || node.type === "linear_scale") &&
+        ((node.type === "star_rating" ||
+          node.type === "linear_scale" ||
+          node.type === "rank_select") &&
           (!val || Number(val) <= 0));
 
       if (isEmpty) {
         setError(`Please complete required question: "${node.label}" before continuing.`);
         return false;
+      }
+
+      if (node.type === "rank_select" && val !== undefined && val !== null && val !== "") {
+        const rankNum = Number(val);
+        const existingHolder = seenRanks.get(rankNum);
+        if (existingHolder) {
+          setError(
+            `Rank #${rankNum} is already assigned to "${existingHolder}". Please choose a unique rank for "${node.label}".`,
+          );
+          return false;
+        }
+        seenRanks.set(rankNum, node.label);
       }
     }
     setError(null);

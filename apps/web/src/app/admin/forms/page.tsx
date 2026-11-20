@@ -50,6 +50,7 @@ import {
   getFormBackgroundPatternCss,
   getFormBackgroundPatternSize,
   getLocalNowParts,
+  normalizeFormNodes,
   resolveFormCategory,
   resolveKbmAccent,
   resolveKbmBg,
@@ -90,6 +91,7 @@ const FIELD_TYPE_GROUPS: {
   {
     group: "Choices & Judging",
     items: [
+      { type: "rank_select", label: "Unique Rank (1–N Exclusive)" },
       { type: "score_wheel", label: "Score Wheel (/Max Marks)" },
       { type: "score_total", label: "Final Score (Auto Total)" },
       { type: "dropdown", label: "Dropdown Select" },
@@ -536,7 +538,8 @@ export default function AdminFormBuilderPage() {
         ((allowRows as { email: string }[] | null) ?? []).map((x) => x.email).join("\n"),
       );
       const loadedTheme = ((ver as { theme_json?: FormTheme } | null)?.theme_json ?? {}) as FormTheme;
-      const loadedNodes = ((ver as { schema_json?: FormFieldNode[] } | null)?.schema_json ?? []) as FormFieldNode[];
+      const rawLoadedNodes = ((ver as { schema_json?: FormFieldNode[] } | null)?.schema_json ?? []) as FormFieldNode[];
+      const loadedNodes = normalizeFormNodes(rawLoadedNodes, f);
       const resolvedCat = resolveFormCategory(f, loadedTheme);
       setCategory(resolvedCat);
       setTheme({
@@ -681,6 +684,9 @@ export default function AdminFormBuilderPage() {
     }
     if (newType === "score_wheel") {
       patch.maxMarks = node.maxMarks ?? 25;
+    }
+    if (newType === "rank_select") {
+      patch.maxMarks = node.maxMarks && node.maxMarks <= 20 ? node.maxMarks : 4;
     }
     if (newType === "score_total") {
       patch.allowManualOverride = node.allowManualOverride ?? false;
@@ -844,21 +850,27 @@ export default function AdminFormBuilderPage() {
             ? "Instructions for applicant"
             : type === "date_time"
               ? "Date & Time"
-              : type === "score_wheel"
-                ? "Scoring Criterion"
-                : type === "score_total"
-                  ? "Final Score — Total Marks Obtained"
-                  : type === "star_rating"
-                    ? "Rating Criterion"
-                    : type === "linear_scale"
-                      ? "Score Scale (1–10)"
-                      : type === "image"
-                        ? "Form Graphic / Poster"
-                        : "Untitled Question",
-      required: type === "score_wheel",
+              : type === "rank_select"
+                ? "Participant Name"
+                : type === "score_wheel"
+                  ? "Scoring Criterion"
+                  : type === "score_total"
+                    ? "Final Score — Total Marks Obtained"
+                    : type === "star_rating"
+                      ? "Rating Criterion"
+                      : type === "linear_scale"
+                        ? "Score Scale (1–10)"
+                        : type === "image"
+                          ? "Form Graphic / Poster"
+                          : "Untitled Question",
+      required: type === "score_wheel" || type === "rank_select",
+      helpText:
+        type === "rank_select"
+          ? "Choose unique rank from 1 (1st Place) to 4. Once chosen, that rank number is locked for other participants."
+          : undefined,
       options: defaultOptions,
       defaultToNow: type === "date_time" || type === "time" ? true : undefined,
-      maxMarks: type === "score_wheel" ? 25 : undefined,
+      maxMarks: type === "score_wheel" ? 25 : type === "rank_select" ? 4 : undefined,
       allowManualOverride: type === "score_total" ? false : undefined,
       maxRating: type === "star_rating" ? 5 : type === "linear_scale" ? 10 : undefined,
       minRating: type === "linear_scale" ? 1 : undefined,
@@ -2114,6 +2126,50 @@ export default function AdminFormBuilderPage() {
                           </div>
                         )}
 
+                        {node.type === "rank_select" && (
+                          <div className="gf-rating-editor-box stack" style={{ gap: "0.65rem" }}>
+                            <div
+                              className="row-actions"
+                              style={{ alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}
+                            >
+                              <span className="gf-theme-label">Total Rank Positions (1 to N):</span>
+                              <input
+                                type="number"
+                                min={2}
+                                max={20}
+                                value={node.maxMarks ?? 4}
+                                onChange={(e) => {
+                                  const parsed = Math.max(
+                                    2,
+                                    Math.min(20, Number(e.target.value) || 4),
+                                  );
+                                  updateNode(node.id, { maxMarks: parsed });
+                                }}
+                                className="gf-select-compact"
+                                style={{ width: "80px" }}
+                              />
+                              <div className="row-actions" style={{ gap: "0.3rem" }}>
+                                {[3, 4, 5, 6, 8, 10].map((preset) => (
+                                  <button
+                                    key={preset}
+                                    type="button"
+                                    className={`pixel-paper-btn compact ${
+                                      (node.maxMarks ?? 4) === preset ? "primary" : ""
+                                    }`}
+                                    style={{ padding: "0.2rem 0.5rem", fontSize: "0.72rem" }}
+                                    onClick={() => updateNode(node.id, { maxMarks: preset })}
+                                  >
+                                    1&ndash;{preset}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <span className="notice" style={{ fontSize: "0.76rem", margin: 0 }}>
+                              Mutually-exclusive rank selector (#1 = 1st Place up to #{node.maxMarks ?? 4}). Once a rank number is chosen for one participant on this page, it is automatically locked for all other participants.
+                            </span>
+                          </div>
+                        )}
+
                         {node.type === "score_total" && (
                           <div className="gf-rating-editor-box stack" style={{ gap: "0.6rem" }}>
                             <div className="row-between" style={{ alignItems: "center" }}>
@@ -2524,6 +2580,13 @@ export default function AdminFormBuilderPage() {
                                 <span>Click to pick or upload banner photo</span>
                               </div>
                             )
+                          ) : node.type === "rank_select" ? (
+                            <div className="gf-idle-mock-input row-between">
+                              <span className="gf-idle-placeholder">
+                                Unique Rank Selector: #1 (1st Place) &ndash; #{node.maxMarks ?? 4} (Mutually Exclusive)
+                              </span>
+                              <span className="pixel-tag-pill">1&ndash;{node.maxMarks ?? 4}</span>
+                            </div>
                           ) : node.type === "score_wheel" ? (
                             <div className="gf-idle-mock-input row-between">
                               <span className="gf-idle-placeholder">

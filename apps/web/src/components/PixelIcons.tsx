@@ -720,6 +720,8 @@ export function PixelFieldTypeIcon({
       return <PixelScaleIcon size={size} className={className} />;
     case "score_wheel":
       return <PixelScaleIcon size={size} className={className} />;
+    case "rank_select":
+      return <PixelStarIcon size={size} className={className} />;
     case "score_total":
       return <PixelCheckIcon size={size} className={className} />;
     case "image":

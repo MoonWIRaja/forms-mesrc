@@ -6052,6 +6052,96 @@ textarea:focus {
   margin-top: 0.1rem;
 }
 
+/* ============================================================================
+   UNIQUE RANK SELECTOR (1..N MUTUALLY EXCLUSIVE TILES)
+   ============================================================================ */
+.fr-rank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.fr-rank-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.72rem 0.55rem;
+  min-height: 68px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface-muted);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--paper-back-edge);
+  transition:
+    transform 0.12s ease,
+    background-color 0.14s ease,
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
+  text-align: center;
+  user-select: none;
+}
+
+.fr-rank-tile:hover:not(:disabled) {
+  border-color: var(--ink);
+  background: var(--surface-elevated);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--paper-back-edge);
+}
+
+.fr-rank-tile.selected {
+  background: var(--form-accent, var(--accent));
+  border-color: var(--ink);
+  color: #ffffff;
+  box-shadow: 2.5px 2.5px 0 var(--ink);
+}
+
+.fr-rank-tile.locked {
+  opacity: 0.52;
+  background: var(--surface);
+  border-style: dashed;
+  border-color: var(--border-strong);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.fr-rank-tile-num {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.fr-rank-tile-sub {
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.25;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fr-rank-tile.selected .fr-rank-tile-sub {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.fr-rank-tile.locked .fr-rank-tile-sub {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+@media (max-width: 520px) {
+  .fr-rank-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
 
 
 

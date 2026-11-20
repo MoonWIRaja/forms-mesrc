@@ -19,6 +19,7 @@ import {
   getFieldMaxMarks,
   getLocalNowParts,
   isScorableField,
+  normalizeFormNodes,
   resolveFormCategory,
   resolveKbmAccent,
   splitNodesIntoPages,
@@ -299,9 +300,9 @@ export default function AdminPage() {
   const submittedOnly = formSubmissions.filter((s) => s.status === "submitted");
 
   // =========================================================================
-  // VOTING & EVALUATION ANALYTICS (3 AUTO-DETECTED MODES)
+  // EDUCATION / VOTING & EVALUATION ANALYTICS (3 AUTO-DETECTED MODES)
   // =========================================================================
-  const activeSchema = activeFormVer?.schema_json ?? [];
+  const activeSchema = normalizeFormNodes(activeFormVer?.schema_json ?? [], activeForm);
   const activeTheme = activeFormVer?.theme_json;
   const activePages = splitNodesIntoPages(activeSchema, activeTheme);
   const scorablePages = activePages.filter((p) =>
@@ -319,7 +320,9 @@ export default function AdminPage() {
     !isMultiPageCompetition &&
     !targetGroupNode &&
     allScorableNodes.length >= 2 &&
-    allScorableNodes.every((n) => n.type === "score_wheel");
+    allScorableNodes.every((n) => n.type === "score_wheel" || n.type === "rank_select");
+  const isUniqueRankMode =
+    isSinglePageCandidateRanking && allScorableNodes.some((n) => n.type === "rank_select");
 
   // Mode 1: Multi-Page Participant Leaderboard (e.g. 4 Speakers + Master of Ceremony)
   const multiPageLeaderboard: MultiPageLeaderboardEntry[] = (() => {
@@ -406,12 +409,18 @@ export default function AdminPage() {
         const maxPossible = getFieldMaxMarks(node);
         let sum = 0;
         let cnt = 0;
+        let firstPlaceCount = 0;
+        let rankPoints = 0;
         for (const sub of submittedOnly) {
           const raw = sub.answers_json[node.id];
           const num = raw !== undefined && raw !== null && raw !== "" ? Number(raw) : NaN;
-          if (!Number.isNaN(num)) {
+          if (!Number.isNaN(num) && num > 0) {
             sum += num;
             cnt += 1;
+            if (num === 1) {
+              firstPlaceCount += 1;
+            }
+            rankPoints += Math.max(1, maxPossible - num + 1);
           }
         }
         return {
@@ -420,10 +429,21 @@ export default function AdminPage() {
           judges: cnt,
           avgScore: cnt > 0 ? sum / cnt : 0,
           sumScore: sum,
+          firstPlaceCount,
+          rankPoints,
           maxPossible,
         };
       })
-      .sort((a, b) => b.avgScore - a.avgScore);
+      .sort((a, b) => {
+        if (isUniqueRankMode) {
+          if (b.rankPoints !== a.rankPoints) return b.rankPoints - a.rankPoints;
+          if (b.firstPlaceCount !== a.firstPlaceCount) return b.firstPlaceCount - a.firstPlaceCount;
+          const aRank = a.judges > 0 ? a.avgScore : 999;
+          const bRank = b.judges > 0 ? b.avgScore : 999;
+          return aRank - bRank;
+        }
+        return b.avgScore - a.avgScore;
+      });
   })();
 
   // Mode 3: Legacy Single-Page Dropdown-Grouped Leaderboard
@@ -526,17 +546,36 @@ export default function AdminPage() {
     }
 
     if (isSinglePageCandidateRanking && singlePageCandidateRows.length > 0) {
-      const rows: unknown[][] = [
-        ["Rank", "Participant", "Judges Count", "Average Score", "Max Marks", "Total Sum"],
-        ...singlePageCandidateRows.map((r, i) => [
-          i + 1,
-          r.candidate,
-          r.judges,
-          r.avgScore.toFixed(2),
-          r.maxPossible,
-          r.sumScore,
-        ]),
-      ];
+      const rows: unknown[][] = isUniqueRankMode
+        ? [
+            [
+              "Leaderboard Standing",
+              "Participant",
+              "Voters Count",
+              "1st Place (#1) Votes",
+              "Average Rank (1 = Best)",
+              "Ranking Points",
+            ],
+            ...singlePageCandidateRows.map((r, i) => [
+              i + 1,
+              r.candidate,
+              r.judges,
+              r.firstPlaceCount,
+              r.judges > 0 ? `#${r.avgScore.toFixed(2)}` : "—",
+              r.rankPoints,
+            ]),
+          ]
+        : [
+            ["Rank", "Participant", "Judges Count", "Average Score", "Max Marks", "Total Sum"],
+            ...singlePageCandidateRows.map((r, i) => [
+              i + 1,
+              r.candidate,
+              r.judges,
+              r.avgScore.toFixed(2),
+              r.maxPossible,
+              r.sumScore,
+            ]),
+          ];
       downloadCsv(`${activeForm.slug}-ranking-${dateTag}.csv`, rows);
       return;
     }
@@ -574,7 +613,10 @@ export default function AdminPage() {
   const selectedSubVer = selectedSub
     ? versionsMap[`${selectedSub.form_id}:${selectedSub.form_version}`]
     : undefined;
-  const selectedSubSchema = selectedSubVer?.schema_json ?? [];
+  const selectedSubSchema = normalizeFormNodes(
+    selectedSubVer?.schema_json ?? [],
+    selectedSub ? formsMap[selectedSub.form_id] : null,
+  );
   const selectedSubPages = selectedSub
     ? splitNodesIntoPages(selectedSubSchema, selectedSubVer?.theme_json)
     : [];
@@ -1048,11 +1090,12 @@ export default function AdminPage() {
                   <table>
                     <thead>
                       <tr>
-                        <th>Rank</th>
+                        <th>Standing</th>
                         <th>Participant</th>
-                        <th>Judges</th>
-                        <th>Average Score</th>
-                        <th>Total Sum</th>
+                        <th>{isUniqueRankMode ? "Voters" : "Judges"}</th>
+                        {isUniqueRankMode && <th>1st Place (#1) Votes</th>}
+                        <th>{isUniqueRankMode ? "Avg Rank (1 = Best)" : "Average Score"}</th>
+                        <th>{isUniqueRankMode ? "Ranking Points" : "Total Sum"}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1071,12 +1114,23 @@ export default function AdminPage() {
                             <strong>{row.candidate}</strong>
                           </td>
                           <td>{row.judges}</td>
+                          {isUniqueRankMode && (
+                            <td>
+                              <strong>{row.firstPlaceCount}</strong>
+                            </td>
+                          )}
                           <td>
                             <strong style={{ color: "var(--accent)" }}>
-                              {row.avgScore.toFixed(1)} / {row.maxPossible}
+                              {isUniqueRankMode
+                                ? row.judges > 0
+                                  ? `Rank #${row.avgScore.toFixed(2)}`
+                                  : "—"
+                                : `${row.avgScore.toFixed(1)} / ${row.maxPossible}`}
                             </strong>
                           </td>
-                          <td style={{ color: "var(--muted)" }}>{row.sumScore}</td>
+                          <td style={{ color: "var(--muted)", fontWeight: 700 }}>
+                            {isUniqueRankMode ? `${row.rankPoints} pts` : row.sumScore}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1446,9 +1500,13 @@ export default function AdminPage() {
                                 }}
                               >
                                 <strong style={{ fontSize: "0.83rem" }}>{nodeDef.label}</strong>
-                                {nodeDef.type === "score_wheel" ||
-                                nodeDef.type === "star_rating" ||
-                                nodeDef.type === "linear_scale" ? (
+                                {nodeDef.type === "rank_select" ? (
+                                  <span className="pixel-stamp-badge live">
+                                    RANK #{formatted}
+                                  </span>
+                                ) : nodeDef.type === "score_wheel" ||
+                                  nodeDef.type === "star_rating" ||
+                                  nodeDef.type === "linear_scale" ? (
                                   <span className="pixel-stamp-badge draft">
                                     {formatted} / {getFieldMaxMarks(nodeDef)}
                                   </span>
@@ -1492,7 +1550,12 @@ export default function AdminPage() {
                         }}
                       >
                         <strong style={{ fontSize: "0.86rem" }}>{displayLabel}</strong>
-                        {nodeDef && isScorableField(nodeDef) ? (
+                        {nodeDef?.type === "rank_select" ? (
+                          <span className="pixel-stamp-badge live">
+                            <PixelStarIcon size={12} />
+                            <span>RANK #{formatted}</span>
+                          </span>
+                        ) : nodeDef && isScorableField(nodeDef) ? (
                           <span className="pixel-stamp-badge draft">
                             <PixelStarIcon size={12} />
                             <span>

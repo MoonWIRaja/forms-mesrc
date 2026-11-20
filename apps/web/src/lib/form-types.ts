@@ -17,6 +17,7 @@ export type FieldType =
   | "linear_scale"
   | "score_wheel"
   | "score_total"
+  | "rank_select"
   | "file_upload";
 
 export type FormCategory = "company_forms" | "staff_complaints" | "voting_evaluation";
@@ -180,6 +181,7 @@ export interface PageScoreSummary {
 
 export function getFieldMaxMarks(node: FormFieldNode): number {
   if (node.type === "score_wheel") return Math.max(1, node.maxMarks ?? 25);
+  if (node.type === "rank_select") return Math.max(2, node.maxMarks ?? 4);
   if (node.type === "star_rating") return Math.max(1, node.maxRating ?? 5);
   if (node.type === "linear_scale") return Math.max(1, node.maxRating ?? 10);
   return 0;
@@ -188,9 +190,59 @@ export function getFieldMaxMarks(node: FormFieldNode): number {
 export function isScorableField(node: FormFieldNode): boolean {
   return (
     node.type === "score_wheel" ||
+    node.type === "rank_select" ||
     node.type === "star_rating" ||
     node.type === "linear_scale"
   );
+}
+
+const KNOWN_RANKING_NODE_IDS = new Set([
+  "gen_asmira",
+  "gen_ainun",
+  "gen_aimi",
+  "gen_ainnajwa",
+]);
+
+/**
+ * Automatically upgrades already-published Competition Ranking — General schemas
+ * from score_wheel (/10) to mutually-exclusive rank_select (1..N unique ranks)
+ * without requiring the Admin to unpublish or recreate the live form.
+ */
+export function normalizeFormNodes(
+  nodes: FormFieldNode[],
+  formMeta?: { slug?: string; title?: string } | null,
+): FormFieldNode[] {
+  if (!Array.isArray(nodes) || nodes.length === 0) return [];
+  const hasKnownIds = nodes.some((n) => KNOWN_RANKING_NODE_IDS.has(n.id));
+  const hay = `${formMeta?.slug ?? ""} ${formMeta?.title ?? ""}`.toLowerCase();
+  const isRankingForm =
+    hasKnownIds ||
+    (hay.includes("ranking") &&
+      !nodes.some((n) => n.type === "score_total") &&
+      !nodes.some((n) => n.type === "section"));
+
+  if (!isRankingForm) return nodes;
+
+  const candidateNodes = nodes.filter(
+    (n) =>
+      KNOWN_RANKING_NODE_IDS.has(n.id) ||
+      n.type === "rank_select" ||
+      (n.type === "score_wheel" && !n.label.toLowerCase().includes("criterion")),
+  );
+  if (candidateNodes.length < 2) return nodes;
+
+  const rankPoolSize = candidateNodes.length;
+  const candidateIds = new Set(candidateNodes.map((n) => n.id));
+
+  return nodes.map((n) => {
+    if (!candidateIds.has(n.id)) return n;
+    return {
+      ...n,
+      type: "rank_select",
+      maxMarks: rankPoolSize,
+      helpText: `Choose unique rank from 1 (1st Place) to ${rankPoolSize}. Each rank number can only be used once.`,
+    };
+  });
 }
 
 export function computePageScoreSummary(
@@ -305,8 +357,8 @@ export const FORM_CATEGORIES: {
   },
   {
     key: "voting_evaluation",
-    label: "Voting & Evaluation",
-    subtitle: "Competition judging, Speaker & MC scoring, and rankings",
+    label: "Education",
+    subtitle: "Training evaluations, speaker & MC scoring, and competition rankings",
     defaultDbKind: "general",
     accent: "#b8862b",
   },
@@ -756,12 +808,12 @@ export const FORM_TEMPLATES: FormTemplate[] = [
   },
   {
     key: "competition_ranking_general",
-    name: "Competition Ranking — General (4 Participants)",
+    name: "Competition Ranking — General (1 to 4 Unique Rank)",
     category: "voting_evaluation",
     kind: "general",
     title: "Competition Ranking — General",
     slug: "competition-ranking-general",
-    description: "General staff scoring & ranking for the 4 competition finalists.",
+    description: "Assign each finalist a unique rank from 1 (1st Place) to 4. Once a rank number is chosen for a participant, it cannot be repeated.",
     allowAppeal: false,
     theme: {
       category: "voting_evaluation",
@@ -771,7 +823,7 @@ export const FORM_TEMPLATES: FormTemplate[] = [
       bannerImageUrl: PRESET_BANNERS[0].url,
       bannerHeight: "compact",
       page1Title: "General Competition Ranking",
-      page1Subtitle: "Score each finalist from 1 to 10",
+      page1Subtitle: "Assign each finalist a unique rank from 1 (1st Place) to 4",
     },
     nodes: [
       {
@@ -785,37 +837,37 @@ export const FORM_TEMPLATES: FormTemplate[] = [
       },
       {
         id: "gen_asmira",
-        type: "score_wheel",
+        type: "rank_select",
         label: "Asmira Ashiqin",
-        helpText: "Select general ranking score (out of 10).",
-        maxMarks: 10,
+        helpText: "Choose unique rank from 1 (1st Place) to 4. Each rank number can only be used once.",
+        maxMarks: 4,
         required: true,
         width: "full",
       },
       {
         id: "gen_ainun",
-        type: "score_wheel",
+        type: "rank_select",
         label: "Nur Ainun",
-        helpText: "Select general ranking score (out of 10).",
-        maxMarks: 10,
+        helpText: "Choose unique rank from 1 (1st Place) to 4. Each rank number can only be used once.",
+        maxMarks: 4,
         required: true,
         width: "full",
       },
       {
         id: "gen_aimi",
-        type: "score_wheel",
+        type: "rank_select",
         label: "Nur Aimi Nadirah",
-        helpText: "Select general ranking score (out of 10).",
-        maxMarks: 10,
+        helpText: "Choose unique rank from 1 (1st Place) to 4. Each rank number can only be used once.",
+        maxMarks: 4,
         required: true,
         width: "full",
       },
       {
         id: "gen_ainnajwa",
-        type: "score_wheel",
+        type: "rank_select",
         label: "Nurul Ainnajwa",
-        helpText: "Select general ranking score (out of 10).",
-        maxMarks: 10,
+        helpText: "Choose unique rank from 1 (1st Place) to 4. Each rank number can only be used once.",
+        maxMarks: 4,
         required: true,
         width: "full",
       },

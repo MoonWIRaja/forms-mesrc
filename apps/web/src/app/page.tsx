@@ -165,15 +165,15 @@ export default function HomePage() {
           </div>
         </Link>
 
-        {/* TILE 3: VOTING & EVALUATION */}
+        {/* TILE 3: EDUCATION */}
         <Link href="/voting/" className="app-choice-card app-card-voting">
           <div className="app-choice-icon-box voting-icon-box" aria-hidden="true">
             <PixelStarIcon size={22} />
           </div>
           <div className="app-choice-info">
-            <h2 className="app-choice-title">Voting &amp; Evaluation</h2>
+            <h2 className="app-choice-title">Education</h2>
             <p className="app-choice-desc">
-              Competition judging, speaker &amp; MC scoring, and evaluations
+              Training evaluations, speaker &amp; MC scoring, and competition rankings
             </p>
           </div>
           <div className="app-choice-chevron" aria-hidden="true">
