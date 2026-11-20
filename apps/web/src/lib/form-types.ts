@@ -241,6 +241,47 @@ export interface FormTemplate {
   nodes: FormFieldNode[];
 }
 
+export const KBM_BRAND_PRIMARY = "#0f5132";
+export const KBM_BRAND_GOLD = "#b8862b";
+export const KBM_BRAND_BG = "#f4f2ea";
+
+const KBM_ALLOWED_ACCENTS = new Set([
+  "#0f5132",
+  "#0a3b24",
+  "#1b6b45",
+  "#14532d",
+  "#c59333",
+  "#b8862b",
+  "#a77922",
+  "#9e7220",
+  "#12231a",
+]);
+
+const KBM_ALLOWED_BGS = new Set([
+  "#f4f2ea",
+  "#f3efe4",
+  "#ebf2ed",
+  "#f7f2e3",
+  "#fbfaf6",
+  "#e4ede7",
+  "#edf3ef",
+]);
+
+/** Ensures every form button, top accent bar, and card stays aligned with the Kayangan Bumi Medical logo palette. */
+export function resolveKbmAccent(rawHex?: string | null, category?: FormCategory): string {
+  const norm = rawHex?.trim().toLowerCase();
+  if (norm && KBM_ALLOWED_ACCENTS.has(norm)) return norm;
+  if (category === "voting_evaluation") return KBM_BRAND_GOLD;
+  return KBM_BRAND_PRIMARY;
+}
+
+/** Ensures every form background tint harmonizes with Kayangan Bumi Medical Ivory/Sage/Gold cardstock. */
+export function resolveKbmBg(rawHex?: string | null): string {
+  const norm = rawHex?.trim().toLowerCase();
+  if (norm && KBM_ALLOWED_BGS.has(norm)) return norm;
+  return KBM_BRAND_BG;
+}
+
 export const FORM_CATEGORIES: {
   key: FormCategory;
   label: string;
@@ -260,14 +301,14 @@ export const FORM_CATEGORIES: {
     label: "Staff Complaints",
     subtitle: "Confidential reports, harassment, misconduct & ticket appeals",
     defaultDbKind: "complaint",
-    accent: "#991b1b",
+    accent: "#0f5132",
   },
   {
     key: "voting_evaluation",
     label: "Voting & Evaluation",
     subtitle: "Competition judging, Speaker & MC scoring, and rankings",
     defaultDbKind: "general",
-    accent: "#a77922",
+    accent: "#b8862b",
   },
 ];
 
@@ -345,12 +386,11 @@ export function getFormBackgroundPatternSize(pattern?: BackgroundPattern): strin
 }
 
 export const PAGE_BG_TINTS: { name: string; hex: string }[] = [
-  { name: "Studio Matboard", hex: "#efece6" },
-  { name: "Dusk Rose Paper", hex: "#d9c8c5" },
-  { name: "Sage Mint Craft", hex: "#dce6df" },
-  { name: "Blueprint Sky", hex: "#dce5f2" },
-  { name: "Lavender Kraft", hex: "#e6e0ee" },
-  { name: "Warm Sand", hex: "#ede3d2" },
+  { name: "KBM Ivory Cream", hex: "#f4f2ea" },
+  { name: "KBM Soft Sage", hex: "#ebf2ed" },
+  { name: "KBM Champagne Gold", hex: "#f7f2e3" },
+  { name: "KBM Pure Cardstock", hex: "#fbfaf6" },
+  { name: "KBM Deep Sage Mist", hex: "#e4ede7" },
 ];
 
 function svgDataUrl(svg: string): string {
@@ -360,66 +400,67 @@ function svgDataUrl(svg: string): string {
 export const PRESET_BANNERS: { id: string; name: string; tag: string; url: string }[] = [
   {
     id: "mcep-pixel-stage",
-    name: "MCEP Pixel Trophy Stage",
+    name: "KBM Gold Trophy Stage",
     tag: "Voting & Judging",
     url: svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" shape-rendering="crispEdges">
-      <rect width="1200" height="300" fill="#1e1b4b"/>
-      <rect y="220" width="1200" height="80" fill="#312e81"/>
-      <rect x="80" y="50" width="16" height="16" fill="#fde047"/>
-      <rect x="210" y="90" width="12" height="12" fill="#a78bfa"/>
-      <rect x="960" y="45" width="16" height="16" fill="#fde047"/>
-      <rect x="1080" y="110" width="12" height="12" fill="#f472b6"/>
-      <rect x="440" y="180" width="320" height="120" fill="#4338ca"/>
-      <rect x="520" y="110" width="160" height="24" fill="#fbbf24"/>
-      <rect x="550" y="60" width="100" height="60" fill="#f59e0b"/>
-      <rect x="530" y="70" width="20" height="30" fill="#fbbf24"/>
-      <rect x="650" y="70" width="20" height="30" fill="#fbbf24"/>
-      <rect x="580" y="134" width="40" height="36" fill="#d97706"/>
-      <rect x="550" y="170" width="100" height="16" fill="#fbbf24"/>
-      <rect x="140" y="170" width="220" height="130" fill="#4c1d95" opacity="0.7"/>
-      <rect x="840" y="160" width="240" height="140" fill="#4c1d95" opacity="0.7"/>
+      <rect width="1200" height="300" fill="#0a3b24"/>
+      <rect y="210" width="1200" height="90" fill="#0f5132"/>
+      <rect x="80" y="50" width="16" height="16" fill="#e5bd67"/>
+      <rect x="210" y="90" width="12" height="12" fill="#c59333"/>
+      <rect x="960" y="45" width="16" height="16" fill="#e5bd67"/>
+      <rect x="1080" y="110" width="12" height="12" fill="#c59333"/>
+      <rect x="440" y="180" width="320" height="120" fill="#145f3b"/>
+      <rect x="520" y="110" width="160" height="24" fill="#e5bd67"/>
+      <rect x="550" y="60" width="100" height="60" fill="#c59333"/>
+      <rect x="530" y="70" width="20" height="30" fill="#e5bd67"/>
+      <rect x="650" y="70" width="20" height="30" fill="#e5bd67"/>
+      <rect x="580" y="134" width="40" height="36" fill="#9e7220"/>
+      <rect x="550" y="170" width="100" height="16" fill="#e5bd67"/>
+      <rect x="140" y="170" width="220" height="130" fill="#0d472c" opacity="0.8"/>
+      <rect x="840" y="160" width="240" height="140" fill="#0d472c" opacity="0.8"/>
     </svg>`),
   },
   {
     id: "mesrc-papercraft-wave",
-    name: "MESRC Layered Cardstock",
+    name: "KBM Emerald & Gold Waves",
     tag: "Company & Check-In",
     url: svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300">
-      <rect width="1200" height="300" fill="#f3ede2"/>
-      <path d="M0 190 L280 120 L580 210 L920 95 L1200 180 L1200 300 L0 300 Z" fill="#dbeafe"/>
-      <path d="M0 230 L340 165 L680 235 L980 140 L1200 220 L1200 300 L0 300 Z" fill="#1d4ed8"/>
-      <path d="M0 265 L420 215 L780 270 L1200 205 L1200 300 L0 300 Z" fill="#18181b"/>
-      <rect x="110" y="55" width="32" height="32" fill="#f59e0b"/>
-      <rect x="110" y="55" width="32" height="32" fill="none" stroke="#18181b" stroke-width="4"/>
-      <rect x="1030" y="60" width="24" height="24" fill="#10b981"/>
-      <rect x="1030" y="60" width="24" height="24" fill="none" stroke="#18181b" stroke-width="4"/>
+      <rect width="1200" height="300" fill="#f4f2ea"/>
+      <path d="M0 190 L280 120 L580 210 L920 95 L1200 180 L1200 300 L0 300 Z" fill="#e6f0ea"/>
+      <path d="M0 225 L340 160 L680 230 L980 135 L1200 215 L1200 300 L0 300 Z" fill="#c59333"/>
+      <path d="M0 258 L420 205 L780 262 L1200 195 L1200 300 L0 300 Z" fill="#0f5132"/>
+      <rect x="110" y="55" width="32" height="32" fill="#c59333"/>
+      <rect x="110" y="55" width="32" height="32" fill="none" stroke="#12231a" stroke-width="4"/>
+      <rect x="1030" y="60" width="24" height="24" fill="#0f5132"/>
+      <rect x="1030" y="60" width="24" height="24" fill="none" stroke="#12231a" stroke-width="4"/>
     </svg>`),
   },
   {
     id: "emerald-pixel-meadow",
-    name: "Emerald Paper Atelier",
+    name: "KBM Forest Atelier",
     tag: "Operations & Events",
     url: svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" shape-rendering="crispEdges">
-      <rect width="1200" height="300" fill="#d1fae5"/>
-      <rect y="180" width="1200" height="120" fill="#059669"/>
-      <rect y="230" width="1200" height="70" fill="#065f46"/>
-      <rect x="120" y="130" width="80" height="80" fill="#34d399"/>
-      <rect x="240" y="110" width="96" height="110" fill="#10b981"/>
-      <rect x="920" y="120" width="110" height="90" fill="#34d399"/>
-      <rect x="1020" y="50" width="48" height="48" fill="#fde047"/>
+      <rect width="1200" height="300" fill="#e6f2eb"/>
+      <rect y="180" width="1200" height="120" fill="#1b6b45"/>
+      <rect y="230" width="1200" height="70" fill="#0f5132"/>
+      <rect x="120" y="130" width="80" height="80" fill="#7fc09b"/>
+      <rect x="240" y="110" width="96" height="110" fill="#1b6b45"/>
+      <rect x="920" y="120" width="110" height="90" fill="#7fc09b"/>
+      <rect x="1020" y="50" width="48" height="48" fill="#c59333"/>
     </svg>`),
   },
   {
     id: "crimson-kraft-desk",
-    name: "Rose & Charcoal Desk",
+    name: "KBM Confidential Gold Crest",
     tag: "Complaints & Notice",
     url: svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" shape-rendering="crispEdges">
-      <rect width="1200" height="300" fill="#881337"/>
-      <rect x="60" y="40" width="340" height="260" fill="#9f1239"/>
-      <rect x="440" y="90" width="420" height="210" fill="#be123c"/>
-      <rect x="900" y="30" width="240" height="270" fill="#4c0519"/>
-      <rect x="180" y="110" width="24" height="24" fill="#fda4af"/>
-      <rect x="760" y="140" width="20" height="20" fill="#fecdd3"/>
+      <rect width="1200" height="300" fill="#0f5132"/>
+      <rect x="60" y="40" width="340" height="260" fill="#0a3b24"/>
+      <rect x="440" y="90" width="420" height="210" fill="#145f3b"/>
+      <rect x="900" y="30" width="240" height="270" fill="#082e1c"/>
+      <rect x="180" y="110" width="24" height="24" fill="#c59333"/>
+      <rect x="760" y="140" width="20" height="20" fill="#e5bd67"/>
+      <rect y="280" width="1200" height="20" fill="#c59333"/>
     </svg>`),
   },
 ];
@@ -771,8 +812,8 @@ export const FORM_TEMPLATES: FormTemplate[] = [
     allowAppeal: true,
     theme: {
       category: "staff_complaints",
-      primaryColor: "#991b1b",
-      backgroundColor: "#f3efe4",
+      primaryColor: "#0f5132",
+      backgroundColor: "#f4f2ea",
       backgroundPattern: "grid_paper",
       bannerImageUrl: PRESET_BANNERS[3].url,
       bannerHeight: "compact",

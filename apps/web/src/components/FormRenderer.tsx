@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   computePageScoreSummary,
   getLocalNowParts,
+  resolveKbmAccent,
   splitDateTimeValue,
   splitNodesIntoPages,
   type FormFieldNode,
@@ -32,11 +33,6 @@ interface FormRendererProps {
   onPageChange?: (pageIndex: number) => void;
 }
 
-function resolveAccentColor(color?: string): string {
-  if (color && /^#[0-9a-fA-F]{6}$/.test(color)) return color;
-  return "#0f5132";
-}
-
 export default function FormRenderer({
   nodes,
   theme,
@@ -47,7 +43,7 @@ export default function FormRenderer({
   activePageIndex,
   onPageChange,
 }: FormRendererProps) {
-  const accent = resolveAccentColor(theme?.primaryColor);
+  const accent = resolveKbmAccent(theme?.primaryColor, theme?.category);
   const [hoveredStar, setHoveredStar] = useState<Record<string, number>>({});
   const [internalPageIdx, setInternalPageIdx] = useState(0);
 
@@ -576,40 +572,87 @@ export default function FormRenderer({
               );
             })()}
 
-            {node.type === "file_upload" && (
-              <div className="gf-file-upload-mock" style={{ alignItems: "flex-start", textAlign: "left" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginBottom: "0.25rem" }}>
-                  <PixelClipIcon size={15} />
-                  <strong style={{ fontSize: "0.86rem" }}>Attach File</strong>
+            {node.type === "file_upload" && (() => {
+              const fileMeta =
+                val && typeof val === "object" && "name" in val
+                  ? (val as { name: string; size?: number })
+                  : null;
+              const sizeLabel =
+                fileMeta?.size && fileMeta.size > 0
+                  ? fileMeta.size >= 1048576
+                    ? `${(fileMeta.size / 1048576).toFixed(1)} MB`
+                    : `${Math.max(1, Math.round(fileMeta.size / 1024))} KB`
+                  : null;
+              return (
+                <div className="fr-file-picker-box">
+                  <input
+                    id={`fld-${node.id}`}
+                    type="file"
+                    className="sr-only"
+                    disabled={disabled}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) {
+                        onChange(node.id, null, undefined);
+                        return;
+                      }
+                      if (f.size > 1073741824) {
+                        window.alert("File exceeds the 1 GiB maximum limit.");
+                        e.target.value = "";
+                        return;
+                      }
+                      onChange(
+                        node.id,
+                        {
+                          name: f.name,
+                          size: f.size,
+                          type: f.type || "application/octet-stream",
+                        },
+                        f,
+                      );
+                    }}
+                  />
+
+                  <div className="fr-file-picker-header">
+                    <div className="fr-file-picker-title">
+                      <PixelClipIcon size={15} />
+                      <span>{fileMeta ? "Attached File" : "Attach Supporting File"}</span>
+                    </div>
+                    <label
+                      htmlFor={`fld-${node.id}`}
+                      className={`pixel-paper-btn compact primary fr-file-picker-btn ${
+                        disabled ? "disabled" : ""
+                      }`}
+                      style={{ backgroundColor: accent }}
+                    >
+                      <span>{fileMeta ? "Replace File" : "Choose File"}</span>
+                    </label>
+                  </div>
+
+                  {fileMeta ? (
+                    <div className="fr-file-selected-row">
+                      <div className="fr-file-selected-name">
+                        <strong>{fileMeta.name}</strong>
+                        {sizeLabel && <span className="notice"> ({sizeLabel})</span>}
+                      </div>
+                      {!disabled && (
+                        <button
+                          type="button"
+                          className="pixel-paper-btn compact"
+                          onClick={() => onChange(node.id, null, undefined)}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="fr-file-picker-hint">
+                      Tap Choose File to attach PDF, image, or document (max 1 GiB).
+                    </span>
+                  )}
                 </div>
-                <input
-                  id={`fld-${node.id}`}
-                  type="file"
-                  disabled={disabled}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (!f) {
-                      onChange(node.id, null, undefined);
-                      return;
-                    }
-                    if (f.size > 1073741824) {
-                      window.alert("File exceeds the 1 GiB maximum limit.");
-                      e.target.value = "";
-                      return;
-                    }
-                    onChange(
-                      node.id,
-                      {
-                        name: f.name,
-                        size: f.size,
-                        type: f.type || "application/octet-stream",
-                      },
-                      f,
-                    );
-                  }}
-                />
-              </div>
-            )}
+              );
+            })()}
           </div>
         );
       })}

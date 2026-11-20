@@ -51,6 +51,8 @@ import {
   getFormBackgroundPatternSize,
   getLocalNowParts,
   resolveFormCategory,
+  resolveKbmAccent,
+  resolveKbmBg,
   splitNodesIntoPages,
   type BackgroundPattern,
   type FieldType,
@@ -114,13 +116,12 @@ const FLAT_FIELD_LABELS: Record<FieldType, string> = Object.fromEntries(
 ) as Record<FieldType, string>;
 
 const THEME_ACCENTS = [
-  { name: "KBM Emerald", hex: "#0f5132" },
-  { name: "KBM Gold", hex: "#c59333" },
-  { name: "Teal Emerald", hex: "#0f766e" },
-  { name: "Royal Blue", hex: "#1d4ed8" },
-  { name: "Warm Amber", hex: "#b45309" },
-  { name: "Rose Crimson", hex: "#be123c" },
-  { name: "Forest Charcoal", hex: "#12231a" },
+  { name: "KBM Forest Emerald", hex: "#0f5132" },
+  { name: "KBM Deep Pine", hex: "#0a3b24" },
+  { name: "KBM Botanical Green", hex: "#1b6b45" },
+  { name: "KBM Metallic Gold", hex: "#c59333" },
+  { name: "KBM Rich Gold", hex: "#b8862b" },
+  { name: "KBM Forest Charcoal", hex: "#12231a" },
 ];
 
 function computeDefaultAnswers(
@@ -1158,14 +1159,14 @@ export default function AdminFormBuilderPage() {
   }
 
   const currentFormRecord = forms.find((f) => f.id === selectedFormId);
-  const primaryAccent = theme.primaryColor || "#0f5132";
+  const primaryAccent = resolveKbmAccent(theme.primaryColor, category);
   const isPublishedOpen =
     currentFormRecord?.state === "published" && !theme.submissionsClosed;
   const isPublishedPaused =
     currentFormRecord?.state === "published" && Boolean(theme.submissionsClosed);
 
   const stageBgStyle: React.CSSProperties = {
-    backgroundColor: theme.backgroundColor || "#f3efe4",
+    backgroundColor: resolveKbmBg(theme.backgroundColor),
     backgroundImage: getFormBackgroundPatternCss(theme.backgroundPattern),
     backgroundSize: getFormBackgroundPatternSize(theme.backgroundPattern),
   };

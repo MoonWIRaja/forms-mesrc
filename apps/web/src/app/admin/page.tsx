@@ -20,6 +20,7 @@ import {
   getLocalNowParts,
   isScorableField,
   resolveFormCategory,
+  resolveKbmAccent,
   splitNodesIntoPages,
   type FormCategory,
   type FormFieldNode,
@@ -685,7 +686,7 @@ export default function AdminPage() {
                       s.form_id === f.id &&
                       toLocalDateKey(s.submitted_at ?? s.created_at) === todayKey,
                   ).length;
-                  const accent = fTheme?.primaryColor || "#0f5132";
+                  const accent = resolveKbmAccent(fTheme?.primaryColor, fCat);
                   const ctaLabel =
                     fCat === "voting_evaluation"
                       ? "Open Scoreboard"

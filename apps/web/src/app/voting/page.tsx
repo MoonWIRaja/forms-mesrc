@@ -11,6 +11,7 @@ import {
 } from "@/components/PixelIcons";
 import {
   resolveFormCategory,
+  resolveKbmAccent,
   type FormRow,
   type FormTheme,
 } from "@/lib/form-types";
@@ -133,7 +134,7 @@ export default function VotingPage() {
         <div className="grid-2">
           {votingForms.map((f) => {
             const fTheme = themesMap[f.id];
-            const accent = fTheme?.primaryColor || "#7c3aed";
+            const accent = resolveKbmAccent(fTheme?.primaryColor, "voting_evaluation");
             const isPaused = Boolean(fTheme?.submissionsClosed);
 
             if (isPaused) {

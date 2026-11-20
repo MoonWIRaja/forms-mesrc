@@ -14,6 +14,7 @@ import {
 import {
   FORM_CATEGORIES,
   resolveFormCategory,
+  resolveKbmAccent,
   type FormCategory,
   type FormFieldNode,
   type FormRow,
@@ -271,7 +272,7 @@ export default function AdminFormsListPage() {
                 const catLabel = FORM_CATEGORIES.find((c) => c.key === fCat)?.label ?? fCat;
                 const isPaused = f.state === "published" && Boolean(fTheme?.submissionsClosed);
                 const isBusy = busyId === f.id;
-                const accent = fTheme?.primaryColor || "#0f5132";
+                const accent = resolveKbmAccent(fTheme?.primaryColor, fCat);
 
                 return (
                   <div

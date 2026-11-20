@@ -11,6 +11,7 @@ import {
 } from "@/components/PixelIcons";
 import {
   resolveFormCategory,
+  resolveKbmAccent,
   type FormRow,
   type FormTheme,
 } from "@/lib/form-types";
@@ -133,7 +134,7 @@ export default function TicketsPage() {
         <div className="grid-2">
           {complaintForms.map((f) => {
             const fTheme = themesMap[f.id];
-            const accent = fTheme?.primaryColor || "#be123c";
+            const accent = resolveKbmAccent(fTheme?.primaryColor, "staff_complaints");
             const isPaused = Boolean(fTheme?.submissionsClosed);
 
             if (isPaused) {

@@ -19,6 +19,8 @@ import {
   getFormBackgroundPatternSize,
   getLocalNowParts,
   resolveFormCategory,
+  resolveKbmAccent,
+  resolveKbmBg,
   splitNodesIntoPages,
   type FormFieldNode,
   type FormRow,
@@ -335,7 +337,8 @@ export default function FillFormPage() {
       : category === "staff_complaints"
         ? "Staff Complaints"
         : "Company Forms";
-  const primaryAccent = theme.primaryColor || "#0f5132";
+  const primaryAccent = resolveKbmAccent(theme.primaryColor, category);
+  const stageBgColor = resolveKbmBg(theme.backgroundColor);
   const pages = splitNodesIntoPages(nodes, theme);
   const isMultiPage = pages.length > 1;
   const clampedPageIdx = Math.min(Math.max(0, activePageIdx), pages.length - 1);
@@ -383,6 +386,7 @@ export default function FillFormPage() {
       setError(null);
     }
     setActivePageIdx(clamped);
+    document.querySelector(".app-frame")?.scrollTo({ top: 0, behavior: "smooth" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -445,7 +449,7 @@ export default function FillFormPage() {
     <div
       className="fill-themed-stage"
       style={{
-        backgroundColor: theme.backgroundColor || "transparent",
+        backgroundColor: stageBgColor,
         backgroundImage: getFormBackgroundPatternCss(theme.backgroundPattern),
         backgroundSize: getFormBackgroundPatternSize(theme.backgroundPattern),
       }}
@@ -461,7 +465,7 @@ export default function FillFormPage() {
           <div
             className="gf-bg-photo-overlay"
             style={{
-              backgroundColor: theme.backgroundColor || "#efece6",
+              backgroundColor: stageBgColor,
               opacity: (theme.backgroundOverlayOpacity ?? 35) / 100,
             }}
           />

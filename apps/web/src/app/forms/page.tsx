@@ -12,6 +12,7 @@ import {
 import {
   FORM_CATEGORIES,
   resolveFormCategory,
+  resolveKbmAccent,
   type FormCategory,
   type FormRow,
   type FormTheme,
@@ -146,7 +147,7 @@ export default function FormsCatalogPage() {
         <div className="grid-2">
           {filteredForms.map((f) => {
             const fTheme = themesMap[f.id];
-            const accent = fTheme?.primaryColor || "#1d4ed8";
+            const accent = resolveKbmAccent(fTheme?.primaryColor, "company_forms");
             const isPaused = Boolean(fTheme?.submissionsClosed);
 
             if (isPaused) {
