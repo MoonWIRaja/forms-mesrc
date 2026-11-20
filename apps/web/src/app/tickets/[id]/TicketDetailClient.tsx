@@ -6,27 +6,44 @@ import ChunkLoader from "@/components/ChunkLoader";
 import { getSupabase, type UserProfile } from "@/lib/supabase";
 
 interface TicketRow {
-  id: string; form_id: string; submission_id: string | null; user_id: string;
-  kind: "appeal" | "complaint"; reason: string;
+  id: string;
+  form_id: string;
+  submission_id: string | null;
+  user_id: string;
+  kind: "appeal" | "complaint";
+  reason: string;
   status: "open" | "taken" | "resolved" | "reopened" | "closed";
-  taken_by: string | null; taken_at: string | null; resolved_at: string | null;
-  resolution: string | null; created_at: string; updated_at: string;
+  taken_by: string | null;
+  taken_at: string | null;
+  resolved_at: string | null;
+  resolution: string | null;
+  created_at: string;
+  updated_at: string;
 }
-interface TicketMessage { id: number; ticket_id: string; sender_id: string; message: string; created_at: string; }
+
+interface TicketMessage {
+  id: number;
+  ticket_id: string;
+  sender_id: string;
+  message: string;
+  created_at: string;
+}
 
 export default function TicketDetailClient() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [ticket, setTicket] = useState<TicketRow | null>(null);
+  const [formTitle, setFormTitle] = useState<string>("");
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [newMessage, setNewMessage] = useState("");
 
-  const ticketId = typeof window === "undefined"
-    ? ""
-    : new URLSearchParams(window.location.search).get("id") ||
-      decodeURIComponent(window.location.pathname.replace(/\/+$/, "").split("/").at(-1) ?? "");
+  const ticketId =
+    typeof window === "undefined"
+      ? ""
+      : new URLSearchParams(window.location.search).get("id") ||
+        decodeURIComponent(window.location.pathname.replace(/\/+$/, "").split("/").at(-1) ?? "");
 
   useEffect(() => {
     let active = true;
@@ -48,20 +65,40 @@ export default function TicketDetailClient() {
         ]);
 
         if (!active) return;
+        const loadedTicket = (tRow as TicketRow | null) ?? null;
         setProfile((prof as UserProfile | null) ?? null);
-        setTicket((tRow as TicketRow | null) ?? null);
+        setTicket(loadedTicket);
         setMessages((mRows as TicketMessage[] | null) ?? []);
+
+        if (loadedTicket?.form_id) {
+          const { data: fRow } = await supabase
+            .from("forms")
+            .select("title")
+            .eq("id", loadedTicket.form_id)
+            .maybeSingle();
+          if (active && fRow && "title" in fRow) {
+            setFormTitle(String((fRow as { title: string }).title));
+          }
+        }
       } catch (err) {
         if (active) setError(err instanceof Error ? err.message : "Unable to load ticket.");
       } finally {
         if (active) setLoading(false);
       }
     })();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [ticketId]);
 
   const isAdminOrMaint = profile ? profile.role === "admin" || profile.role === "maintenance" : false;
   const isTakenByMe = ticket ? ticket.taken_by === (profile?.id ?? "") : false;
+
+  async function refreshTicket() {
+    const supabase = getSupabase();
+    const { data: tRow } = await supabase.from("tickets").select("*").eq("id", ticketId).maybeSingle();
+    if (tRow) setTicket(tRow as TicketRow);
+  }
 
   async function handleTakeTicket() {
     setBusy(true);
@@ -70,9 +107,7 @@ export default function TicketDetailClient() {
       const supabase = getSupabase();
       const { error: rpcErr } = await supabase.rpc("take_ticket", { p_ticket_id: ticketId });
       if (rpcErr) throw rpcErr;
-      const supabase2 = getSupabase();
-      const { data: tRow } = await supabase2.from("tickets").select("*").eq("id", ticketId).maybeSingle();
-      if (tRow) setTicket(tRow as TicketRow);
+      await refreshTicket();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Take ticket failed.");
     } finally {
@@ -87,11 +122,12 @@ export default function TicketDetailClient() {
     setError(null);
     try {
       const supabase = getSupabase();
-      const { error: rpcErr } = await supabase.rpc("resolve_ticket", { p_ticket_id: ticketId, p_resolution: resolution });
+      const { error: rpcErr } = await supabase.rpc("resolve_ticket", {
+        p_ticket_id: ticketId,
+        p_resolution: resolution,
+      });
       if (rpcErr) throw rpcErr;
-      const supabase2 = getSupabase();
-      const { data: tRow } = await supabase2.from("tickets").select("*").eq("id", ticketId).maybeSingle();
-      if (tRow) setTicket(tRow as TicketRow);
+      await refreshTicket();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Resolve ticket failed.");
     } finally {
@@ -106,9 +142,7 @@ export default function TicketDetailClient() {
       const supabase = getSupabase();
       const { error: rpcErr } = await supabase.rpc("reopen_ticket", { p_ticket_id: ticketId });
       if (rpcErr) throw rpcErr;
-      const supabase2 = getSupabase();
-      const { data: tRow } = await supabase2.from("tickets").select("*").eq("id", ticketId).maybeSingle();
-      if (tRow) setTicket(tRow as TicketRow);
+      await refreshTicket();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Reopen ticket failed.");
     } finally {
@@ -133,8 +167,12 @@ export default function TicketDetailClient() {
         return;
       }
       const helper = helpers[0];
-      const { error: rpcErr } = await supabase.rpc("request_help", { p_ticket_id: ticketId, p_helper_id: helper.id });
+      const { error: rpcErr } = await supabase.rpc("request_help", {
+        p_ticket_id: ticketId,
+        p_helper_id: helper.id,
+      });
       if (rpcErr) throw rpcErr;
+      await supabase.functions.invoke("send-outbox-emails").catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request help failed.");
     } finally {
@@ -187,11 +225,12 @@ export default function TicketDetailClient() {
         return;
       }
       const newOwner = owners[0];
-      const { error: rpcErr } = await supabase.rpc("transfer_ticket", { p_ticket_id: ticketId, p_new_owner_id: newOwner.id });
+      const { error: rpcErr } = await supabase.rpc("transfer_ticket", {
+        p_ticket_id: ticketId,
+        p_new_owner_id: newOwner.id,
+      });
       if (rpcErr) throw rpcErr;
-      const supabase2 = getSupabase();
-      const { data: tRow } = await supabase2.from("tickets").select("*").eq("id", ticketId).maybeSingle();
-      if (tRow) setTicket(tRow as TicketRow);
+      await refreshTicket();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Transfer ticket failed.");
     } finally {
@@ -231,12 +270,7 @@ export default function TicketDetailClient() {
   const canTransfer = isAdminOrMaint && ticket?.status === "taken";
 
   if (loading) {
-    return (
-      <ChunkLoader
-        title="Ticket"
-        subtitle="Loading ticket details..."
-      />
-    );
+    return <ChunkLoader title="Ticket" subtitle="Loading ticket details..." />;
   }
 
   if (!profile) {
@@ -257,9 +291,13 @@ export default function TicketDetailClient() {
     return (
       <section className="card stack">
         <h1>Ticket Not Found</h1>
-        <p className="notice">{error ?? "This ticket does not exist or you do not have access to it."}</p>
+        <p className="notice">
+          {error ?? "This ticket does not exist or you do not have access to it."}
+        </p>
         <div className="row-actions">
-          <Link href="/tickets/" className="btn btn-primary">Back to Tickets</Link>
+          <Link href="/tickets/" className="btn btn-primary">
+            Back to Staff Complaints
+          </Link>
         </div>
       </section>
     );
@@ -267,101 +305,160 @@ export default function TicketDetailClient() {
 
   return (
     <section className="card stack">
-      <div className="row-between">
+      <div className="row-between" style={{ flexWrap: "wrap", gap: "0.75rem" }}>
         <div>
-          <h1>Ticket #{ticket.id.slice(0, 8)}</h1>
-          <p className="notice">{ticket.kind === "appeal" ? "Formal Appeal" : "Operational Complaint"}</p>
+          <h1 style={{ marginBottom: "0.2rem" }}>Ticket #{ticket.id.slice(0, 8)}</h1>
+          <p className="notice" style={{ margin: 0 }}>
+            {ticket.kind === "appeal" ? "Formal Appeal" : "Confidential Staff Complaint"}
+          </p>
         </div>
-        <span className={`badge ${ticket.status === "open" ? "badge-not_configured" : "badge-configured"}`}>
-          {ticket.status}
+        <span
+          className={`pixel-stamp-badge ${
+            ticket.status === "open" || ticket.status === "reopened" ? "draft" : "live"
+          }`}
+        >
+          {ticket.status.toUpperCase()}
         </span>
       </div>
 
-      {error && <p className="alert alert-error" role="alert">{error}</p>}
+      {error && (
+        <p className="alert alert-error" role="alert">
+          {error}
+        </p>
+      )}
 
-      <section className="card stack" style={{ marginTop: "0.5rem" }}>
-        <h2>Details</h2>
+      <section className="card stack" style={{ margin: 0, background: "var(--surface-muted)" }}>
+        <h2 style={{ margin: 0 }}>Details</h2>
         <div className="field">
-          <label>Form ID</label>
-          <p className="notice">{ticket.form_id}</p>
+          <label>Form</label>
+          <p className="notice" style={{ margin: 0, color: "var(--ink)", fontWeight: 700 }}>
+            {formTitle || ticket.form_id}
+          </p>
         </div>
-        {ticket.submission_id && (
+        <div className="field">
+          <label>Summary / Details</label>
+          <p className="notice" style={{ margin: 0, color: "var(--ink)", whiteSpace: "pre-line" }}>
+            {ticket.reason}
+          </p>
+        </div>
+        <div className="grid-2">
           <div className="field">
-            <label>Submission ID</label>
-            <p className="notice">{ticket.submission_id}</p>
+            <label>Status</label>
+            <p className="notice" style={{ margin: 0, textTransform: "uppercase", fontWeight: 700 }}>
+              {ticket.status}
+            </p>
           </div>
-        )}
-        <div className="field">
-          <label>Reason</label>
-          <p className="notice">{ticket.reason}</p>
+          <div className="field">
+            <label>Handled By</label>
+            <p className="notice" style={{ margin: 0 }}>
+              {ticket.taken_by
+                ? `Assigned Admin (${ticket.taken_by.slice(0, 8)})`
+                : "Pending Admin Review"}
+            </p>
+          </div>
         </div>
         <div className="field">
-          <label>Status</label>
-          <p className="notice">{ticket.status}</p>
-        </div>
-        <div className="field">
-          <label>Taken By</label>
-          <p className="notice">{ticket.taken_by ? ticket.taken_by.slice(0, 8) + "..." : "Ã¢â‚¬â€"}</p>
-        </div>
-        <div className="field">
-          <label>Created</label>
-          <p className="notice">{new Date(ticket.created_at).toLocaleString()}</p>
+          <label>Submitted</label>
+          <p className="notice" style={{ margin: 0 }}>
+            {new Date(ticket.created_at).toLocaleString()}
+          </p>
         </div>
         {ticket.resolved_at && (
           <div className="field">
             <label>Resolved At</label>
-            <p className="notice">{new Date(ticket.resolved_at).toLocaleString()}</p>
+            <p className="notice" style={{ margin: 0 }}>
+              {new Date(ticket.resolved_at).toLocaleString()}
+            </p>
           </div>
         )}
         {ticket.resolution && (
           <div className="field">
             <label>Resolution</label>
-            <p className="notice">{ticket.resolution}</p>
+            <p className="notice" style={{ margin: 0, color: "var(--ok-text)", fontWeight: 600 }}>
+              {ticket.resolution}
+            </p>
           </div>
         )}
       </section>
 
-      <div className="row-actions" style={{ marginTop: "0.5rem", gap: "0.5rem" }}>
+      <div className="row-actions" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
         {canTake && (
-          <button type="button" className="btn btn-primary" disabled={busy} onClick={handleTakeTicket}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={busy}
+            onClick={handleTakeTicket}
+          >
             Take Ticket
           </button>
         )}
         {canResolve && (
-          <button type="button" className="btn btn-secondary" disabled={busy} onClick={handleResolveTicket}>
-            Resolve
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={busy}
+            onClick={handleResolveTicket}
+          >
+            Resolve Ticket
           </button>
         )}
         {canReopen && (
-          <button type="button" className="btn btn-secondary" disabled={busy} onClick={handleReopenTicket}>
-            Reopen
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={busy}
+            onClick={handleReopenTicket}
+          >
+            Reopen Ticket
           </button>
         )}
         {canTransfer && (
-          <button type="button" className="btn btn-secondary" disabled={busy} onClick={handleTransferTicket}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={busy}
+            onClick={handleTransferTicket}
+          >
             Transfer
           </button>
         )}
         {isTakenByMe && ticket.status === "taken" && (
-          <button type="button" className="btn btn-secondary" disabled={busy} onClick={handleRequestHelp}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            disabled={busy}
+            onClick={handleRequestHelp}
+          >
             Request Help
           </button>
         )}
-        {isAdminOrMaint && (
-          <button type="button" className="btn btn-secondary" disabled={busy} onClick={handleAcceptHelp}>
-            Accept Help
-          </button>
+        {isAdminOrMaint && ticket.status === "taken" && !isTakenByMe && (
+          <>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              disabled={busy}
+              onClick={handleAcceptHelp}
+            >
+              Accept Help
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              disabled={busy}
+              onClick={handleDeclineHelp}
+            >
+              Decline Help
+            </button>
+          </>
         )}
-        {isAdminOrMaint && (
-          <button type="button" className="btn btn-secondary" disabled={busy} onClick={handleDeclineHelp}>
-            Decline Help
-          </button>
-        )}
-        <Link href="/tickets/" className="btn btn-secondary">Back to Tickets</Link>
+        <Link href="/tickets/" className="btn btn-secondary">
+          &larr; Back to Staff Complaints
+        </Link>
       </div>
 
-      <section className="card stack" style={{ marginTop: "1rem" }}>
-        <h2>Messages</h2>
+      <section className="card stack" style={{ margin: 0 }}>
+        <h2 style={{ margin: 0 }}>Messages &amp; Updates</h2>
         <div className="table-wrap" style={{ maxHeight: "300px", overflowY: "auto" }}>
           <table>
             <thead>
@@ -374,37 +471,52 @@ export default function TicketDetailClient() {
             <tbody>
               {messages.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="notice">No messages yet.</td>
+                  <td colSpan={3} className="notice">
+                    No messages yet.
+                  </td>
                 </tr>
               ) : (
                 messages.map((m) => (
                   <tr key={m.id}>
-                    <td>{m.sender_id.slice(0, 8)}...</td>
+                    <td>
+                      <strong>
+                        {m.sender_id === profile.id
+                          ? "You"
+                          : m.sender_id === ticket.user_id
+                            ? "Complainant"
+                            : "Admin"}
+                      </strong>
+                    </td>
                     <td>{m.message}</td>
-                    <td>{new Date(m.created_at).toLocaleTimeString()}</td>
+                    <td style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+                      {new Date(m.created_at).toLocaleString()}
+                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
-        <div className="field" style={{ marginTop: "0.5rem" }}>
+        <div className="field">
           <label>New Message</label>
           <textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             rows={3}
-            className="input"
-            placeholder="Type your message..."
+            placeholder="Write a follow-up update or question..."
           />
         </div>
-        <button type="button" className="btn btn-primary" disabled={busy || !newMessage.trim()} onClick={handleSendMessage}>
-          Send
-        </button>
+        <div>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={busy || !newMessage.trim()}
+            onClick={handleSendMessage}
+          >
+            Send Message
+          </button>
+        </div>
       </section>
     </section>
   );
 }
-
-
-

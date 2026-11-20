@@ -102,6 +102,7 @@ export default function FillFormPage() {
   const [busy, setBusy] = useState(false);
   const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [createdTicketId, setCreatedTicketId] = useState<string | null>(null);
+  const [complaintEmailNote, setComplaintEmailNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
@@ -278,19 +279,42 @@ export default function FillFormPage() {
         const cat = resolveFormCategory(form, theme);
         if (cat === "staff_complaints" || form.kind === "complaint") {
           try {
-            const { data: tData } = await supabase.rpc("create_ticket", {
+            const { data: tData, error: tErr } = await supabase.rpc("create_ticket", {
               p_form_id: form.id,
               p_submission_id: submissionId,
               p_kind: form.kind === "appeal_enabled" ? "appeal" : "complaint",
-              p_reason: summarizeSubmissionReason(nodes, answers, form.title),
+              p_reason: summarizeSubmissionReason(nodes, preparedAnswers, form.title),
             });
-            if (tData && (tData as { ticket_id?: string }).ticket_id) {
-              setCreatedTicketId((tData as { ticket_id: string }).ticket_id);
+            if (tErr) {
+              console.warn("Ticket creation error:", tErr);
+              setComplaintEmailNote("Complaint recorded, but ticket creation encountered a warning.");
+            } else {
+              const tRes = tData as { ticket_id?: string; notified_count?: number } | null;
+              if (tRes?.ticket_id) {
+                setCreatedTicketId(tRes.ticket_id);
+              }
+              // Await Edge Function so complaint alert emails deliver reliably before user leaves screen
+              try {
+                const { data: fnData, error: fnErr } = await supabase.functions.invoke(
+                  "send-outbox-emails",
+                  { body: { trigger: "complaint", ticket_id: tRes?.ticket_id ?? null } },
+                );
+                const payload = fnData as { ok?: boolean; sent?: number; error?: string } | null;
+                if (!fnErr && payload?.ok && (payload.sent ?? 0) > 0) {
+                  setComplaintEmailNote(
+                    `Confidential alert email sent to ${payload.sent} authorized administrator(s).`,
+                  );
+                } else {
+                  setComplaintEmailNote(
+                    "Ticket logged. Admin email alert is queued in Email Outbox.",
+                  );
+                }
+              } catch {
+                setComplaintEmailNote(
+                  "Ticket logged. Admin email alert is queued in Email Outbox.",
+                );
+              }
             }
-            // Trigger Edge Function to deliver queued complaint emails to authorized admins
-            supabase.functions.invoke("send-outbox-emails").catch(() => {
-              /* Edge Function optional until deployed */
-            });
           } catch (ticketErr) {
             console.warn("Ticket auto-link warning:", ticketErr);
           }
@@ -407,6 +431,11 @@ export default function FillFormPage() {
         <p className="notice" style={{ maxWidth: "42ch", margin: "0 auto" }}>
           Recorded under <strong>{profile?.email ?? "your account"}</strong>.
         </p>
+        {complaintEmailNote && (
+          <p className="notice" style={{ maxWidth: "44ch", margin: "0.35rem auto 0", fontSize: "0.82rem", color: "var(--accent)", fontWeight: 600 }}>
+            {complaintEmailNote}
+          </p>
+        )}
 
         <div className="app-success-actions">
           {createdTicketId ? (

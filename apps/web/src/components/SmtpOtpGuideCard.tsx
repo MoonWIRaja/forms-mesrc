@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { getSupabase } from "@/lib/supabase";
 import InfoPopover from "./InfoPopover";
 
 export const OTP_EMAIL_SUBJECT = "Kayangan Bumi Medical Verification Code: {{ slice .Token 0 4 }}";
@@ -72,8 +73,125 @@ export const OTP_EMAIL_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+interface OutboxRow {
+  id: number;
+  to_email: string;
+  subject: string;
+  status: "pending" | "sent" | "failed";
+  attempts: number;
+  last_error: string | null;
+  created_at: string;
+  sent_at: string | null;
+}
+
 export default function SmtpOtpGuideCard() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [outboxRows, setOutboxRows] = useState<OutboxRow[]>([]);
+  const [outboxLoading, setOutboxLoading] = useState(true);
+  const [dispatchBusy, setDispatchBusy] = useState(false);
+  const [dispatchMsg, setDispatchMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const loadOutbox = useCallback(async () => {
+    setOutboxLoading(true);
+    try {
+      const supabase = getSupabase();
+      const { data, error } = await supabase
+        .from("email_outbox")
+        .select("id,to_email,subject,status,attempts,last_error,created_at,sent_at")
+        .order("created_at", { ascending: false })
+        .limit(15);
+      if (!error && data) {
+        setOutboxRows(data as OutboxRow[]);
+      }
+    } finally {
+      setOutboxLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const supabase = getSupabase();
+        const { data, error } = await supabase
+          .from("email_outbox")
+          .select("id,to_email,subject,status,attempts,last_error,created_at,sent_at")
+          .order("created_at", { ascending: false })
+          .limit(15);
+        if (active && !error && data) {
+          setOutboxRows(data as OutboxRow[]);
+        }
+      } finally {
+        if (active) setOutboxLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleRunOutboxDispatch(retryFailed = false) {
+    setDispatchBusy(true);
+    setDispatchMsg(null);
+    try {
+      const supabase = getSupabase();
+      if (retryFailed) {
+        await supabase
+          .from("email_outbox")
+          .update({ status: "pending", attempts: 0, last_error: null })
+          .eq("status", "failed");
+      }
+
+      const { data, error } = await supabase.functions.invoke("send-outbox-emails", {
+        body: { trigger: "manual_test" },
+      });
+
+      if (error) {
+        const msg = error.message || "Edge Function invocation failed.";
+        const hint =
+          msg.includes("401") || msg.toLowerCase().includes("jwt")
+            ? " Tip: Open Supabase Dashboard -> Edge Functions -> send-outbox-emails -> Settings and turn OFF 'Enforce JWT Verification / Verify JWT'."
+            : msg.includes("404") || msg.toLowerCase().includes("not found")
+              ? " Tip: Make sure the Edge Function is deployed with exact name 'send-outbox-emails'."
+              : "";
+        setDispatchMsg({ ok: false, text: `${msg}${hint}` });
+      } else {
+        const payload = data as {
+          ok?: boolean;
+          sent?: number;
+          failed?: number;
+          provider?: string;
+          error?: string;
+          errors?: string[];
+        } | null;
+
+        if (payload?.error) {
+          setDispatchMsg({ ok: false, text: payload.error });
+        } else if (payload?.errors && payload.errors.length > 0) {
+          setDispatchMsg({
+            ok: false,
+            text: `Sent: ${payload.sent ?? 0}, Failed: ${payload.failed ?? 0}. Error: ${payload.errors[0]}`,
+          });
+        } else {
+          setDispatchMsg({
+            ok: true,
+            text:
+              (payload?.sent ?? 0) > 0
+                ? `Successfully delivered ${payload?.sent} email(s) via ${payload?.provider ?? "email"}!`
+                : "Edge Function is online! No pending emails left in queue.",
+          });
+        }
+      }
+      await loadOutbox();
+    } catch (err) {
+      setDispatchMsg({
+        ok: false,
+        text: err instanceof Error ? err.message : "Failed to run email dispatcher.",
+      });
+    } finally {
+      setDispatchBusy(false);
+    }
+  }
 
   async function copyText(key: string, value: string) {
     try {
@@ -85,6 +203,9 @@ export default function SmtpOtpGuideCard() {
     }
   }
 
+  const pendingCount = outboxRows.filter((r) => r.status === "pending").length;
+  const failedCount = outboxRows.filter((r) => r.status === "failed").length;
+
   return (
     <div className="stack">
       <div className="row-between">
@@ -93,26 +214,142 @@ export default function SmtpOtpGuideCard() {
             Email Delivery, SMTP &amp; Complaint Alert Setup
           </h2>
           <p className="notice">
-            Configure both Supabase Auth OTP emails and automated Staff Complaint alert delivery
-            for <strong>Kayangan Bumi Medical</strong>.
+            Configure both Supabase Auth OTP emails and automated Invitation &amp; Staff Complaint
+            email delivery for <strong>Kayangan Bumi Medical</strong>.
           </p>
         </div>
         <InfoPopover title="Why configure this in Supabase Dashboard?">
           <p style={{ margin: "0 0 0.5rem 0" }}>
-            Supabase Auth sends login OTP emails directly from its auth server, while Staff
-            Complaint notifications are dispatched to authorized Admins via the{" "}
-            <code>send-outbox-emails</code> Supabase Edge Function.
+            Supabase Auth sends login OTP emails directly from its auth server, while Invitations
+            and Staff Complaint alerts are dispatched via the <code>send-outbox-emails</code>{" "}
+            Supabase Edge Function.
           </p>
           <ol style={{ margin: 0, paddingLeft: "1.25rem" }}>
             <li>
               Auth OTP emails come from <strong>support@mesrc.com.my</strong> via Google SMTP.
             </li>
             <li>
-              Targeted complaint alerts go only to Admins enabled in Form Access &amp; Admin
-              Permissions.
+              Targeted complaint alerts go only to Admins enabled in Admin Permissions or Craft
+              Settings.
             </li>
           </ol>
         </InfoPopover>
+      </div>
+
+      {/* LIVE EMAIL DELIVERY OUTBOX & DIAGNOSTICS */}
+      <div
+        className="stack"
+        style={{
+          padding: "1rem",
+          border: "2px solid var(--accent)",
+          borderRadius: "var(--radius)",
+          background: "var(--surface-elevated)",
+        }}
+      >
+        <div className="row-between" style={{ flexWrap: "wrap", gap: "0.65rem" }}>
+          <div>
+            <strong style={{ color: "var(--accent)", fontSize: "0.96rem" }}>
+              Live Email Outbox &amp; Diagnostics ({pendingCount} pending, {failedCount} failed)
+            </strong>
+            <p className="notice" style={{ fontSize: "0.8rem", margin: "0.15rem 0 0" }}>
+              Inspect queued Invite &amp; Staff Complaint emails and test your{" "}
+              <code>send-outbox-emails</code> Edge Function directly.
+            </p>
+          </div>
+          <div className="row-actions" style={{ gap: "0.45rem", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="pixel-paper-btn compact primary"
+              disabled={dispatchBusy}
+              onClick={() => void handleRunOutboxDispatch(false)}
+            >
+              {dispatchBusy ? "Sending..." : "Send Pending Emails Now"}
+            </button>
+            {failedCount > 0 && (
+              <button
+                type="button"
+                className="pixel-paper-btn compact"
+                disabled={dispatchBusy}
+                onClick={() => void handleRunOutboxDispatch(true)}
+              >
+                Retry Failed ({failedCount})
+              </button>
+            )}
+            <button
+              type="button"
+              className="pixel-paper-btn compact"
+              disabled={outboxLoading}
+              onClick={() => void loadOutbox()}
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {dispatchMsg && (
+          <p
+            className={`alert ${dispatchMsg.ok ? "alert-ok" : "alert-error"}`}
+            role="status"
+            style={{ margin: 0 }}
+          >
+            {dispatchMsg.text}
+          </p>
+        )}
+
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Recipient</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Details / Error</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {outboxLoading ? (
+                <tr>
+                  <td colSpan={5} className="notice" style={{ textAlign: "center" }}>
+                    Loading email queue...
+                  </td>
+                </tr>
+              ) : outboxRows.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="notice" style={{ textAlign: "center" }}>
+                    No outgoing invite or complaint emails queued yet.
+                  </td>
+                </tr>
+              ) : (
+                outboxRows.map((row) => (
+                  <tr key={row.id}>
+                    <td style={{ fontWeight: 600, fontSize: "0.82rem" }}>{row.to_email}</td>
+                    <td style={{ fontSize: "0.82rem" }}>{row.subject}</td>
+                    <td>
+                      <span
+                        className={`pixel-stamp-badge ${
+                          row.status === "sent" ? "live" : "draft"
+                        }`}
+                      >
+                        {row.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: "0.78rem", color: row.last_error ? "var(--err-text)" : "var(--muted)" }}>
+                      {row.last_error
+                        ? row.last_error
+                        : row.sent_at
+                          ? `Delivered ${new Date(row.sent_at).toLocaleTimeString()}`
+                          : "Waiting for send-outbox-emails"}
+                    </td>
+                    <td style={{ fontSize: "0.76rem", color: "var(--muted)" }}>
+                      {new Date(row.created_at).toLocaleString()}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="grid-2">
@@ -213,17 +450,23 @@ export default function SmtpOtpGuideCard() {
         <p className="notice" style={{ fontSize: "0.86rem", margin: 0 }}>
           Both <strong>Send Invitation</strong> emails and <strong>Staff Complaint</strong> alerts
           are delivered automatically via the <code>send-outbox-emails</code> Supabase Edge
-          Function using your <strong>existing Google Workspace SMTP</strong> (<code>support@mesrc.com.my</code>) — no extra paid service required.
+          Function using your <strong>existing Google Workspace SMTP</strong> (
+          <code>support@mesrc.com.my</code>).
         </p>
         <div style={{ fontSize: "0.84rem", display: "grid", gap: "0.35rem" }}>
           <div>
             <strong>1. Deploy Edge Function:</strong> Open Supabase Dashboard &rarr;{" "}
             <strong>Edge Functions</strong> &rarr; create function named{" "}
             <code>send-outbox-emails</code> and paste{" "}
-            <code>supabase/functions/send-outbox-emails/index.ts</code> (disable Verify JWT if prompted).
+            <code>supabase/functions/send-outbox-emails/index.ts</code>.
           </div>
           <div>
-            <strong>2. Add Edge Function Secrets (Reuse your Gmail App Password):</strong>
+            <strong>2. Turn OFF Verify JWT:</strong> Inside the <code>send-outbox-emails</code>{" "}
+            function settings, disable <strong>Enforce JWT Verification / Verify JWT</strong>{" "}
+            (required for <code>sb_publishable_</code> projects).
+          </div>
+          <div>
+            <strong>3. Add Edge Function Secrets:</strong>
             <br />
             <code>SMTP_USER</code> = <code>support@mesrc.com.my</code>
             <br />
